@@ -1,0 +1,6 @@
+[submodule "libs/spylls"]
+	path = libs/spylls
+	url = https://github.com/wachin/spylls.git
+[submodule "libs/pythes"]
+	path = libs/pythes
+	url = https://github.com/wachin/pythes.git
