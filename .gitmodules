@@ -4,3 +4,9 @@
 [submodule "libs/pythes"]
 	path = libs/pythes
 	url = https://github.com/wachin/pythes.git
+[submodule "third-party/hunspell"]
+	path = third-party/hunspell
+	url = https://github.com/hunspell/hunspell
+[submodule "third-party/sonnet"]
+	path = third-party/sonnet
+	url = https://github.com/vnotex/sonnet
