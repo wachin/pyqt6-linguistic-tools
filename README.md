@@ -12,6 +12,17 @@ Development is currently focused on stabilizing its portable engines:
 Native Hunspell and MyThes are outside the scope of this first stage. They may
 be added later as optional backends without changing the public API.
 
+## Portable backend API
+
+`SpyllsBackend` and `PyThesBackend` implement stable engine-neutral contracts.
+Both load their configured dictionary on first use and can be explicitly
+unloaded. `BackendCache` provides an LRU bound for applications that switch
+between languages. Engine exceptions and result types never leak through the
+public API.
+
+See [`docs/backend-api.md`](docs/backend-api.md) for usage, lifecycle, error,
+metadata, and thread-boundary guidance.
+
 ## Setting up the repository
 
 ```bash
@@ -19,6 +30,9 @@ git submodule update --init --recursive
 python -m pip install -e '.[test]'
 python -m pytest
 ```
+
+The built distribution includes the maintained Spylls and PyThes packages;
+applications do not install those engine forks separately.
 
 The fast tests do not require external dictionary downloads. The compatibility
 suite uses an explicitly configured LibreOffice dictionary collection:

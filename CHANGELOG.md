@@ -13,3 +13,8 @@ changes are recorded here before a release.
 - Add a subprocess-isolated Spylls/PyThes benchmark with machine-readable
   reports, real small/medium/very-large corpus cases, and documented diagnostic
   budgets for loading, lookup, suggestions, caching, and peak memory.
+- Add stable spelling and thesaurus backend contracts, portable Spylls and
+  PyThes adapters, structured toolkit errors, lazy dictionary loading, and an
+  unloading bounded LRU backend cache.
+- Bundle the maintained engine packages in toolkit distributions so host
+  applications never need to import or install the forks separately.

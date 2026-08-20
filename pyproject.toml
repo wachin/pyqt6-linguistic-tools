@@ -20,7 +20,15 @@ classifiers = [
 test = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "libs/spylls", "libs/pythes"]
+include = ["pyqt6_linguistic_tools*", "spylls*", "pythes*"]
+exclude = ["tests*"]
+
+[tool.setuptools]
+license-files = ["libs/spylls/LICENSE", "libs/pythes/LICENSE"]
+
+[tool.setuptools.package-data]
+"spylls.hunspell" = ["data/**/*.aff", "data/**/*.dic", "data/**/README*"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"

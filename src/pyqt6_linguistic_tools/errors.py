@@ -1,0 +1,43 @@
+"""Stable toolkit errors that do not expose portable-engine exceptions."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+
+class LinguisticError(Exception):
+    """Base error raised by the public linguistic toolkit API."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        backend: str,
+        operation: str,
+        path: Path | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.backend = backend
+        self.operation = operation
+        self.path = path
+
+
+class BackendUnavailableError(LinguisticError):
+    """The selected backend cannot be imported on this installation."""
+
+
+class DictionaryLoadError(LinguisticError):
+    """A spelling dictionary or thesaurus could not be loaded."""
+
+
+class DictionaryNotFoundError(DictionaryLoadError):
+    """One or more source dictionary files do not exist."""
+
+
+class BackendOperationError(LinguisticError):
+    """A loaded backend failed while processing a request."""
+
+
+class UnsupportedOperationError(LinguisticError):
+    """The selected backend does not support an optional operation."""
+
