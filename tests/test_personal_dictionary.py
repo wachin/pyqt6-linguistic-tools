@@ -11,8 +11,22 @@ from pyqt6_linguistic_tools import (
     PersonalDictionary,
     PersonalDictionaryError,
     PersonalDictionaryStore,
+    normalize_personal_locale,
     normalize_personal_word,
 )
+
+
+@pytest.mark.parametrize("locale", ["../../escape", "es/EC", "es\\EC", "es:EC"])
+def test_personal_dictionary_rejects_unsafe_locale_paths(locale: str, tmp_path: Path):
+    with pytest.raises(ValueError, match="unsafe characters"):
+        PersonalDictionary(locale, tmp_path)
+
+    assert not tuple(tmp_path.iterdir())
+
+
+def test_personal_locale_normalization_is_portable():
+    assert normalize_personal_locale("ES-ec") == "es_EC"
+    assert normalize_personal_locale("sr-Latn-RS") == "sr_Latn_RS"
 
 
 def test_personal_dictionary_does_not_create_storage_until_mutated(tmp_path: Path):
@@ -156,6 +170,23 @@ def test_stale_lock_is_recovered_but_live_lock_times_out(tmp_path: Path):
     with pytest.raises(PersonalDictionaryError, match="timed out"):
         dictionary.add_word("bloqueada")
     dictionary._lock_path.unlink()
+
+
+def test_store_wide_lock_coordinates_mutations_across_locales(tmp_path: Path):
+    dictionary = PersonalDictionary(
+        "en_US",
+        tmp_path,
+        lock_timeout=0.01,
+        stale_lock_seconds=1,
+    )
+    tmp_path.mkdir(exist_ok=True)
+    dictionary._store_lock_path.write_text("live", encoding="ascii")
+
+    with pytest.raises(PersonalDictionaryError, match="store lock"):
+        dictionary.add_word("blocked")
+
+    os.utime(dictionary._store_lock_path, (0, 0))
+    assert dictionary.add_word("recovered")
 
 
 def test_store_supports_application_specific_and_explicitly_shared_roots(tmp_path: Path):

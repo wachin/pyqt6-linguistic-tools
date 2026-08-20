@@ -54,6 +54,11 @@ dictionaries. See [`docs/personal-dictionary.md`](docs/personal-dictionary.md).
 exceptions in memory, separated by locale and entirely independent of the
 persistent personal dictionary. See [`docs/ignored-words.md`](docs/ignored-words.md).
 
+`PersonalDictionaryBackupManager` provides validated previews, atomic UTF-8
+exports, and transactional merge or replace restoration across locales. Its
+portable backups contain only personal words and never alter official source
+dictionaries. See [`docs/personal-backups.md`](docs/personal-backups.md).
+
 ## Setting up the repository
 
 ```bash

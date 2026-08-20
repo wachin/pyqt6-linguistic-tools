@@ -38,3 +38,9 @@ changes are recorded here before a release.
 - Add thread-safe, non-persistent ignored-word state with separate occurrence,
   document, session, and locale scopes, stable occurrence identities, explicit
   clearing, Unicode normalization, and revision tracking.
+- Add versioned cross-platform personal-dictionary backups with complete
+  validation and previews, selected or all-locale UTF-8 export, merge and
+  replace restore modes, store-wide concurrency protection, staged publication,
+  and rollback on multi-locale restore failures.
+- Reject unsafe personal-dictionary locale basenames before they can form a
+  filesystem path.

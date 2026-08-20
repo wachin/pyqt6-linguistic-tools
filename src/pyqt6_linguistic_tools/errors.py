@@ -96,3 +96,12 @@ class PersonalDictionaryError(Exception):
     def __init__(self, message: str, *, path: Path) -> None:
         super().__init__(message)
         self.path = path
+
+
+class PersonalDictionaryBackupError(Exception):
+    """A personal-dictionary backup could not be exported or restored safely."""
+
+    def __init__(self, message: str, *, operation: str, path: Path) -> None:
+        super().__init__(message)
+        self.operation = operation
+        self.path = path

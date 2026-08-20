@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 from threading import RLock
 import time
@@ -19,6 +20,15 @@ from pyqt6_linguistic_tools.storage import dictionary_storage_paths
 
 
 _FORMAT_VERSION = 1
+_SAFE_LOCALE = re.compile(r"[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*\Z")
+
+
+def normalize_personal_locale(locale: str) -> str:
+    """Normalize a locale that is safe as a cross-platform file basename."""
+    normalized = normalize_locale(locale)
+    if _SAFE_LOCALE.fullmatch(normalized) is None:
+        raise ValueError("personal dictionary locale contains unsafe characters")
+    return normalized
 
 
 def normalize_personal_word(word: str) -> str:
@@ -33,6 +43,60 @@ def normalize_personal_word(word: str) -> str:
     if any(unicodedata.category(character).startswith("C") for character in normalized):
         raise ValueError("personal dictionary words cannot contain control characters")
     return normalized
+
+
+@contextmanager
+def _cooperative_file_lock(
+    path: Path,
+    *,
+    timeout: float,
+    stale_seconds: float,
+    description: str,
+) -> Iterator[None]:
+    """Acquire one portable exclusive lock file and recover stale owners."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + timeout
+    descriptor: int | None = None
+    while descriptor is None:
+        try:
+            descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            try:
+                age = time.time() - path.stat().st_mtime
+                if age > stale_seconds:
+                    path.unlink()
+                    continue
+            except FileNotFoundError:
+                continue
+            except OSError as error:
+                raise PersonalDictionaryError(
+                    f"cannot inspect {description} lock: {path}", path=path
+                ) from error
+            if time.monotonic() >= deadline:
+                raise PersonalDictionaryError(
+                    f"timed out waiting for {description} lock: {path}", path=path
+                )
+            time.sleep(0.05)
+        except OSError as error:
+            raise PersonalDictionaryError(
+                f"cannot lock {description}: {path}", path=path
+            ) from error
+    try:
+        os.write(descriptor, f"{os.getpid()}\n".encode("ascii"))
+        os.close(descriptor)
+        descriptor = None
+        yield
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError as error:
+            raise PersonalDictionaryError(
+                f"cannot release {description} lock: {path}", path=path
+            ) from error
 
 
 class PersonalDictionary:
@@ -55,13 +119,14 @@ class PersonalDictionary:
             raise TypeError("stale_lock_seconds must be a number")
         if lock_timeout < 0 or stale_lock_seconds <= 0:
             raise ValueError("lock timeouts must be non-negative and stale time positive")
-        self.locale = normalize_locale(locale)
+        self.locale = normalize_personal_locale(locale)
         self.root = (
             Path(root).expanduser().resolve()
             if root is not None
             else dictionary_storage_paths(namespace).personal
         )
         self.path = self.root / f"{self.locale}.json"
+        self._store_lock_path = self.root / ".personal-dictionaries.lock"
         self._lock_path = self.root / f".{self.locale}.lock"
         self._lock_timeout = float(lock_timeout)
         self._stale_lock_seconds = float(stale_lock_seconds)
@@ -248,57 +313,18 @@ class PersonalDictionary:
 
     @contextmanager
     def _file_lock(self) -> Iterator[None]:
-        self.root.mkdir(parents=True, exist_ok=True)
-        deadline = time.monotonic() + self._lock_timeout
-        descriptor: int | None = None
-        while descriptor is None:
-            try:
-                descriptor = os.open(
-                    self._lock_path,
-                    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
-                    0o600,
-                )
-            except FileExistsError:
-                try:
-                    age = time.time() - self._lock_path.stat().st_mtime
-                    if age > self._stale_lock_seconds:
-                        self._lock_path.unlink()
-                        continue
-                except FileNotFoundError:
-                    continue
-                except OSError as error:
-                    raise PersonalDictionaryError(
-                        f"cannot inspect personal dictionary lock: {self._lock_path}",
-                        path=self._lock_path,
-                    ) from error
-                if time.monotonic() >= deadline:
-                    raise PersonalDictionaryError(
-                        f"timed out waiting for personal dictionary lock: {self._lock_path}",
-                        path=self._lock_path,
-                    )
-                time.sleep(0.05)
-            except OSError as error:
-                raise PersonalDictionaryError(
-                    f"cannot lock personal dictionary: {self._lock_path}",
-                    path=self._lock_path,
-                ) from error
-        try:
-            os.write(descriptor, f"{os.getpid()}\n".encode("ascii"))
-            os.close(descriptor)
-            descriptor = None
+        with _cooperative_file_lock(
+            self._store_lock_path,
+            timeout=self._lock_timeout,
+            stale_seconds=self._stale_lock_seconds,
+            description="personal dictionary store",
+        ), _cooperative_file_lock(
+            self._lock_path,
+            timeout=self._lock_timeout,
+            stale_seconds=self._stale_lock_seconds,
+            description="personal dictionary",
+        ):
             yield
-        finally:
-            if descriptor is not None:
-                os.close(descriptor)
-            try:
-                self._lock_path.unlink()
-            except FileNotFoundError:
-                pass
-            except OSError as error:
-                raise PersonalDictionaryError(
-                    f"cannot release personal dictionary lock: {self._lock_path}",
-                    path=self._lock_path,
-                ) from error
 
 
 class PersonalDictionaryStore:
@@ -325,7 +351,7 @@ class PersonalDictionaryStore:
         locales = []
         for path in self.root.glob("*.json"):
             try:
-                locales.append(normalize_locale(path.stem))
+                locales.append(normalize_personal_locale(path.stem))
             except (TypeError, ValueError):
                 continue
         return tuple(sorted(set(locales)))
@@ -334,5 +360,6 @@ class PersonalDictionaryStore:
 __all__ = [
     "PersonalDictionary",
     "PersonalDictionaryStore",
+    "normalize_personal_locale",
     "normalize_personal_word",
 ]

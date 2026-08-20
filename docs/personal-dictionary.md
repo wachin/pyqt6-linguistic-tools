@@ -79,3 +79,7 @@ Personal dictionaries never open or modify `.aff`, `.dic`, `.dat`, or `.idx`
 files. Ignore-once, document-ignore, and session-ignore state remain a separate
 non-persistent subsystem.
 
+Personal words can be moved safely between installations with
+`PersonalDictionaryBackupManager`; see
+[`personal-backups.md`](personal-backups.md). Backup merge and replace operations
+apply only to these separate personal files, never to official dictionaries.

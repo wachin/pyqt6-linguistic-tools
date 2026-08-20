@@ -23,6 +23,7 @@ from pyqt6_linguistic_tools.errors import (
     DictionaryLoadError,
     DictionaryNotFoundError,
     LinguisticError,
+    PersonalDictionaryBackupError,
     PersonalDictionaryError,
     UnsupportedOperationError,
 )
@@ -55,7 +56,18 @@ from pyqt6_linguistic_tools.providers import (
 from pyqt6_linguistic_tools.personal import (
     PersonalDictionary,
     PersonalDictionaryStore,
+    normalize_personal_locale,
     normalize_personal_word,
+)
+from pyqt6_linguistic_tools.personal_backup import (
+    BACKUP_FORMAT,
+    BACKUP_VERSION,
+    PersonalDictionaryBackupEntry,
+    PersonalDictionaryBackupManager,
+    PersonalDictionaryBackupPreview,
+    PersonalDictionaryRestoreEntry,
+    PersonalDictionaryRestoreResult,
+    RestoreMode,
 )
 from pyqt6_linguistic_tools.registry import DictionaryRegistry
 from pyqt6_linguistic_tools.resolver import (
@@ -86,6 +98,8 @@ __all__ = [
     "BackendResolutionError",
     "BackendResolver",
     "BackendUnavailableError",
+    "BACKUP_FORMAT",
+    "BACKUP_VERSION",
     "DictionaryLoadError",
     "DictionaryCandidate",
     "DictionaryBundleValidation",
@@ -111,9 +125,16 @@ __all__ = [
     "IgnoredWordsStore",
     "ManagedDictionaryProvider",
     "PersonalDictionary",
+    "PersonalDictionaryBackupEntry",
+    "PersonalDictionaryBackupError",
+    "PersonalDictionaryBackupManager",
+    "PersonalDictionaryBackupPreview",
     "PersonalDictionaryError",
+    "PersonalDictionaryRestoreEntry",
+    "PersonalDictionaryRestoreResult",
     "PersonalDictionaryStore",
     "PyThesBackend",
+    "RestoreMode",
     "SpellCheckerBackend",
     "SpellBackendResolver",
     "SpyllsBackend",
@@ -130,6 +151,7 @@ __all__ = [
     "load_dictionary_catalog",
     "locale_display_name",
     "normalize_locale",
+    "normalize_personal_locale",
     "normalize_personal_word",
     "regenerate_thesaurus_index",
     "__version__",
