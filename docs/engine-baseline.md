@@ -93,6 +93,15 @@ content. Repeated lookups use a per-instance, thread-safe LRU cache bounded to
 clearing or index regeneration invalidates stored results. All 26 corpus
 thesauri continue to pass with normalization and caching enabled.
 
+The fork now exposes backend-ready primitives without removing its historical
+API: `data_path` and `index_path` are typed `Path` values; immutable typed
+entries and meanings retain tuple unpacking and old field names; and all data
+and index format errors derive from `PyThesError` with path, line, and offset
+context where applicable. Legacy string path attributes and `Exc*` exception
+names remain compatibility aliases. Malformed lookup data is translated into
+structured errors rather than leaking parser exceptions. The maintained fork
+now explicitly requires Python 3.10 or newer, matching the toolkit.
+
 ## Fork policy
 
 Engine behavior changes belong in the corresponding engine fork and require a
