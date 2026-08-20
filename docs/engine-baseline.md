@@ -10,10 +10,11 @@ Baseline captured on 2026-08-20 with Python 3.13.5 and pytest 8.3.5.
 - Version declared by packaging: `0.1.7`
 - License file: Mozilla Public License 2.0.
 
-There is a metadata inconsistency to resolve before publishing: `setup.py`
-classifies Spylls as MIT while the repository's `LICENSE` contains MPL-2.0.
-The license file is treated as authoritative until provenance is reviewed; no
-license metadata has been changed speculatively.
+The baseline contained two metadata inconsistencies: `setup.py` classified
+Spylls as MIT while the changelog and `LICENSE` record the change to MPL-2.0,
+and the runtime exposed version 0.1.0 while packaging declared 0.1.7. The
+maintained fork now aligns both values with the repository evidence and tests
+them automatically.
 
 `python -m pytest -q` does not provide a usable upstream baseline. Collection
 fails because draft unit tests import the obsolete package name `spyll` and one
@@ -23,6 +24,11 @@ with `PYTHONPATH=.`:
 
 - Lookup: 107 scenarios; 101 active passed, 6 explicitly pending, 0 failed.
 - Suggest: 34 scenarios; 31 active passed, 3 explicitly pending, 0 failed.
+
+The maintained fork wraps both historical scripts with pytest. The wrapper
+requires their exact active/pending totals and zero failures, so regressions
+now produce a failing process suitable for CI. Its initial directive inventory
+is maintained in `docs/hunspell-compatibility.md` inside the Spylls fork.
 
 The repository-level corpus tests add real LibreOffice dictionaries for UTF-8,
 ISO-8859-1, ISO-8859-2, ISO-8859-7, ISO-8859-13 and ISO-8859-15.
