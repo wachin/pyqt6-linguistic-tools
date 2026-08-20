@@ -71,6 +71,14 @@ original data file. It never rewrites a source dictionary. After the patch all
 26 thesauri load and return at least one indexed entry; known recoveries remain
 visible as warnings.
 
+External indexes are now checked completely at load time: the declared count
+must be valid and every byte offset must point to the named `.dat` entry.
+Missing, truncated, malformed, and stale indexes are rebuilt in memory. The
+rebuild supports LF and CRLF source files and can skip isolated malformed data
+headers with a warning. This exposed the known stray `technika` line and stale
+`metodologia` offset in the Polish corpus without modifying either source file.
+All 26 corpus thesauri still pass after recovery.
+
 ## Fork policy
 
 Engine behavior changes belong in the corresponding engine fork and require a
