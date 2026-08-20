@@ -33,6 +33,13 @@ is maintained in `docs/hunspell-compatibility.md` inside the Spylls fork.
 The repository-level corpus tests add real LibreOffice dictionaries for UTF-8,
 ISO-8859-1, ISO-8859-2, ISO-8859-7, ISO-8859-13 and ISO-8859-15.
 
+The maintained fork now also provides an encoding-agnostic directive scanner.
+Against the 88 LibreOffice `.aff` files it classified 47 directive names as
+supported, 9 as partial, 8 as non-spelling metadata/extensions, and one `SFT`
+line in the Mongolian dictionary as probable source corruption. This evidence
+prioritizes `FULLSTRIP` as the next engine behavior; `WORDCHARS`, although more
+widespread, belongs to the toolkit tokenizer rather than dictionary lookup.
+
 ## PyThes
 
 - Maintained fork: `https://github.com/wachin/pythes.git`
