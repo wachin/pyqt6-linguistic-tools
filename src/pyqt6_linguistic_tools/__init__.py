@@ -45,6 +45,7 @@ from pyqt6_linguistic_tools.models import (
     ValidationStatus,
 )
 from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
+from pyqt6_linguistic_tools.ignored import IgnoredWords, IgnoredWordsStore
 from pyqt6_linguistic_tools.providers import (
     DictionaryProvider,
     DirectoryDictionaryProvider,
@@ -106,6 +107,8 @@ __all__ = [
     "DictionaryValidationError",
     "DirectoryDictionaryProvider",
     "LinguisticError",
+    "IgnoredWords",
+    "IgnoredWordsStore",
     "ManagedDictionaryProvider",
     "PersonalDictionary",
     "PersonalDictionaryError",

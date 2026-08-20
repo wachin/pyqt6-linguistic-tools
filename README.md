@@ -50,6 +50,10 @@ files per locale. Atomic replacement and portable per-locale locks allow
 ChordFlow and ChordPages to share storage without modifying source
 dictionaries. See [`docs/personal-dictionary.md`](docs/personal-dictionary.md).
 
+`IgnoredWords` keeps ignore-once, document-wide, and session-wide spelling
+exceptions in memory, separated by locale and entirely independent of the
+persistent personal dictionary. See [`docs/ignored-words.md`](docs/ignored-words.md).
+
 ## Setting up the repository
 
 ```bash

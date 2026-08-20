@@ -35,3 +35,6 @@ changes are recorded here before a release.
   NFC normalization, atomic durable writes, cooperative cross-process locks,
   external-change revisions, and explicitly shared or application-specific
   storage.
+- Add thread-safe, non-persistent ignored-word state with separate occurrence,
+  document, session, and locale scopes, stable occurrence identities, explicit
+  clearing, Unicode normalization, and revision tracking.
