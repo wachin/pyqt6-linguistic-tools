@@ -36,6 +36,13 @@ is maintained in `docs/hunspell-compatibility.md` inside the Spylls fork.
 The repository-level corpus tests add real LibreOffice dictionaries for UTF-8,
 ISO-8859-1, ISO-8859-2, ISO-8859-7, ISO-8859-13 and ISO-8859-15.
 
+Engine load, lookup, suggestion, cache, and memory measurements are maintained
+separately in [`performance-budgets.md`](performance-budgets.md), with exact
+machine-readable values in
+[`performance-baseline.json`](performance-baseline.json). Performance cases run
+in isolated subprocesses and are not enforced as hardware-dependent pytest
+timing assertions.
+
 The maintained fork now also provides an encoding-agnostic directive scanner.
 Against the 88 LibreOffice `.aff` files it initially classified 47 directive
 names as supported, 9 as partial, 8 as non-spelling metadata/extensions, and

@@ -44,3 +44,19 @@ python -m pytest -m full_corpus --dictionary-corpus=/path/to/dicts
 The corpus path is never embedded in the package. See
 [`docs/engine-baseline.md`](docs/engine-baseline.md) for the verified initial
 engine status.
+
+## Performance benchmark
+
+The portable engines include a reproducible, subprocess-isolated benchmark for
+load time, lookup and suggestion latency, thesaurus caching, and peak memory:
+
+```bash
+python -m pyqt6_linguistic_tools.performance \
+  --corpus=/path/to/dicts \
+  --output=performance-report.json
+```
+
+The default small, medium, and very-large matrix and its initial diagnostic
+budgets are documented in
+[`docs/performance-budgets.md`](docs/performance-budgets.md). Performance
+budgets are review thresholds rather than machine-dependent pytest failures.

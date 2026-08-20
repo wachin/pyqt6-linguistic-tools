@@ -10,3 +10,6 @@ changes are recorded here before a release.
 - Add configurable LibreOffice corpus tests for spelling encodings and
   thesaurus byte offsets.
 - Stabilize PyThes for UTF-8 BOMs and recoverable malformed indexes.
+- Add a subprocess-isolated Spylls/PyThes benchmark with machine-readable
+  reports, real small/medium/very-large corpus cases, and documented diagnostic
+  budgets for loading, lookup, suggestions, caching, and peak memory.
