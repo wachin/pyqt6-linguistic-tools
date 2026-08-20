@@ -23,8 +23,9 @@ the integration scripts as the working suite. Executed against the local source
 with `PYTHONPATH=.`:
 
 - Lookup baseline: 107 scenarios; 101 active passed, 6 explicitly pending, 0
-  failed. After implementing `CHECKCOMPOUNDPATTERN` replacements: 104 active
-  passed, 3 explicitly pending, 0 failed.
+  failed. After completing `CHECKCOMPOUNDPATTERN` replacement and zero-pattern
+  behavior plus `ONLYINCOMPOUND` linking-affix boundaries: 105 active passed,
+  2 explicitly pending, 0 failed.
 - Suggest: 34 scenarios; 31 active passed, 3 explicitly pending, 0 failed.
 
 The maintained fork wraps both historical scripts with pytest. The wrapper
@@ -39,9 +40,12 @@ The maintained fork now also provides an encoding-agnostic directive scanner.
 Against the 88 LibreOffice `.aff` files it initially classified 47 directive
 names as supported, 9 as partial, 8 as non-spelling metadata/extensions, and
 one `SFT` line in the Mongolian dictionary as probable source corruption.
-`FULLSTRIP` was then implemented for both prefix and suffix lookup, moving the
-current count to 48 supported and 8 partial directives. All nine real
-LibreOffice dictionaries that enable it load and accept sampled stems.
+`FULLSTRIP` was then implemented for both prefix and suffix lookup.
+`CHECKCOMPOUNDPATTERN` now covers boundary rejection, replacements, flag
+conditions, and the special `0` unmodified-stem form. These changes move the
+current count to 49 supported and 7 partial directives. All nine real
+LibreOffice dictionaries that enable `FULLSTRIP` and all 20 that enable
+`ONLYINCOMPOUND` load and accept sampled stems.
 `WORDCHARS`, although more widespread, belongs to the toolkit tokenizer rather
 than dictionary lookup.
 
