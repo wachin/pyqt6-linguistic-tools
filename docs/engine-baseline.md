@@ -22,7 +22,9 @@ file contains invalid Python syntax. The upstream `tests/README.rst` identifies
 the integration scripts as the working suite. Executed against the local source
 with `PYTHONPATH=.`:
 
-- Lookup: 107 scenarios; 101 active passed, 6 explicitly pending, 0 failed.
+- Lookup baseline: 107 scenarios; 101 active passed, 6 explicitly pending, 0
+  failed. After implementing `CHECKCOMPOUNDPATTERN` replacements: 104 active
+  passed, 3 explicitly pending, 0 failed.
 - Suggest: 34 scenarios; 31 active passed, 3 explicitly pending, 0 failed.
 
 The maintained fork wraps both historical scripts with pytest. The wrapper
