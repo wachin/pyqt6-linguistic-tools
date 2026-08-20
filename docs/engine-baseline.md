@@ -86,6 +86,13 @@ Existing files require `overwrite=True`. A scheduled corpus test regenerates
 all 26 indexes into temporary storage and validates lookups without writing to
 the LibreOffice collection.
 
+Index keys and lookup input now share NFC normalization, so precomposed and
+combining-mark spellings resolve consistently without rewriting dictionary
+content. Repeated lookups use a per-instance, thread-safe LRU cache bounded to
+256 entries by default; misses are cached too, zero disables it, and explicit
+clearing or index regeneration invalidates stored results. All 26 corpus
+thesauri continue to pass with normalization and caching enabled.
+
 ## Fork policy
 
 Engine behavior changes belong in the corresponding engine fork and require a
