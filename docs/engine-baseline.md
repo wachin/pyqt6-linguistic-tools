@@ -34,11 +34,14 @@ The repository-level corpus tests add real LibreOffice dictionaries for UTF-8,
 ISO-8859-1, ISO-8859-2, ISO-8859-7, ISO-8859-13 and ISO-8859-15.
 
 The maintained fork now also provides an encoding-agnostic directive scanner.
-Against the 88 LibreOffice `.aff` files it classified 47 directive names as
-supported, 9 as partial, 8 as non-spelling metadata/extensions, and one `SFT`
-line in the Mongolian dictionary as probable source corruption. This evidence
-prioritizes `FULLSTRIP` as the next engine behavior; `WORDCHARS`, although more
-widespread, belongs to the toolkit tokenizer rather than dictionary lookup.
+Against the 88 LibreOffice `.aff` files it initially classified 47 directive
+names as supported, 9 as partial, 8 as non-spelling metadata/extensions, and
+one `SFT` line in the Mongolian dictionary as probable source corruption.
+`FULLSTRIP` was then implemented for both prefix and suffix lookup, moving the
+current count to 48 supported and 8 partial directives. All nine real
+LibreOffice dictionaries that enable it load and accept sampled stems.
+`WORDCHARS`, although more widespread, belongs to the toolkit tokenizer rather
+than dictionary lookup.
 
 ## PyThes
 
