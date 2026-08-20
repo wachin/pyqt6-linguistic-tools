@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyqt6-linguistic-tools"
+version = "0.1.0.dev0"
+description = "Reusable cross-platform linguistic tools for Python and PyQt6"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "GuitarChordStudio contributors" }]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Text Processing :: Linguistic",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src", "libs/spylls", "libs/pythes"]
+markers = [
+  "corpus: requires an external LibreOffice dictionaries collection",
+  "full_corpus: scans every compatible file in the external corpus",
+]
