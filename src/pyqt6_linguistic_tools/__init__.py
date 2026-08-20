@@ -23,6 +23,7 @@ from pyqt6_linguistic_tools.errors import (
     DictionaryLoadError,
     DictionaryNotFoundError,
     LinguisticError,
+    PersonalDictionaryError,
     UnsupportedOperationError,
 )
 from pyqt6_linguistic_tools.models import (
@@ -49,6 +50,11 @@ from pyqt6_linguistic_tools.providers import (
     DirectoryDictionaryProvider,
     ManagedDictionaryProvider,
     UserDictionaryProvider,
+)
+from pyqt6_linguistic_tools.personal import (
+    PersonalDictionary,
+    PersonalDictionaryStore,
+    normalize_personal_word,
 )
 from pyqt6_linguistic_tools.registry import DictionaryRegistry
 from pyqt6_linguistic_tools.resolver import (
@@ -101,6 +107,9 @@ __all__ = [
     "DirectoryDictionaryProvider",
     "LinguisticError",
     "ManagedDictionaryProvider",
+    "PersonalDictionary",
+    "PersonalDictionaryError",
+    "PersonalDictionaryStore",
     "PyThesBackend",
     "SpellCheckerBackend",
     "SpellBackendResolver",
@@ -118,6 +127,7 @@ __all__ = [
     "load_dictionary_catalog",
     "locale_display_name",
     "normalize_locale",
+    "normalize_personal_word",
     "regenerate_thesaurus_index",
     "__version__",
 ]

@@ -88,3 +88,11 @@ class DictionaryValidationError(Exception):
     def __init__(self, message: str, *, path: Path | None = None) -> None:
         super().__init__(message)
         self.path = path
+
+
+class PersonalDictionaryError(Exception):
+    """A personal dictionary could not be read, locked, or persisted safely."""
+
+    def __init__(self, message: str, *, path: Path) -> None:
+        super().__init__(message)
+        self.path = path

@@ -31,3 +31,7 @@ changes are recorded here before a release.
 - Add structured Hunspell/MyThes validation reports, codec and count checks,
   representative lookups, sampled index-offset verification, explicit safe
   index regeneration, and mandatory deep validation before manual publication.
+- Add backend-independent personal dictionaries with per-locale UTF-8 JSON,
+  NFC normalization, atomic durable writes, cooperative cross-process locks,
+  external-change revisions, and explicitly shared or application-specific
+  storage.

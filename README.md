@@ -45,6 +45,11 @@ and complete Spylls/PyThes loading. Manual imports must pass this validation
 before atomic publication. See
 [`docs/dictionary-validation.md`](docs/dictionary-validation.md).
 
+`PersonalDictionary` persists NFC-normalized Unicode words in separate UTF-8
+files per locale. Atomic replacement and portable per-locale locks allow
+ChordFlow and ChordPages to share storage without modifying source
+dictionaries. See [`docs/personal-dictionary.md`](docs/personal-dictionary.md).
+
 ## Setting up the repository
 
 ```bash

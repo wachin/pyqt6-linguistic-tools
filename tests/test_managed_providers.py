@@ -29,6 +29,7 @@ def test_storage_paths_are_shared_and_do_not_create_directories(tmp_path: Path):
     assert paths.root == tmp_path / "GuitarChordStudio" / "dictionaries"
     assert paths.managed == paths.root / "managed"
     assert paths.user == paths.root / "user"
+    assert paths.personal == paths.root / "personal"
     assert not paths.root.exists()
     assert application_data_directory(
         "GuitarChordStudio", base_path=tmp_path

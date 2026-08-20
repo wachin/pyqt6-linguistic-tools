@@ -12,6 +12,7 @@ from pyqt6_linguistic_tools import dictionary_storage_paths
 paths = dictionary_storage_paths("GuitarChordStudio")
 print(paths.managed)
 print(paths.user)
+print(paths.personal)
 ```
 
 When PyQt6 is available, the base comes from

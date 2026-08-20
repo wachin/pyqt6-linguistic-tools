@@ -15,6 +15,7 @@ class DictionaryStoragePaths:
     root: Path
     managed: Path
     user: Path
+    personal: Path
 
 
 def _validate_namespace(namespace: str) -> str:
@@ -86,6 +87,7 @@ def dictionary_storage_paths(
         root=root,
         managed=root / "managed",
         user=root / "user",
+        personal=root / "personal",
     )
 
 
