@@ -21,3 +21,7 @@ changes are recorded here before a release.
 - Add extensible spelling and thesaurus backend resolvers with portable
   cross-platform defaults, explicit selection, compatibility checks, strict
   mode, locale-preserving fallback, and structured selection diagnostics.
+- Add a cached `DictionaryRegistry`, a reusable directory provider, stable
+  locale parsing and human-readable names, independent spelling/thesaurus
+  source priorities, deterministic duplicate handling, and explicit generic
+  language fallback for regional variants.

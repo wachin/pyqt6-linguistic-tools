@@ -59,3 +59,12 @@ class BackendResolutionError(LinguisticError):
         )
         self.requested_backend = requested_backend
         self.locale = locale
+
+
+class DictionaryDiscoveryError(Exception):
+    """A dictionary provider failed while enumerating its source."""
+
+    def __init__(self, message: str, *, source: str, path: Path | None = None) -> None:
+        super().__init__(message)
+        self.source = source
+        self.path = path

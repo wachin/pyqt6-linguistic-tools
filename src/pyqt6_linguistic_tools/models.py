@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from enum import IntEnum
 from pathlib import Path
 from typing import Generic, TypeVar
 
@@ -87,3 +88,63 @@ class BackendResolution(Generic[BackendType]):
 
     backend: BackendType
     diagnostic: BackendResolutionDiagnostic
+
+
+class DictionarySourcePriority(IntEnum):
+    """Recommended precedence for duplicate dictionary sources."""
+
+    SYSTEM = 100
+    MANAGED = 200
+    USER = 300
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryCandidate:
+    """Dictionary files offered by one provider for one locale."""
+
+    locale: str
+    source: str
+    priority: int
+    aff_path: Path | None = None
+    dic_path: Path | None = None
+    thesaurus_dat: Path | None = None
+    thesaurus_idx: Path | None = None
+
+    @property
+    def has_spelling(self) -> bool:
+        return self.aff_path is not None and self.dic_path is not None
+
+    @property
+    def has_thesaurus(self) -> bool:
+        return self.thesaurus_dat is not None
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryInfo:
+    """Resolved spelling and thesaurus resources for a document locale."""
+
+    locale: str
+    display_name: str
+    aff_path: Path | None = None
+    dic_path: Path | None = None
+    thesaurus_dat: Path | None = None
+    thesaurus_idx: Path | None = None
+    spelling_source: str | None = None
+    thesaurus_source: str | None = None
+    spelling_locale: str | None = None
+    thesaurus_locale: str | None = None
+
+    @property
+    def has_spelling(self) -> bool:
+        return self.aff_path is not None and self.dic_path is not None
+
+    @property
+    def has_thesaurus(self) -> bool:
+        return self.thesaurus_dat is not None
+
+    @property
+    def uses_language_fallback(self) -> bool:
+        return (
+            self.spelling_locale not in {None, self.locale}
+            or self.thesaurus_locale not in {None, self.locale}
+        )

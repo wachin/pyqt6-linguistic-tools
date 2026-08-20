@@ -28,6 +28,11 @@ by default on every platform. Optional future engines can register behind the
 same contracts. Explicit requests and fallbacks return structured diagnostics
 and always preserve the requested document locale.
 
+`DictionaryRegistry` combines prioritized dictionary providers, pairs
+Hunspell and MyThes files, supports regional locales, and reports whether a
+language has spelling, a thesaurus, or both. See
+[`docs/dictionary-registry.md`](docs/dictionary-registry.md).
+
 ## Setting up the repository
 
 ```bash

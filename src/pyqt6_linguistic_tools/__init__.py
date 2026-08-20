@@ -11,6 +11,7 @@ from pyqt6_linguistic_tools.errors import (
     BackendOperationError,
     BackendResolutionError,
     BackendUnavailableError,
+    DictionaryDiscoveryError,
     DictionaryLoadError,
     DictionaryNotFoundError,
     LinguisticError,
@@ -23,9 +24,18 @@ from pyqt6_linguistic_tools.models import (
     BackendResolutionCode,
     BackendResolutionDiagnostic,
     DictionaryMetadata,
+    DictionaryCandidate,
+    DictionaryInfo,
+    DictionarySourcePriority,
     ThesaurusEntry,
     ThesaurusMeaning,
 )
+from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
+from pyqt6_linguistic_tools.providers import (
+    DictionaryProvider,
+    DirectoryDictionaryProvider,
+)
+from pyqt6_linguistic_tools.registry import DictionaryRegistry
 from pyqt6_linguistic_tools.resolver import (
     BackendResolver,
     SpellBackendResolver,
@@ -46,8 +56,15 @@ __all__ = [
     "BackendResolver",
     "BackendUnavailableError",
     "DictionaryLoadError",
+    "DictionaryCandidate",
+    "DictionaryDiscoveryError",
+    "DictionaryInfo",
     "DictionaryMetadata",
     "DictionaryNotFoundError",
+    "DictionaryProvider",
+    "DictionaryRegistry",
+    "DictionarySourcePriority",
+    "DirectoryDictionaryProvider",
     "LinguisticError",
     "PyThesBackend",
     "SpellCheckerBackend",
@@ -58,5 +75,7 @@ __all__ = [
     "ThesaurusEntry",
     "ThesaurusMeaning",
     "UnsupportedOperationError",
+    "locale_display_name",
+    "normalize_locale",
     "__version__",
 ]
