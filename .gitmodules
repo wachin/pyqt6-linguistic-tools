@@ -10,3 +10,6 @@
 [submodule "third-party/sonnet"]
 	path = third-party/sonnet
 	url = https://github.com/vnotex/sonnet
+[submodule "third-party/mythes"]
+	path = third-party/mythes
+	url = https://github.com/hunspell/mythes
