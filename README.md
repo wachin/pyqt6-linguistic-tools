@@ -23,6 +23,11 @@ public API.
 See [`docs/backend-api.md`](docs/backend-api.md) for usage, lifecycle, error,
 metadata, and thread-boundary guidance.
 
+`SpellBackendResolver` and `ThesaurusBackendResolver` select Spylls and PyThes
+by default on every platform. Optional future engines can register behind the
+same contracts. Explicit requests and fallbacks return structured diagnostics
+and always preserve the requested document locale.
+
 ## Setting up the repository
 
 ```bash

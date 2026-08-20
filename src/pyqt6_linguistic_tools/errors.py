@@ -41,3 +41,21 @@ class BackendOperationError(LinguisticError):
 class UnsupportedOperationError(LinguisticError):
     """The selected backend does not support an optional operation."""
 
+
+class BackendResolutionError(LinguisticError):
+    """A requested backend could not be selected or safely replaced."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        requested_backend: str,
+        locale: str,
+    ) -> None:
+        super().__init__(
+            message,
+            backend=requested_backend,
+            operation="resolve_backend",
+        )
+        self.requested_backend = requested_backend
+        self.locale = locale

@@ -75,3 +75,54 @@ Its `add_word()` and `remove_word()` methods raise `UnsupportedOperationError`.
 Persistent personal dictionaries belong to the future toolkit-level
 `PersonalDictionary`, independently of the immutable source dictionary.
 
+## Backend selection
+
+Host applications do not need operating-system conditionals. The spelling and
+thesaurus resolvers register the portable engines as their defaults on every
+platform:
+
+```python
+from pyqt6_linguistic_tools import SpellBackendResolver
+
+resolution = SpellBackendResolver().resolve(
+    "/usr/share/hunspell/es_EC",
+    locale="es_EC",
+)
+spelling = resolution.backend       # A lazy SpyllsBackend.
+diagnostic = resolution.diagnostic  # Why it was selected.
+```
+
+An optional backend can be registered without changing the public service or
+Qt APIs:
+
+```python
+resolver.register(
+    "native-hunspell",
+    lambda path, locale: NativeHunspellBackend(path, locale=locale),
+    available=NativeHunspellBackend.available,
+    compatible=NativeHunspellBackend.supports_dictionary,
+)
+resolution = resolver.resolve(
+    dictionary_path,
+    locale="es_EC",
+    backend="native-hunspell",
+)
+```
+
+If an explicitly requested backend is unknown, unavailable, or incompatible,
+the resolver selects the portable backend and reports one of these stable
+codes:
+
+- `requested_backend_unknown`;
+- `requested_backend_unavailable`;
+- `requested_backend_incompatible`.
+
+The diagnostic retains the requested backend, selected backend, exact locale,
+fallback flag, and a human-readable message. The same dictionary path and
+locale are passed to the fallback; the resolver never substitutes `es` for
+`es_EC` or otherwise changes the document language.
+
+Pass `allow_fallback=False` for conformance tests or strict configuration. A
+failure then raises `BackendResolutionError`. Factory and dictionary-loading
+errors also remain errors instead of triggering fallback, so corrupt data or a
+broken backend cannot be silently hidden by another engine.

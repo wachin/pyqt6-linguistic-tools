@@ -9,6 +9,7 @@ from pyqt6_linguistic_tools.backends import (
 from pyqt6_linguistic_tools.cache import BackendCache
 from pyqt6_linguistic_tools.errors import (
     BackendOperationError,
+    BackendResolutionError,
     BackendUnavailableError,
     DictionaryLoadError,
     DictionaryNotFoundError,
@@ -18,9 +19,17 @@ from pyqt6_linguistic_tools.errors import (
 from pyqt6_linguistic_tools.models import (
     BackendCapabilities,
     BackendMetadata,
+    BackendResolution,
+    BackendResolutionCode,
+    BackendResolutionDiagnostic,
     DictionaryMetadata,
     ThesaurusEntry,
     ThesaurusMeaning,
+)
+from pyqt6_linguistic_tools.resolver import (
+    BackendResolver,
+    SpellBackendResolver,
+    ThesaurusBackendResolver,
 )
 
 __version__ = "0.1.0.dev0"
@@ -30,6 +39,11 @@ __all__ = [
     "BackendCapabilities",
     "BackendMetadata",
     "BackendOperationError",
+    "BackendResolution",
+    "BackendResolutionCode",
+    "BackendResolutionDiagnostic",
+    "BackendResolutionError",
+    "BackendResolver",
     "BackendUnavailableError",
     "DictionaryLoadError",
     "DictionaryMetadata",
@@ -37,8 +51,10 @@ __all__ = [
     "LinguisticError",
     "PyThesBackend",
     "SpellCheckerBackend",
+    "SpellBackendResolver",
     "SpyllsBackend",
     "ThesaurusBackend",
+    "ThesaurusBackendResolver",
     "ThesaurusEntry",
     "ThesaurusMeaning",
     "UnsupportedOperationError",

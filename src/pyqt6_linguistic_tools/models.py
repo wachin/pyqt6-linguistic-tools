@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+from typing import Generic, TypeVar
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,3 +55,35 @@ class ThesaurusEntry:
     word: str
     meanings: tuple[ThesaurusMeaning, ...]
 
+
+class BackendResolutionCode(str, Enum):
+    """Machine-readable reason for a backend selection."""
+
+    DEFAULT_SELECTED = "default_selected"
+    REQUESTED_SELECTED = "requested_selected"
+    REQUESTED_UNKNOWN = "requested_backend_unknown"
+    REQUESTED_UNAVAILABLE = "requested_backend_unavailable"
+    REQUESTED_INCOMPATIBLE = "requested_backend_incompatible"
+
+
+@dataclass(frozen=True, slots=True)
+class BackendResolutionDiagnostic:
+    """Selection details suitable for logs, settings, or diagnostic UIs."""
+
+    code: BackendResolutionCode
+    requested_backend: str | None
+    selected_backend: str
+    locale: str
+    fallback_used: bool
+    message: str
+
+
+BackendType = TypeVar("BackendType")
+
+
+@dataclass(frozen=True, slots=True)
+class BackendResolution(Generic[BackendType]):
+    """The selected lazy backend and the reason it was selected."""
+
+    backend: BackendType
+    diagnostic: BackendResolutionDiagnostic

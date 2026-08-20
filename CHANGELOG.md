@@ -18,3 +18,6 @@ changes are recorded here before a release.
   unloading bounded LRU backend cache.
 - Bundle the maintained engine packages in toolkit distributions so host
   applications never need to import or install the forks separately.
+- Add extensible spelling and thesaurus backend resolvers with portable
+  cross-platform defaults, explicit selection, compatibility checks, strict
+  mode, locale-preserving fallback, and structured selection diagnostics.
