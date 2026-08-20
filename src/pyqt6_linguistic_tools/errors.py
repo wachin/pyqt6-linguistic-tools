@@ -68,3 +68,11 @@ class DictionaryDiscoveryError(Exception):
         super().__init__(message)
         self.source = source
         self.path = path
+
+
+class DictionaryImportError(Exception):
+    """A manual dictionary import is incomplete, invalid, or unsafe."""
+
+
+class DictionaryCatalogError(Exception):
+    """A dictionary download catalog does not match the supported schema."""

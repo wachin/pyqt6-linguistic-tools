@@ -33,6 +33,12 @@ Hunspell and MyThes files, supports regional locales, and reports whether a
 language has spelling, a thesaurus, or both. See
 [`docs/dictionary-registry.md`](docs/dictionary-registry.md).
 
+`ManagedDictionaryProvider` and `UserDictionaryProvider` use shared
+cross-platform application-data locations and support safe manual imports.
+The validated `dictionaries.json` reader prepares future managed downloads
+without performing network access. See
+[`docs/managed-dictionaries.md`](docs/managed-dictionaries.md).
+
 ## Setting up the repository
 
 ```bash

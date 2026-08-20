@@ -25,3 +25,6 @@ changes are recorded here before a release.
   locale parsing and human-readable names, independent spelling/thesaurus
   source priorities, deterministic duplicate handling, and explicit generic
   language fallback for regional variants.
+- Add cross-platform managed and user providers, shared `QStandardPaths` data
+  roots, atomic non-overwriting manual import, and strict offline validation of
+  the 57-entry `dictionaries.json` catalog for future verified downloads.

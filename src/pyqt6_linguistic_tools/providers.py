@@ -3,14 +3,28 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import os
 from pathlib import Path
+import re
+import shutil
+import tempfile
 
-from pyqt6_linguistic_tools.errors import DictionaryDiscoveryError
+from pyqt6_linguistic_tools.errors import (
+    DictionaryDiscoveryError,
+    DictionaryImportError,
+)
 from pyqt6_linguistic_tools.locales import (
     spelling_locale_from_stem,
     thesaurus_locale_from_stem,
 )
-from pyqt6_linguistic_tools.models import DictionaryCandidate
+from pyqt6_linguistic_tools.models import (
+    DictionaryCandidate,
+    DictionarySourcePriority,
+)
+from pyqt6_linguistic_tools.storage import dictionary_storage_paths
+
+
+_SAFE_BUNDLE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 class DictionaryProvider(ABC):
@@ -116,4 +130,136 @@ class DirectoryDictionaryProvider(DictionaryProvider):
         return tuple(candidates)
 
 
-__all__ = ["DictionaryProvider", "DirectoryDictionaryProvider"]
+class ManagedDictionaryProvider(DirectoryDictionaryProvider):
+    """Discover application-managed dictionaries without downloading them."""
+
+    def __init__(
+        self,
+        root: str | Path | None = None,
+        *,
+        namespace: str = "pyqt6-linguistic-tools",
+    ) -> None:
+        managed_root = (
+            Path(root).expanduser().resolve()
+            if root is not None
+            else dictionary_storage_paths(namespace).managed
+        )
+        super().__init__(
+            managed_root,
+            source="managed",
+            priority=DictionarySourcePriority.MANAGED,
+        )
+
+    def discover(self) -> tuple[DictionaryCandidate, ...]:
+        return () if not self.root.exists() else super().discover()
+
+    def ensure_directory(self) -> Path:
+        """Create the managed root only when explicitly requested."""
+        self.root.mkdir(parents=True, exist_ok=True)
+        return self.root
+
+
+class UserDictionaryProvider(DirectoryDictionaryProvider):
+    """Discover and safely import user-supplied dictionary files."""
+
+    def __init__(
+        self,
+        root: str | Path | None = None,
+        *,
+        namespace: str = "pyqt6-linguistic-tools",
+    ) -> None:
+        user_root = (
+            Path(root).expanduser().resolve()
+            if root is not None
+            else dictionary_storage_paths(namespace).user
+        )
+        super().__init__(
+            user_root,
+            source="user",
+            priority=DictionarySourcePriority.USER,
+        )
+
+    def discover(self) -> tuple[DictionaryCandidate, ...]:
+        return () if not self.root.exists() else super().discover()
+
+    def ensure_directory(self) -> Path:
+        """Create the user root only when explicitly requested."""
+        self.root.mkdir(parents=True, exist_ok=True)
+        return self.root
+
+    def import_files(
+        self,
+        files: tuple[str | Path, ...] | list[str | Path],
+        *,
+        bundle_name: str | None = None,
+    ) -> Path:
+        """Atomically import one complete, previously unpacked dictionary bundle.
+
+        Existing bundles are never overwritten. Archive extraction and network
+        access deliberately remain outside this method.
+        """
+        sources = tuple(Path(path).expanduser().resolve() for path in files)
+        if not sources:
+            raise DictionaryImportError("manual import requires at least one file")
+        if any(not path.is_file() for path in sources):
+            missing = next(path for path in sources if not path.is_file())
+            raise DictionaryImportError(f"import source is not a file: {missing}")
+        if len({path.name for path in sources}) != len(sources):
+            raise DictionaryImportError("import contains duplicate filenames")
+        allowed = {".aff", ".dic", ".dat", ".idx"}
+        if any(path.suffix.lower() not in allowed for path in sources):
+            raise DictionaryImportError("import contains an unsupported file type")
+
+        self.ensure_directory()
+        staging = Path(tempfile.mkdtemp(prefix=".import-", dir=self.root))
+        published = False
+        try:
+            for source in sources:
+                shutil.copy2(source, staging / source.name)
+            candidates = DirectoryDictionaryProvider(
+                staging,
+                source=self.source,
+                priority=self.priority,
+                recursive=False,
+            ).discover()
+            recognized = {
+                path.name
+                for candidate in candidates
+                for path in (
+                    candidate.aff_path,
+                    candidate.dic_path,
+                    candidate.thesaurus_dat,
+                    candidate.thesaurus_idx,
+                )
+                if path is not None
+            }
+            supplied = {path.name for path in sources}
+            if not candidates or recognized != supplied:
+                raise DictionaryImportError(
+                    "import must contain complete Hunspell pairs and/or a valid MyThes data set"
+                )
+
+            selected_name = bundle_name or candidates[0].locale
+            if (
+                not isinstance(selected_name, str)
+                or not _SAFE_BUNDLE_NAME.fullmatch(selected_name)
+                or selected_name in {".", ".."}
+            ):
+                raise DictionaryImportError("bundle_name must be one safe path component")
+            destination = self.root / selected_name
+            if destination.exists():
+                raise FileExistsError(f"dictionary bundle already exists: {destination}")
+            os.replace(staging, destination)
+            published = True
+            return destination
+        finally:
+            if not published and staging.exists():
+                shutil.rmtree(staging)
+
+
+__all__ = [
+    "DictionaryProvider",
+    "DirectoryDictionaryProvider",
+    "ManagedDictionaryProvider",
+    "UserDictionaryProvider",
+]

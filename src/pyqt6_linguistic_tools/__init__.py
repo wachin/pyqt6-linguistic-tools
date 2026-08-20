@@ -7,11 +7,18 @@ from pyqt6_linguistic_tools.backends import (
     ThesaurusBackend,
 )
 from pyqt6_linguistic_tools.cache import BackendCache
+from pyqt6_linguistic_tools.catalog import (
+    DictionaryCatalog,
+    DictionaryCatalogEntry,
+    load_dictionary_catalog,
+)
 from pyqt6_linguistic_tools.errors import (
     BackendOperationError,
     BackendResolutionError,
     BackendUnavailableError,
     DictionaryDiscoveryError,
+    DictionaryCatalogError,
+    DictionaryImportError,
     DictionaryLoadError,
     DictionaryNotFoundError,
     LinguisticError,
@@ -34,12 +41,19 @@ from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.providers import (
     DictionaryProvider,
     DirectoryDictionaryProvider,
+    ManagedDictionaryProvider,
+    UserDictionaryProvider,
 )
 from pyqt6_linguistic_tools.registry import DictionaryRegistry
 from pyqt6_linguistic_tools.resolver import (
     BackendResolver,
     SpellBackendResolver,
     ThesaurusBackendResolver,
+)
+from pyqt6_linguistic_tools.storage import (
+    DictionaryStoragePaths,
+    application_data_directory,
+    dictionary_storage_paths,
 )
 
 __version__ = "0.1.0.dev0"
@@ -57,15 +71,21 @@ __all__ = [
     "BackendUnavailableError",
     "DictionaryLoadError",
     "DictionaryCandidate",
+    "DictionaryCatalog",
+    "DictionaryCatalogEntry",
+    "DictionaryCatalogError",
     "DictionaryDiscoveryError",
     "DictionaryInfo",
+    "DictionaryImportError",
     "DictionaryMetadata",
     "DictionaryNotFoundError",
     "DictionaryProvider",
     "DictionaryRegistry",
     "DictionarySourcePriority",
+    "DictionaryStoragePaths",
     "DirectoryDictionaryProvider",
     "LinguisticError",
+    "ManagedDictionaryProvider",
     "PyThesBackend",
     "SpellCheckerBackend",
     "SpellBackendResolver",
@@ -75,6 +95,10 @@ __all__ = [
     "ThesaurusEntry",
     "ThesaurusMeaning",
     "UnsupportedOperationError",
+    "UserDictionaryProvider",
+    "application_data_directory",
+    "dictionary_storage_paths",
+    "load_dictionary_catalog",
     "locale_display_name",
     "normalize_locale",
     "__version__",
