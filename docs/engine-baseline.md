@@ -79,6 +79,13 @@ headers with a warning. This exposed the known stray `technika` line and stale
 `metodologia` offset in the Polish corpus without modifying either source file.
 All 26 corpus thesauri still pass after recovery.
 
+PyThes now also exposes explicit `.idx` regeneration. It calculates offsets
+from the source file in binary mode, preserves the encoding declaration, BOM,
+and line endings, validates the temporary result, and publishes it atomically.
+Existing files require `overwrite=True`. A scheduled corpus test regenerates
+all 26 indexes into temporary storage and validates lookups without writing to
+the LibreOffice collection.
+
 ## Fork policy
 
 Engine behavior changes belong in the corresponding engine fork and require a

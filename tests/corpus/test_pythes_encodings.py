@@ -43,3 +43,28 @@ def test_every_real_thesaurus_can_read_an_indexed_entry(dictionary_corpus):
             failures.append(f"{path}: {type(error).__name__}: {error}")
 
     assert not failures, "\n".join(failures)
+
+
+@pytest.mark.corpus
+@pytest.mark.full_corpus
+def test_every_real_thesaurus_can_regenerate_a_valid_index(
+    dictionary_corpus, tmp_path
+):
+    files = sorted(dictionary_corpus.rglob("th_*.dat"))
+    assert files, "the configured corpus contains no thesaurus data files"
+
+    failures = []
+    for path in files:
+        destination = tmp_path / f"{path.parent.name}-{path.stem}.idx"
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", PyThesIndexWarning)
+                thesaurus = PyThes(path)
+                generated_path = thesaurus.regenerate_index(destination)
+            assert generated_path == destination
+            assert generated_path.is_file()
+            assert thesaurus.lookup(next(iter(thesaurus.index))) is not None
+        except Exception as error:  # report the entire corpus in one execution
+            failures.append(f"{path}: {type(error).__name__}: {error}")
+
+    assert not failures, "\n".join(failures)
