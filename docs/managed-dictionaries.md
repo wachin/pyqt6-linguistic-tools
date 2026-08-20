@@ -62,9 +62,12 @@ destination = user.import_files(
 
 The import validates complete Hunspell pairs and MyThes data, rejects unknown
 files and duplicate names, stages copies inside the destination filesystem,
-and publishes the complete directory with one atomic rename. Existing bundles
+loads every staged component through Spylls/PyThes, and publishes the complete
+directory with one atomic rename. A failed deep validation removes staging and
+attaches its structured report to `DictionaryImportError`. Existing bundles
 are never overwritten. Archive extraction and removal require separate,
-explicit policies and are not performed by this API.
+explicit policies and are not performed by this API. See
+[`dictionary-validation.md`](dictionary-validation.md).
 
 ## dictionaries.json catalog
 
@@ -88,4 +91,3 @@ not implement automatic downloading or extraction. A future downloader should
 require checksums in the release catalog, verify archive size and SHA-256, and
 protect extraction against path traversal before publishing into the managed
 directory.
-

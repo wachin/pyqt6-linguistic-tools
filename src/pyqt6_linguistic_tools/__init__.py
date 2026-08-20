@@ -19,6 +19,7 @@ from pyqt6_linguistic_tools.errors import (
     DictionaryDiscoveryError,
     DictionaryCatalogError,
     DictionaryImportError,
+    DictionaryValidationError,
     DictionaryLoadError,
     DictionaryNotFoundError,
     LinguisticError,
@@ -32,10 +33,15 @@ from pyqt6_linguistic_tools.models import (
     BackendResolutionDiagnostic,
     DictionaryMetadata,
     DictionaryCandidate,
+    DictionaryBundleValidation,
     DictionaryInfo,
+    DictionaryImportResult,
     DictionarySourcePriority,
+    DictionaryValidationReport,
     ThesaurusEntry,
     ThesaurusMeaning,
+    ValidationCheck,
+    ValidationStatus,
 )
 from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.providers import (
@@ -55,6 +61,10 @@ from pyqt6_linguistic_tools.storage import (
     application_data_directory,
     dictionary_storage_paths,
 )
+from pyqt6_linguistic_tools.validation import (
+    DictionaryValidator,
+    regenerate_thesaurus_index,
+)
 
 __version__ = "0.1.0.dev0"
 
@@ -71,18 +81,23 @@ __all__ = [
     "BackendUnavailableError",
     "DictionaryLoadError",
     "DictionaryCandidate",
+    "DictionaryBundleValidation",
     "DictionaryCatalog",
     "DictionaryCatalogEntry",
     "DictionaryCatalogError",
     "DictionaryDiscoveryError",
     "DictionaryInfo",
     "DictionaryImportError",
+    "DictionaryImportResult",
     "DictionaryMetadata",
     "DictionaryNotFoundError",
     "DictionaryProvider",
     "DictionaryRegistry",
     "DictionarySourcePriority",
     "DictionaryStoragePaths",
+    "DictionaryValidationReport",
+    "DictionaryValidator",
+    "DictionaryValidationError",
     "DirectoryDictionaryProvider",
     "LinguisticError",
     "ManagedDictionaryProvider",
@@ -96,10 +111,13 @@ __all__ = [
     "ThesaurusMeaning",
     "UnsupportedOperationError",
     "UserDictionaryProvider",
+    "ValidationCheck",
+    "ValidationStatus",
     "application_data_directory",
     "dictionary_storage_paths",
     "load_dictionary_catalog",
     "locale_display_name",
     "normalize_locale",
+    "regenerate_thesaurus_index",
     "__version__",
 ]

@@ -57,8 +57,11 @@ def test_manual_import_publishes_complete_bundle_atomically(tmp_path: Path):
     source = tmp_path / "source"
     aff = _write(source / "es_EC.aff", "SET UTF-8\n")
     dic = _write(source / "es_EC.dic", "1\nEcuador\n")
-    dat = _write(source / "th_es_v2.dat", "ISO8859-1\n")
-    idx = _write(source / "th_es_v2.idx", "ISO8859-1\n0\n")
+    dat = _write(
+        source / "th_es_v2.dat",
+        "ISO8859-1\nfeliz|1\n-|dichoso|contento\n",
+    )
+    idx = _write(source / "th_es_v2.idx", "ISO8859-1\n1\nfeliz|10\n")
     provider = UserDictionaryProvider(tmp_path / "user")
 
     destination = provider.import_files(
@@ -149,4 +152,3 @@ def test_catalog_rejects_unsafe_or_malformed_entries(tmp_path: Path, entry: dict
 
     with pytest.raises(DictionaryCatalogError):
         load_dictionary_catalog(path)
-

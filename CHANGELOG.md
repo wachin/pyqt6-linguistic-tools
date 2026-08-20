@@ -28,3 +28,6 @@ changes are recorded here before a release.
 - Add cross-platform managed and user providers, shared `QStandardPaths` data
   roots, atomic non-overwriting manual import, and strict offline validation of
   the 57-entry `dictionaries.json` catalog for future verified downloads.
+- Add structured Hunspell/MyThes validation reports, codec and count checks,
+  representative lookups, sampled index-offset verification, explicit safe
+  index regeneration, and mandatory deep validation before manual publication.

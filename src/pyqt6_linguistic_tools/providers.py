@@ -19,7 +19,9 @@ from pyqt6_linguistic_tools.locales import (
 )
 from pyqt6_linguistic_tools.models import (
     DictionaryCandidate,
+    DictionaryImportResult,
     DictionarySourcePriority,
+    ValidationStatus,
 )
 from pyqt6_linguistic_tools.storage import dictionary_storage_paths
 
@@ -193,10 +195,23 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
         *,
         bundle_name: str | None = None,
     ) -> Path:
+        """Import a valid bundle and return its published directory."""
+        return self.import_validated_files(
+            files,
+            bundle_name=bundle_name,
+        ).destination
+
+    def import_validated_files(
+        self,
+        files: tuple[str | Path, ...] | list[str | Path],
+        *,
+        bundle_name: str | None = None,
+    ) -> DictionaryImportResult:
         """Atomically import one complete, previously unpacked dictionary bundle.
 
-        Existing bundles are never overwritten. Archive extraction and network
-        access deliberately remain outside this method.
+        Return the validation report that authorized publication. Existing
+        bundles are never overwritten. Archive extraction and network access
+        deliberately remain outside this method.
         """
         sources = tuple(Path(path).expanduser().resolve() for path in files)
         if not sources:
@@ -239,6 +254,23 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
                     "import must contain complete Hunspell pairs and/or a valid MyThes data set"
                 )
 
+            # Import locally to keep provider discovery lightweight and avoid
+            # loading either engine merely by constructing a provider.
+            from pyqt6_linguistic_tools.validation import DictionaryValidator
+
+            validation = DictionaryValidator().validate_candidates(candidates)
+            if not validation.usable:
+                failed = [
+                    check.message
+                    for report in validation.reports
+                    for check in report.checks
+                    if check.status is ValidationStatus.FAIL
+                ]
+                raise DictionaryImportError(
+                    "dictionary validation failed: " + "; ".join(failed),
+                    validation=validation,
+                )
+
             selected_name = bundle_name or candidates[0].locale
             if (
                 not isinstance(selected_name, str)
@@ -251,7 +283,7 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
                 raise FileExistsError(f"dictionary bundle already exists: {destination}")
             os.replace(staging, destination)
             published = True
-            return destination
+            return DictionaryImportResult(destination, validation)
         finally:
             if not published and staging.exists():
                 shutil.rmtree(staging)

@@ -39,6 +39,12 @@ The validated `dictionaries.json` reader prepares future managed downloads
 without performing network access. See
 [`docs/managed-dictionaries.md`](docs/managed-dictionaries.md).
 
+`DictionaryValidator` produces structured `PASS`, `WARNING`, and `FAIL`
+reports by checking encodings, counts, rules, offsets, representative entries,
+and complete Spylls/PyThes loading. Manual imports must pass this validation
+before atomic publication. See
+[`docs/dictionary-validation.md`](docs/dictionary-validation.md).
+
 ## Setting up the repository
 
 ```bash

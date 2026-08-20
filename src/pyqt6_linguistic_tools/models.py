@@ -148,3 +148,73 @@ class DictionaryInfo:
             self.spelling_locale not in {None, self.locale}
             or self.thesaurus_locale not in {None, self.locale}
         )
+
+
+class ValidationStatus(str, Enum):
+    """Severity and aggregate outcome of a dictionary validation check."""
+
+    PASS = "PASS"
+    WARNING = "WARNING"
+    FAIL = "FAIL"
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationCheck:
+    """One machine-readable validation observation."""
+
+    code: str
+    status: ValidationStatus
+    message: str
+    path: Path | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryValidationReport:
+    """Validation outcome for one spelling or thesaurus component."""
+
+    component: str
+    locale: str
+    checks: tuple[ValidationCheck, ...]
+    encoding: str | None = None
+    sampled_entries: tuple[str, ...] = ()
+
+    @property
+    def status(self) -> ValidationStatus:
+        statuses = {check.status for check in self.checks}
+        if ValidationStatus.FAIL in statuses:
+            return ValidationStatus.FAIL
+        if ValidationStatus.WARNING in statuses:
+            return ValidationStatus.WARNING
+        return ValidationStatus.PASS
+
+    @property
+    def usable(self) -> bool:
+        return self.status is not ValidationStatus.FAIL
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryBundleValidation:
+    """Combined reports for every component in an import bundle."""
+
+    reports: tuple[DictionaryValidationReport, ...]
+
+    @property
+    def status(self) -> ValidationStatus:
+        statuses = {report.status for report in self.reports}
+        if not statuses or ValidationStatus.FAIL in statuses:
+            return ValidationStatus.FAIL
+        if ValidationStatus.WARNING in statuses:
+            return ValidationStatus.WARNING
+        return ValidationStatus.PASS
+
+    @property
+    def usable(self) -> bool:
+        return bool(self.reports) and all(report.usable for report in self.reports)
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryImportResult:
+    """Published destination and the validation that authorized it."""
+
+    destination: Path
+    validation: DictionaryBundleValidation

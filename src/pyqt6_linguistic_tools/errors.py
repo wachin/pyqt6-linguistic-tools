@@ -73,6 +73,18 @@ class DictionaryDiscoveryError(Exception):
 class DictionaryImportError(Exception):
     """A manual dictionary import is incomplete, invalid, or unsafe."""
 
+    def __init__(self, message: str, *, validation=None) -> None:
+        super().__init__(message)
+        self.validation = validation
+
 
 class DictionaryCatalogError(Exception):
     """A dictionary download catalog does not match the supported schema."""
+
+
+class DictionaryValidationError(Exception):
+    """An explicit validation or repair operation could not be completed."""
+
+    def __init__(self, message: str, *, path: Path | None = None) -> None:
+        super().__init__(message)
+        self.path = path
