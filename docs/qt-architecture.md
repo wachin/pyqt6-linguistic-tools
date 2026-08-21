@@ -151,10 +151,10 @@ Applications can also register callbacks with
 altering the host menu. The context-menu component introduced in Phase 25 will
 invoke them while additively composing linguistic and application actions.
 
-## QTextEdit word operations
+## Qt text-editor word operations
 
 The decorator exposes synchronous, cursor-oriented building blocks for an
-existing `QTextEdit`:
+existing `QTextEdit` or `QPlainTextEdit`:
 
 ```python
 token = integration.word_at_cursor()
@@ -171,9 +171,11 @@ if token is not None and integration.check_word_at_cursor() is False:
 `word_at_cursor()` uses `UnicodeTokenizer`, including application token
 filters, instead of Qt's simpler `WordUnderCursor` boundary. Apostrophes,
 hyphens and multilingual text therefore follow the same rules as the core.
-The returned `WordToken` contains both Python and UTF-16 ranges; the latter are
-used for exact `QTextCursor` selections even when preceding text contains
-characters outside the Unicode Basic Multilingual Plane.
+For performance, cursor lookup tokenizes only the current `QTextBlock`; it does
+not copy or tokenize the complete document. The returned `WordToken` therefore
+contains block-local Python ranges and document-global UTF-16 ranges. The
+latter are used for exact `QTextCursor` selections even when preceding text
+contains characters outside the Unicode Basic Multilingual Plane.
 
 `cursor_for_word()` returns `None` if a token became stale after an edit.
 Likewise, the optional `expected_word` argument prevents a delayed suggestion
@@ -184,3 +186,9 @@ single-line phrases for future thesaurus replacements.
 These operations do not underline text or create menus. The highlighter,
 asynchronous scheduler and additive context menu remain isolated in Phases 23,
 24 and 25 respectively.
+
+The `QPlainTextEdit` integration is tested with documents containing 20,001
+blocks. Read-only cursor queries do not change the document revision, emit
+`textChanged`, request viewport updates, or call `toPlainText()` for the full
+document. This stable structural assertion is preferred to a fragile
+machine-specific wall-clock threshold.

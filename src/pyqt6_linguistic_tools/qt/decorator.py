@@ -277,13 +277,17 @@ class LinguisticTextEditDecorator(QObject):
         if cursor.isNull() or cursor.document() is not editor.document():
             raise ValueError("cursor must belong to the attached editor document")
 
-        position = cursor.position()
-        for token in self.create_tokenizer().iter_tokens(editor.toPlainText()):
-            if token.utf16_start <= position < token.utf16_end:
-                return token
-            if position == token.utf16_end:
-                return token
-            if token.utf16_start > position:
+        block = cursor.block()
+        if not block.isValid():
+            return None
+        position_in_block = cursor.positionInBlock()
+        block_position = block.position()
+        for local_token in self.create_tokenizer().iter_tokens(block.text()):
+            if local_token.utf16_start <= position_in_block < local_token.utf16_end:
+                return self._document_token(local_token, block_position)
+            if position_in_block == local_token.utf16_end:
+                return self._document_token(local_token, block_position)
+            if local_token.utf16_start > position_in_block:
                 break
         return None
 
@@ -411,6 +415,17 @@ class LinguisticTextEditDecorator(QObject):
         if any(character in replacement for character in ("\x00", "\r", "\n")):
             raise ValueError("replacement must be a single line without NUL")
         return replacement
+
+    @staticmethod
+    def _document_token(token: WordToken, block_position: int) -> WordToken:
+        """Keep Python offsets block-local and make Qt offsets document-global."""
+        return WordToken(
+            text=token.text,
+            start=token.start,
+            end=token.end,
+            utf16_start=block_position + token.utf16_start,
+            utf16_end=block_position + token.utf16_end,
+        )
 
     @staticmethod
     def _validate_editor(editor: object) -> None:
