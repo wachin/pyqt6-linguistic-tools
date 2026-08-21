@@ -192,3 +192,49 @@ blocks. Read-only cursor queries do not change the document revision, emit
 `textChanged`, request viewport updates, or call `toPlainText()` for the full
 document. This stable structural assertion is preferred to a fragile
 machine-specific wall-clock threshold.
+
+## Spell-check highlighter
+
+`SpellCheckHighlighter` is a reusable `QSyntaxHighlighter` for both supported
+editor documents. The decorator creates and owns one automatically, while
+applications may also use it directly:
+
+```python
+from pyqt6_linguistic_tools.qt import SpellCheckHighlighter
+
+highlighter = SpellCheckHighlighter(editor.document(), service)
+highlighter.set_enabled(False)
+```
+
+The highlighter tokenizes only the block supplied by Qt, applies registered
+filters and underlines rejected words with a red spell-check wave. It never
+requests suggestions, scans dictionary directories, selects an engine, or
+downloads resources. Linguistic resolution remains behind
+`LinguisticService`.
+
+Spelling statuses use a bounded 2,048-entry LRU cache keyed by locale and
+normalized word. Rehighlighting unchanged text therefore does not recheck the
+same word. Applications can inspect `cache_stats()` and configure the bound
+through `cache_size` when constructing a standalone highlighter.
+
+The visual style is a copied `QTextCharFormat` and can be replaced without
+sharing mutable format state:
+
+```python
+from PyQt6.QtGui import QColor, QTextCharFormat
+
+style = QTextCharFormat()
+style.setUnderlineColor(QColor("blue"))
+style.setUnderlineStyle(QTextCharFormat.UnderlineStyle.DashUnderline)
+integration.highlighter.set_misspelling_format(style)
+```
+
+After changing a personal or ignored word, the host calls
+`integration.invalidate_spelling(word)`. The cache entry is removed and only
+blocks containing that word are passed to `rehighlightBlock()`. Passing no word
+clears the complete local cache, which is appropriate after a broader external
+dictionary change.
+
+Phase 23 performs cache misses synchronously through the service. Phase 24
+replaces that initial work with debounced, cancellable background jobs so a
+large dictionary can never delay the user interface while typing.

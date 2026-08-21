@@ -99,6 +99,7 @@ def test_large_document_lookup_tokenizes_only_current_block(application, service
         return True
 
     decorator.add_token_filter(observe_source)
+    inspected_sources.clear()
     _cursor_at_end(editor)
     editor.forbid_full_text_read = True
 

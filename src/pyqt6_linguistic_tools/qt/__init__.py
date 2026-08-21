@@ -18,15 +18,21 @@ if TYPE_CHECKING:
         ContextActionProvider,
         LinguisticTextEditDecorator,
     )
+    from pyqt6_linguistic_tools.qt.spell_highlighter import (
+        SpellCheckHighlighter,
+        default_misspelling_format,
+    )
 
 
 __all__ = [
     "ContextActionProvider",
     "LinguisticTextEditDecorator",
+    "SpellCheckHighlighter",
     "QtIntegrationUnavailableError",
     "QtLinguisticSettings",
     "QtRuntimeInfo",
     "pyqt6_available",
+    "default_misspelling_format",
     "qt_runtime_info",
     "require_pyqt6",
 ]
@@ -38,6 +44,10 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import decorator
 
         return getattr(decorator, name)
+    if name in {"SpellCheckHighlighter", "default_misspelling_format"}:
+        from pyqt6_linguistic_tools.qt import spell_highlighter
+
+        return getattr(spell_highlighter, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

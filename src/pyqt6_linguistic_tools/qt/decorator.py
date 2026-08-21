@@ -15,6 +15,7 @@ from pyqt6_linguistic_tools.tokenizer import (
 )
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
+from pyqt6_linguistic_tools.qt.spell_highlighter import SpellCheckHighlighter
 
 
 require_pyqt6()
@@ -72,7 +73,15 @@ class LinguisticTextEditDecorator(QObject):
         self._filtered_objects: tuple[QObject, ...] = ()
         self._token_filters: list[TokenFilter] = []
         self._context_action_providers: list[ContextActionProvider] = []
+        self._highlighter: SpellCheckHighlighter | None = None
         self.attach(editor)
+        self._highlighter = SpellCheckHighlighter(
+            editor.document(),
+            service,
+            tokenizer=self.create_tokenizer(),
+            enabled=self.highlighting_active,
+            parent=self,
+        )
 
     @property
     def service(self) -> LinguisticService:
@@ -145,6 +154,13 @@ class LinguisticTextEditDecorator(QObject):
     def context_action_providers(self) -> tuple[ContextActionProvider, ...]:
         return tuple(self._context_action_providers)
 
+    @property
+    def highlighter(self) -> SpellCheckHighlighter:
+        """Return the decorator-owned spelling highlighter."""
+        if self._highlighter is None:
+            raise RuntimeError("the highlighter has not been initialized")
+        return self._highlighter
+
     def attach(self, editor: QTextEdit | QPlainTextEdit) -> bool:
         """Attach to an existing supported editor and return whether it changed."""
         self._validate_editor(editor)
@@ -171,6 +187,9 @@ class LinguisticTextEditDecorator(QObject):
             watched.installEventFilter(self)
         self._filtered_objects = tuple(objects)
         editor.destroyed.connect(self._on_editor_destroyed)
+        if self._highlighter is not None:
+            self._highlighter.setDocument(editor.document())
+            self._sync_highlighter_enabled()
         self.attached_changed.emit(True)
         return True
 
@@ -180,6 +199,9 @@ class LinguisticTextEditDecorator(QObject):
         if editor is None:
             self._clear_attachment()
             return False
+
+        if self._highlighter is not None:
+            self._highlighter.setDocument(None)
 
         for watched in self._filtered_objects:
             try:
@@ -202,18 +224,25 @@ class LinguisticTextEditDecorator(QObject):
         if enabled == self._enabled:
             return False
         self._enabled = enabled
+        self._sync_highlighter_enabled()
         self.enabled_changed.emit(enabled)
         return True
 
     def set_spellcheck_enabled(self, enabled: bool) -> bool:
-        return self._update_setting(
+        changed = self._update_setting(
             "spellcheck_enabled", enabled, self.spellcheck_enabled_changed
         )
+        if changed:
+            self._sync_highlighter_enabled()
+        return changed
 
     def set_highlighting_enabled(self, enabled: bool) -> bool:
-        return self._update_setting(
+        changed = self._update_setting(
             "highlighting_enabled", enabled, self.highlighting_enabled_changed
         )
+        if changed:
+            self._sync_highlighter_enabled()
+        return changed
 
     def set_thesaurus_enabled(self, enabled: bool) -> bool:
         return self._update_setting(
@@ -232,6 +261,7 @@ class LinguisticTextEditDecorator(QObject):
         if any(current is token_filter for current in self._token_filters):
             return False
         self._token_filters.append(token_filter)
+        self._sync_highlighter_tokenizer()
         self.token_filters_changed.emit()
         return True
 
@@ -239,6 +269,7 @@ class LinguisticTextEditDecorator(QObject):
         for index, current in enumerate(self._token_filters):
             if current is token_filter:
                 del self._token_filters[index]
+                self._sync_highlighter_tokenizer()
                 self.token_filters_changed.emit()
                 return True
         return False
@@ -247,6 +278,7 @@ class LinguisticTextEditDecorator(QObject):
         if not self._token_filters:
             return False
         self._token_filters.clear()
+        self._sync_highlighter_tokenizer()
         self.token_filters_changed.emit()
         return True
 
@@ -363,6 +395,12 @@ class LinguisticTextEditDecorator(QObject):
         editor.setTextCursor(replacement_cursor)
         return True
 
+    def invalidate_spelling(self, word: str | None = None) -> int:
+        """Refresh highlighting after personal or ignored-word state changes."""
+        if word is None:
+            return self.highlighter.clear_cache()
+        return self.highlighter.invalidate_word(word)
+
     def add_context_action_provider(self, provider: ContextActionProvider) -> bool:
         """Retain a host callback for the future additive context menu."""
         if not callable(provider):
@@ -435,6 +473,14 @@ class LinguisticTextEditDecorator(QObject):
     def _on_editor_destroyed(self, _editor: QObject | None = None) -> None:
         self._clear_attachment()
         self.attached_changed.emit(False)
+
+    def _sync_highlighter_enabled(self) -> None:
+        if self._highlighter is not None:
+            self._highlighter.set_enabled(self.highlighting_active)
+
+    def _sync_highlighter_tokenizer(self) -> None:
+        if self._highlighter is not None:
+            self._highlighter.set_tokenizer(self.create_tokenizer())
 
     def _clear_attachment(self) -> None:
         self._editor_ref = None
