@@ -69,6 +69,11 @@ backends, personal dictionaries, ignored-word scopes, capability reporting,
 language switching, and bounded diagnostics behind the application-facing API.
 See [`docs/linguistic-service.md`](docs/linguistic-service.md).
 
+Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
+registry and personal-dictionary revisions provide automatic invalidation.
+Cache statistics remain available for tuning without exposing engine objects.
+See [`docs/result-caching.md`](docs/result-caching.md).
+
 ## Setting up the repository
 
 ```bash

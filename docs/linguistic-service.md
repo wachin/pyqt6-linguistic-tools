@@ -98,8 +98,9 @@ bounds, and `close()` unloads all cached engines. `refresh_dictionaries()`
 rediscovers providers and unloads backends pointing to the previous snapshot.
 
 `resolution_diagnostics()` reports default, explicit, and fallback backend
-selection. Result caching for individual words and its revision-based
-invalidation are intentionally deferred to Phase 18.
+selection. Spelling, suggestion, and thesaurus results use separate bounded
+LRU caches with revision-based invalidation; see
+[`result-caching.md`](result-caching.md).
 
 ## Graceful and strict errors
 

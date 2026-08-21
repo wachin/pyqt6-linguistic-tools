@@ -8,7 +8,11 @@ from threading import RLock
 from typing import TypeVar
 
 from pyqt6_linguistic_tools.backends import SpellCheckerBackend, ThesaurusBackend
-from pyqt6_linguistic_tools.cache import BackendCache
+from pyqt6_linguistic_tools.cache import (
+    BackendCache,
+    LinguisticResultCacheStats,
+    ResultCache,
+)
 from pyqt6_linguistic_tools.errors import (
     DictionaryDiscoveryError,
     LinguisticError,
@@ -67,6 +71,7 @@ class LinguisticService:
         spell_check_enabled: bool = True,
         thesaurus_enabled: bool = True,
         backend_cache_size: int = 2,
+        result_cache_size: int = 2048,
         strict: bool = False,
         diagnostic_handler: DiagnosticHandler | None = None,
         diagnostic_limit: int = 100,
@@ -134,6 +139,17 @@ class LinguisticService:
         self._thesaurus_cache: BackendCache[
             tuple[str, Path, str | None], ThesaurusBackend
         ] = BackendCache(backend_cache_size)
+        self._spelling_results: ResultCache[tuple[str, str], bool] = ResultCache(
+            result_cache_size
+        )
+        self._suggestion_results: ResultCache[
+            tuple[str, str], tuple[str, ...]
+        ] = ResultCache(result_cache_size)
+        self._thesaurus_results: ResultCache[
+            tuple[str, str], ThesaurusEntry | None
+        ] = ResultCache(result_cache_size)
+        self._personal_revisions: dict[str, int] = {}
+        self._registry_revision = self.registry.revision
         self._lock = RLock()
 
     @property
@@ -158,7 +174,8 @@ class LinguisticService:
             if normalized == self._language:
                 return False
             self._language = normalized
-            return True
+        self.clear_result_caches()
+        return True
 
     def set_spell_check_enabled(self, enabled: bool) -> bool:
         if not isinstance(enabled, bool):
@@ -180,7 +197,9 @@ class LinguisticService:
         """Return exact locales having spelling, a thesaurus, or both."""
         locale = self.language
         try:
-            return tuple(info.locale for info in self.registry.discover())
+            entries = self.registry.discover()
+            self._sync_registry_revision()
+            return tuple(info.locale for info in entries)
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "available_languages", locale, ())
 
@@ -188,7 +207,9 @@ class LinguisticService:
         """Return resolved source information for one requested locale."""
         normalized = self._locale(locale)
         try:
-            return self.registry.get(normalized)
+            info = self.registry.get(normalized)
+            self._sync_registry_revision()
+            return info
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "dictionary_info", normalized, None)
 
@@ -236,7 +257,9 @@ class LinguisticService:
         ):
             return True
         try:
-            if self.personal_dictionary(normalized_locale).contains(normalized_word):
+            personal = self.personal_dictionary(normalized_locale)
+            self._sync_personal_revision(normalized_locale, personal)
+            if personal.contains(normalized_word):
                 return True
         except PersonalDictionaryError as error:
             self._recover(error, "check_personal_word", normalized_locale, False)
@@ -245,11 +268,17 @@ class LinguisticService:
         info = self.dictionary_info(normalized_locale)
         if info is None or not info.has_spelling:
             return True
+        cache_key = (normalized_locale, normalized_word)
+        found, cached = self._spelling_results.try_get(cache_key)
+        if found:
+            return bool(cached)
         backend = self._get_spell_backend(info, normalized_locale, "check_word")
         if backend is None:
             return True
         try:
-            return backend.check_word(normalized_word)
+            accepted = backend.check_word(normalized_word)
+            self._spelling_results.put(cache_key, accepted)
+            return accepted
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "check_word", normalized_locale, True)
 
@@ -281,11 +310,17 @@ class LinguisticService:
         info = self.dictionary_info(normalized_locale)
         if info is None or not info.has_spelling:
             return ()
+        cache_key = (normalized_locale, normalized_word)
+        found, cached = self._suggestion_results.try_get(cache_key)
+        if found:
+            return self._limit_suggestions(cached or (), limit)
         backend = self._get_spell_backend(info, normalized_locale, "suggestions")
         if backend is None:
             return ()
         try:
-            return backend.suggest(normalized_word, limit=limit)
+            suggestions = backend.suggest(normalized_word, limit=None)
+            self._suggestion_results.put(cache_key, suggestions)
+            return self._limit_suggestions(suggestions, limit)
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "suggestions", normalized_locale, ())
 
@@ -300,11 +335,17 @@ class LinguisticService:
         info = self.dictionary_info(normalized_locale)
         if info is None or not info.has_thesaurus:
             return None
+        cache_key = (normalized_locale, normalized_word)
+        found, cached = self._thesaurus_results.try_get(cache_key)
+        if found:
+            return cached
         backend = self._get_thesaurus_backend(info, normalized_locale, "thesaurus")
         if backend is None:
             return None
         try:
-            return backend.lookup(normalized_word)
+            entry = backend.lookup(normalized_word)
+            self._thesaurus_results.put(cache_key, entry)
+            return entry
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "thesaurus", normalized_locale, None)
 
@@ -336,7 +377,11 @@ class LinguisticService:
     ) -> bool:
         normalized_locale = self._locale(locale)
         try:
-            return self.personal_dictionary(normalized_locale).add_word(word)
+            dictionary = self.personal_dictionary(normalized_locale)
+            changed = dictionary.add_word(word)
+            if changed:
+                self._invalidate_personal_locale(normalized_locale, dictionary)
+            return changed
         except PersonalDictionaryError as error:
             return self._recover(error, "add_personal_word", normalized_locale, False)
 
@@ -345,7 +390,11 @@ class LinguisticService:
     ) -> bool:
         normalized_locale = self._locale(locale)
         try:
-            return self.personal_dictionary(normalized_locale).remove_word(word)
+            dictionary = self.personal_dictionary(normalized_locale)
+            changed = dictionary.remove_word(word)
+            if changed:
+                self._invalidate_personal_locale(normalized_locale, dictionary)
+            return changed
         except PersonalDictionaryError as error:
             return self._recover(error, "remove_personal_word", normalized_locale, False)
 
@@ -418,7 +467,33 @@ class LinguisticService:
             return self._recover(error, "refresh_dictionaries", locale, ())
         self._spell_cache.clear()
         self._thesaurus_cache.clear()
+        self.clear_result_caches()
+        with self._lock:
+            self._registry_revision = self.registry.revision
         return tuple(entry.locale for entry in entries)
+
+    def result_cache_stats(self) -> LinguisticResultCacheStats:
+        """Return hit, miss, eviction, and occupancy counters."""
+        return LinguisticResultCacheStats(
+            spelling=self._spelling_results.stats(),
+            suggestions=self._suggestion_results.stats(),
+            thesaurus=self._thesaurus_results.stats(),
+        )
+
+    def clear_result_caches(self, locale: str | None = None) -> int:
+        """Invalidate every result, or only results belonging to one locale."""
+        if locale is None:
+            return (
+                self._spelling_results.clear()
+                + self._suggestion_results.clear()
+                + self._thesaurus_results.clear()
+            )
+        normalized = normalize_personal_locale(locale)
+        return (
+            self._spelling_results.invalidate(lambda key: key[0] == normalized)
+            + self._suggestion_results.invalidate(lambda key: key[0] == normalized)
+            + self._thesaurus_results.invalidate(lambda key: key[0] == normalized)
+        )
 
     def diagnostics(self) -> tuple[LinguisticServiceDiagnostic, ...]:
         with self._lock:
@@ -440,9 +515,44 @@ class LinguisticService:
         """Unload all cached engine dictionaries."""
         self._spell_cache.clear()
         self._thesaurus_cache.clear()
+        self.clear_result_caches()
 
     def _locale(self, locale: str | None) -> str:
         return self.language if locale is None else normalize_personal_locale(locale)
+
+    @staticmethod
+    def _limit_suggestions(
+        suggestions: tuple[str, ...], limit: int | None
+    ) -> tuple[str, ...]:
+        return suggestions if limit is None else suggestions[:limit]
+
+    def _sync_registry_revision(self) -> None:
+        revision = self.registry.revision
+        with self._lock:
+            if revision == self._registry_revision:
+                return
+            self._registry_revision = revision
+        self._spell_cache.clear()
+        self._thesaurus_cache.clear()
+        self.clear_result_caches()
+
+    def _sync_personal_revision(
+        self, locale: str, dictionary: PersonalDictionary
+    ) -> None:
+        revision = dictionary.revision
+        with self._lock:
+            previous = self._personal_revisions.get(locale)
+            self._personal_revisions[locale] = revision
+        if previous is not None and revision != previous:
+            self.clear_result_caches(locale)
+
+    def _invalidate_personal_locale(
+        self, locale: str, dictionary: PersonalDictionary
+    ) -> None:
+        revision = dictionary.revision
+        with self._lock:
+            self._personal_revisions[locale] = revision
+        self.clear_result_caches(locale)
 
     def _get_spell_backend(
         self, info: DictionaryInfo, locale: str, operation: str

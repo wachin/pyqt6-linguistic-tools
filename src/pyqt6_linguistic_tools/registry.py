@@ -24,6 +24,7 @@ class DictionaryRegistry:
         self._by_locale: dict[str, DictionaryInfo] = {}
         self._spelling: dict[str, DictionaryCandidate] = {}
         self._thesauri: dict[str, DictionaryCandidate] = {}
+        self._revision = 0
         self._lock = RLock()
         for provider in providers:
             self.add_provider(provider)
@@ -48,6 +49,12 @@ class DictionaryRegistry:
     def providers(self) -> tuple[DictionaryProvider, ...]:
         with self._lock:
             return tuple(self._providers)
+
+    @property
+    def revision(self) -> int:
+        """Increment whenever provider topology or a discovery snapshot changes."""
+        with self._lock:
+            return self._revision
 
     def discover(self, *, force: bool = False) -> tuple[DictionaryInfo, ...]:
         """Discover and cache all exact locales exposed by the providers."""
@@ -90,6 +97,7 @@ class DictionaryRegistry:
             self._thesauri = thesauri
             self._cache = entries
             self._by_locale = {entry.locale: entry for entry in entries}
+            self._revision += 1
             return entries
 
     def refresh(self) -> tuple[DictionaryInfo, ...]:
@@ -183,6 +191,7 @@ class DictionaryRegistry:
         self._by_locale = {}
         self._spelling = {}
         self._thesauri = {}
+        self._revision += 1
 
 
 __all__ = ["DictionaryRegistry"]

@@ -6,7 +6,12 @@ from pyqt6_linguistic_tools.backends import (
     SpyllsBackend,
     ThesaurusBackend,
 )
-from pyqt6_linguistic_tools.cache import BackendCache
+from pyqt6_linguistic_tools.cache import (
+    BackendCache,
+    CacheStats,
+    LinguisticResultCacheStats,
+    ResultCache,
+)
 from pyqt6_linguistic_tools.catalog import (
     DictionaryCatalog,
     DictionaryCatalogEntry,
@@ -110,6 +115,7 @@ __all__ = [
     "BackendUnavailableError",
     "BACKUP_FORMAT",
     "BACKUP_VERSION",
+    "CacheStats",
     "DictionaryLoadError",
     "DictionaryCandidate",
     "DictionaryBundleValidation",
@@ -135,6 +141,7 @@ __all__ = [
     "LinguisticCapabilities",
     "LinguisticService",
     "LinguisticServiceDiagnostic",
+    "LinguisticResultCacheStats",
     "IgnoredWords",
     "IgnoredWordsStore",
     "ManagedDictionaryProvider",
@@ -149,6 +156,7 @@ __all__ = [
     "PersonalDictionaryStore",
     "PyThesBackend",
     "RestoreMode",
+    "ResultCache",
     "SpellCheckerBackend",
     "SpellBackendResolver",
     "SpyllsBackend",

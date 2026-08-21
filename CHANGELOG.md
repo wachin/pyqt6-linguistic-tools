@@ -52,3 +52,6 @@ changes are recorded here before a release.
   capability management, independently enabled spelling and thesaurus paths,
   lazy bounded backend reuse, personal and ignored-word precedence, safe
   fallbacks, strict mode, refresh lifecycle, and bounded structured diagnostics.
+- Add bounded LRU spelling, suggestion, and thesaurus result caches with cached
+  empty values, statistics, complete-suggestion reuse, registry revisions, and
+  automatic invalidation for language, dictionary, and personal-word changes.

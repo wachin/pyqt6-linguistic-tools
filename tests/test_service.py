@@ -250,6 +250,7 @@ class CountingThesaurusBackend(ThesaurusBackend):
         self.path = path
         self.locale = locale
         self.load_count = 0
+        self.lookup_count = 0
         self.instances.append(self)
 
     @classmethod
@@ -280,6 +281,9 @@ class CountingThesaurusBackend(ThesaurusBackend):
 
     def lookup(self, word: str) -> ThesaurusEntry | None:
         self.load_dictionary()
+        self.lookup_count += 1
+        if word == "absent":
+            return None
         return ThesaurusEntry(
             word=word,
             meanings=(ThesaurusMeaning("noun", "related", ("similar",)),),
@@ -312,6 +316,184 @@ def test_thesaurus_backend_is_created_and_loaded_only_for_thesaurus_use(tmp_path
     assert len(CountingThesaurusBackend.instances) == 1
     assert CountingThesaurusBackend.instances[0].path == data
     assert CountingThesaurusBackend.instances[0].load_count == 1
+
+    assert service.synonyms("word") == ("related", "similar")
+    assert service.thesaurus_entry("absent") is None
+    assert service.thesaurus_entry("absent") is None
+    assert CountingThesaurusBackend.instances[0].lookup_count == 2
+
+
+class CountingSpellBackend(SpellCheckerBackend):
+    instances: list["CountingSpellBackend"] = []
+
+    def __init__(self, path: Path, locale: str) -> None:
+        self.path = path
+        self.locale = locale
+        self.check_count = 0
+        self.suggest_count = 0
+        self.unload_count = 0
+        self.instances.append(self)
+
+    @classmethod
+    def available(cls) -> bool:
+        return True
+
+    @property
+    def loaded(self) -> bool:
+        return True
+
+    @property
+    def metadata(self) -> BackendMetadata:
+        return BackendMetadata(
+            name="counting-spell",
+            version="test",
+            capabilities=BackendCapabilities(spell_check=True, suggestions=True),
+            dictionary=DictionaryMetadata(
+                locale=self.locale, paths=(self.path,), loaded=True
+            ),
+        )
+
+    def load_dictionary(self) -> None:
+        pass
+
+    def unload(self) -> None:
+        self.unload_count += 1
+
+    def check_word(self, word: str) -> bool:
+        self.check_count += 1
+        return word == "known"
+
+    def suggest(self, word: str, *, limit: int | None = 8) -> tuple[str, ...]:
+        self.suggest_count += 1
+        values = ("first", "second", "third")
+        return values if limit is None else values[:limit]
+
+
+def _counting_spell_resolver() -> SpellBackendResolver:
+    resolver = SpellBackendResolver()
+    resolver.register(
+        "counting",
+        lambda path, locale: CountingSpellBackend(path, locale),
+        available=lambda: True,
+    )
+    return resolver
+
+
+def test_service_caches_backend_results_and_slices_cached_suggestions(tmp_path: Path):
+    CountingSpellBackend.instances.clear()
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("placeholder",))
+    service = LinguisticService(
+        "en_US",
+        registry=_registry(dictionaries),
+        spell_resolver=_counting_spell_resolver(),
+        spell_backend="counting",
+        allow_backend_fallback=False,
+        result_cache_size=8,
+    )
+
+    assert not service.check_word("unknown")
+    assert not service.check_word("unknown")
+    assert service.suggestions("unknown", limit=1) == ("first",)
+    assert service.suggestions("unknown", limit=2) == ("first", "second")
+
+    backend = CountingSpellBackend.instances[0]
+    assert backend.check_count == 1
+    assert backend.suggest_count == 1
+    stats = service.result_cache_stats()
+    assert stats.spelling.hits >= 2
+    assert stats.suggestions.hits == 1
+    assert stats.spelling.size == 1
+    assert stats.suggestions.size == 1
+
+
+def test_personal_changes_invalidate_cached_spelling_and_suggestions(tmp_path: Path):
+    CountingSpellBackend.instances.clear()
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "es_EC", ("placeholder",))
+    service = LinguisticService(
+        "es_EC",
+        registry=_registry(dictionaries),
+        spell_resolver=_counting_spell_resolver(),
+        spell_backend="counting",
+        allow_backend_fallback=False,
+        personal_store=PersonalDictionaryStore(tmp_path / "personal"),
+    )
+
+    assert not service.check_word("regionalismo")
+    assert service.suggestions("regionalismo")
+    assert service.add_to_personal_dictionary("regionalismo")
+    assert service.result_cache_stats().spelling.size == 0
+    assert service.result_cache_stats().suggestions.size == 0
+    assert service.check_word("regionalismo")
+
+    assert service.remove_from_personal_dictionary("regionalismo")
+    assert not service.check_word("regionalismo")
+    assert CountingSpellBackend.instances[0].check_count == 2
+
+
+def test_language_change_clears_every_result_cache(tmp_path: Path):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("hello",))
+    _thesaurus(dictionaries, "en_US")
+    _spelling(dictionaries, "es_EC", ("hola",))
+    service = LinguisticService("en_US", registry=_registry(dictionaries))
+
+    assert service.check_word("hello")
+    assert not service.check_word("misspelled")
+    service.suggestions("misspelled")
+    assert service.thesaurus_entry("absent") is None
+    stats = service.result_cache_stats()
+    assert stats.spelling.size and stats.suggestions.size and stats.thesaurus.size
+
+    assert service.set_language("es_EC")
+    stats = service.result_cache_stats()
+    assert stats.spelling.size == 0
+    assert stats.suggestions.size == 0
+    assert stats.thesaurus.size == 0
+
+
+def test_external_registry_refresh_invalidates_results_and_loaded_backend(
+    tmp_path: Path,
+):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    root = _spelling(dictionaries, "en_US", ("hello",))
+    registry = _registry(dictionaries)
+    service = LinguisticService("en_US", registry=registry)
+
+    assert not service.check_word("newword")
+    root.with_suffix(".dic").write_text(
+        "2\nhello\nnewword\n", encoding="utf-8"
+    )
+    registry.refresh()
+
+    assert service.check_word("newword")
+
+
+def test_result_caches_are_bounded_at_service_level(tmp_path: Path):
+    CountingSpellBackend.instances.clear()
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("placeholder",))
+    service = LinguisticService(
+        "en_US",
+        registry=_registry(dictionaries),
+        spell_resolver=_counting_spell_resolver(),
+        spell_backend="counting",
+        allow_backend_fallback=False,
+        result_cache_size=2,
+    )
+
+    for word in ("one", "two", "three"):
+        assert not service.check_word(word)
+
+    stats = service.result_cache_stats().spelling
+    assert stats.size == 2
+    assert stats.evictions == 1
 
 
 class BrokenSpellBackend(SpellCheckerBackend):
