@@ -55,3 +55,7 @@ changes are recorded here before a release.
 - Add bounded LRU spelling, suggestion, and thesaurus result caches with cached
   empty values, statistics, complete-suggestion reuse, registry revisions, and
   automatic invalidation for language, dictionary, and personal-word changes.
+- Establish the optional `pyqt6_linguistic_tools.qt` package boundary with lazy
+  PyQt6 detection and version checks, validated shared UI defaults, explicit
+  component ownership, packaging through the `[qt]` extra, and core-only import
+  guarantees.

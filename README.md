@@ -74,6 +74,11 @@ registry and personal-dictionary revisions provide automatic invalidation.
 Cache statistics remain available for tuning without exposing engine objects.
 See [`docs/result-caching.md`](docs/result-caching.md).
 
+The optional `pyqt6_linguistic_tools.qt` package establishes a lazy,
+one-directional integration boundary without making PyQt6 a core dependency.
+Install the `[qt]` extra for widgets. See
+[`docs/qt-architecture.md`](docs/qt-architecture.md).
+
 ## Setting up the repository
 
 ```bash

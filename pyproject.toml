@@ -18,6 +18,7 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+qt = ["PyQt6>=6.6"]
 
 [tool.setuptools.packages.find]
 where = ["src", "libs/spylls", "libs/pythes"]
