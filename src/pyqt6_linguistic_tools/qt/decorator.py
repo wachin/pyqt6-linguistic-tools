@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import replace
+import unicodedata
 import weakref
 
 from pyqt6_linguistic_tools.service import LinguisticService
-from pyqt6_linguistic_tools.tokenizer import TokenFilter, UnicodeTokenizer
+from pyqt6_linguistic_tools.tokenizer import (
+    TokenFilter,
+    UnicodeTokenizer,
+    WordToken,
+)
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 
@@ -15,6 +20,7 @@ from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 require_pyqt6()
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal  # noqa: E402
+from PyQt6.QtGui import QTextCursor  # noqa: E402
 from PyQt6.QtWidgets import QPlainTextEdit, QTextEdit  # noqa: E402
 
 
@@ -254,6 +260,105 @@ class LinguisticTextEditDecorator(QObject):
             ),
         )
 
+    def word_at_cursor(self, cursor: QTextCursor | None = None) -> WordToken | None:
+        """Return the retained word at a Qt cursor using exact UTF-16 offsets.
+
+        A cursor immediately after a word still refers to that word, matching
+        normal text-editor behavior while typing. Punctuation and whitespace do
+        not inherit the preceding word.
+        """
+        editor = self.editor
+        if editor is None:
+            return None
+        if cursor is None:
+            cursor = editor.textCursor()
+        elif not isinstance(cursor, QTextCursor):
+            raise TypeError("cursor must be a QTextCursor or None")
+        if cursor.isNull() or cursor.document() is not editor.document():
+            raise ValueError("cursor must belong to the attached editor document")
+
+        position = cursor.position()
+        for token in self.create_tokenizer().iter_tokens(editor.toPlainText()):
+            if token.utf16_start <= position < token.utf16_end:
+                return token
+            if position == token.utf16_end:
+                return token
+            if token.utf16_start > position:
+                break
+        return None
+
+    def cursor_for_word(self, token: WordToken) -> QTextCursor | None:
+        """Create a selecting cursor, or return ``None`` for a stale token."""
+        if not isinstance(token, WordToken):
+            raise TypeError("token must be a WordToken")
+        editor = self.editor
+        if editor is None:
+            return None
+        cursor = QTextCursor(editor.document())
+        cursor.setPosition(token.utf16_start)
+        cursor.setPosition(
+            token.utf16_end,
+            QTextCursor.MoveMode.KeepAnchor,
+        )
+        if cursor.selectedText() != token.text:
+            return None
+        return cursor
+
+    def check_word_at_cursor(self, cursor: QTextCursor | None = None) -> bool | None:
+        """Check the current word, or return ``None`` when checking is inactive."""
+        if not self.spellcheck_active:
+            return None
+        token = self.word_at_cursor(cursor)
+        if token is None:
+            return None
+        return self._service.check_word(token.normalized)
+
+    def suggestions_at_cursor(
+        self,
+        cursor: QTextCursor | None = None,
+        *,
+        limit: int | None = None,
+    ) -> tuple[str, ...]:
+        """Return bounded suggestions for the current retained word."""
+        if not self.spellcheck_active:
+            return ()
+        token = self.word_at_cursor(cursor)
+        if token is None:
+            return ()
+        effective_limit = self._settings.suggestion_limit if limit is None else limit
+        return self._service.suggestions(token.normalized, limit=effective_limit)
+
+    def replace_word_at_cursor(
+        self,
+        replacement: str,
+        cursor: QTextCursor | None = None,
+        *,
+        expected_word: str | None = None,
+    ) -> bool:
+        """Replace exactly the current token and reject stale asynchronous data."""
+        replacement = self._validate_replacement(replacement)
+        if expected_word is not None and not isinstance(expected_word, str):
+            raise TypeError("expected_word must be a string or None")
+        editor = self.editor
+        if editor is None or editor.isReadOnly():
+            return False
+        token = self.word_at_cursor(cursor)
+        if token is None:
+            return False
+        if expected_word is not None and token.normalized != unicodedata.normalize(
+            "NFC", expected_word
+        ):
+            return False
+        replacement_cursor = self.cursor_for_word(token)
+        if replacement_cursor is None:
+            return False
+
+        replacement_cursor.beginEditBlock()
+        replacement_cursor.insertText(replacement)
+        replacement_cursor.endEditBlock()
+        editor.setTextCursor(replacement_cursor)
+        return True
+
     def add_context_action_provider(self, provider: ContextActionProvider) -> bool:
         """Retain a host callback for the future additive context menu."""
         if not callable(provider):
@@ -296,6 +401,16 @@ class LinguisticTextEditDecorator(QObject):
         if not isinstance(enabled, bool):
             raise TypeError("enabled must be a boolean")
         return enabled
+
+    @staticmethod
+    def _validate_replacement(replacement: str) -> str:
+        if not isinstance(replacement, str):
+            raise TypeError("replacement must be a string")
+        if not replacement:
+            raise ValueError("replacement must not be empty")
+        if any(character in replacement for character in ("\x00", "\r", "\n")):
+            raise ValueError("replacement must be a single line without NUL")
+        return replacement
 
     @staticmethod
     def _validate_editor(editor: object) -> None:

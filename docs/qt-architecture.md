@@ -150,3 +150,37 @@ Applications can also register callbacks with
 `add_context_action_provider()`. The decorator retains these callbacks without
 altering the host menu. The context-menu component introduced in Phase 25 will
 invoke them while additively composing linguistic and application actions.
+
+## QTextEdit word operations
+
+The decorator exposes synchronous, cursor-oriented building blocks for an
+existing `QTextEdit`:
+
+```python
+token = integration.word_at_cursor()
+
+if token is not None and integration.check_word_at_cursor() is False:
+    suggestions = integration.suggestions_at_cursor()
+    if suggestions:
+        integration.replace_word_at_cursor(
+            suggestions[0],
+            expected_word=token.text,
+        )
+```
+
+`word_at_cursor()` uses `UnicodeTokenizer`, including application token
+filters, instead of Qt's simpler `WordUnderCursor` boundary. Apostrophes,
+hyphens and multilingual text therefore follow the same rules as the core.
+The returned `WordToken` contains both Python and UTF-16 ranges; the latter are
+used for exact `QTextCursor` selections even when preceding text contains
+characters outside the Unicode Basic Multilingual Plane.
+
+`cursor_for_word()` returns `None` if a token became stale after an edit.
+Likewise, the optional `expected_word` argument prevents a delayed suggestion
+from replacing a different word. Replacement is one undoable edit, preserves
+the surrounding rich-text document, refuses read-only editors and permits
+single-line phrases for future thesaurus replacements.
+
+These operations do not underline text or create menus. The highlighter,
+asynchronous scheduler and additive context menu remain isolated in Phases 23,
+24 and 25 respectively.
