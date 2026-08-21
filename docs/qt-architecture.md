@@ -106,3 +106,47 @@ Attaching the toolkit must be reversible. No component may require applications
 to subclass `QTextEdit` or `QPlainTextEdit`, replace their documents, or discard
 existing context-menu behavior. These lifecycle requirements are implemented
 and tested beginning with Phase 20.
+
+## Editor decorator
+
+`LinguisticTextEditDecorator` attaches the integration state to an existing
+`QTextEdit` or `QPlainTextEdit`. It does not replace the editor, its document,
+its signals, or its context-menu policy:
+
+```python
+from PyQt6.QtWidgets import QTextEdit
+
+from pyqt6_linguistic_tools import LinguisticService
+from pyqt6_linguistic_tools.qt import LinguisticTextEditDecorator
+
+editor = QTextEdit()
+service = LinguisticService(language="es_EC")
+integration = LinguisticTextEditDecorator(editor, service)
+
+integration.set_spellcheck_enabled(False)
+integration.set_thesaurus_enabled(True)
+integration.set_enabled(False)
+integration.detach()
+```
+
+The host owns `service`. While attached, the editor owns the decorator through
+Qt parent ownership. Calling `detach()` removes the event filters and Qt parent
+relationship, permitting the same decorator to be attached to another
+supported editor. Only one decorator may be attached to an editor at a time.
+
+Enable states belong to the decorator and are intentionally independent of the
+service-wide enable states. Consequently, ChordFlow and ChordPages can share a
+service while enabling different editor features. The master `set_enabled()`
+switch temporarily suspends all integration features without forgetting their
+individual preferences.
+
+Applications can register domain-specific `TokenFilter` callbacks with
+`add_token_filter()`. `create_tokenizer()` combines them with any filters from
+the tokenizer passed to the constructor without mutating that tokenizer. This
+allows applications such as GuitarChordStudio to exclude chord notation while
+the reusable toolkit remains music-domain neutral.
+
+Applications can also register callbacks with
+`add_context_action_provider()`. The decorator retains these callbacks without
+altering the host menu. The context-menu component introduced in Phase 25 will
+invoke them while additively composing linguistic and application actions.
