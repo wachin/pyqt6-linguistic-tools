@@ -81,3 +81,7 @@ changes are recorded here before a release.
   `chordflow/linguistic_service.py` factory, use `LinguisticTextEditDecorator`
   and `ThesaurusDialog` in ChordFlow, update `chordpages/spellcheck.py` to
   re-export toolkit classes.
+- Add `docs/release-checklist.md` with pre-release verification steps for
+  Linux, Windows, macOS, and cross-platform requirements.
+- Add `docs/reuse.md` with documented submodule, pip, and OS package
+  integration procedures.
