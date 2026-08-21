@@ -48,3 +48,7 @@ changes are recorded here before a release.
   offsets, multilingual combining-mark support, internal apostrophes and
   hyphens, URL/email and numeric exclusions, configurable technical tokens,
   and host-supplied contextual filters.
+- Add the widget-independent `LinguisticService` facade with language and
+  capability management, independently enabled spelling and thesaurus paths,
+  lazy bounded backend reuse, personal and ignored-word precedence, safe
+  fallbacks, strict mode, refresh lifecycle, and bounded structured diagnostics.

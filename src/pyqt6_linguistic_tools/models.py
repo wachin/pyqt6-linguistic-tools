@@ -218,3 +218,33 @@ class DictionaryImportResult:
 
     destination: Path
     validation: DictionaryBundleValidation
+
+
+@dataclass(frozen=True, slots=True)
+class LinguisticCapabilities:
+    """Operations currently available to an application for one locale."""
+
+    locale: str
+    spell_check: bool
+    suggestions: bool
+    thesaurus: bool
+    personal_dictionary: bool = True
+    ignored_words: bool = True
+    spelling_source: str | None = None
+    thesaurus_source: str | None = None
+
+    @property
+    def any_dictionary(self) -> bool:
+        return self.spell_check or self.thesaurus
+
+
+@dataclass(frozen=True, slots=True)
+class LinguisticServiceDiagnostic:
+    """Recoverable service failure suitable for logs or a host status UI."""
+
+    operation: str
+    locale: str
+    error_type: str
+    message: str
+    backend: str | None = None
+    path: Path | None = None

@@ -64,6 +64,11 @@ preserves linguistic apostrophes and hyphens, excludes configurable technical
 regions, and returns exact Python plus Qt-compatible UTF-16 positions. See
 [`docs/unicode-tokenizer.md`](docs/unicode-tokenizer.md).
 
+`LinguisticService` unifies registry discovery, lazy spelling and thesaurus
+backends, personal dictionaries, ignored-word scopes, capability reporting,
+language switching, and bounded diagnostics behind the application-facing API.
+See [`docs/linguistic-service.md`](docs/linguistic-service.md).
+
 ## Setting up the repository
 
 ```bash
