@@ -83,6 +83,8 @@ Fast, Qt-offscreen, curated corpus, and full-corpus test workflows are kept
 separate and mapped to their contracts in [`docs/testing.md`](docs/testing.md).
 Current operating-system smoke tests and their explicit skip rules are
 documented in [`docs/platform-testing.md`](docs/platform-testing.md).
+The GitHub Actions fast matrix and separately scheduled corpus workflows are
+documented in [`docs/continuous-integration.md`](docs/continuous-integration.md).
 
 Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
 registry and personal-dictionary revisions provide automatic invalidation.

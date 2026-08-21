@@ -26,6 +26,11 @@ system and skip explicitly when those resources are unavailable. Run them
 alone with `python3 -m pytest -m platform`; see
 [`platform-testing.md`](platform-testing.md).
 
+GitHub Actions runs the deterministic suite across supported Python and host
+operating systems, while real-corpus jobs have separate pull-request and
+scheduled/manual triggers. See
+[`continuous-integration.md`](continuous-integration.md).
+
 ## LibreOffice corpus suite
 
 Point either the command-line option or environment variable at the collection

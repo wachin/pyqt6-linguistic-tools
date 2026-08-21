@@ -1,0 +1,145 @@
+name: LibreOffice corpus
+
+on:
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Corpus suite to run
+        required: true
+        default: curated
+        type: choice
+        options:
+          - curated
+          - full
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corpus-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  curated:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.suite == 'curated')
+    name: Curated / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - windows-latest
+          - macos-latest
+    env:
+      PYTHONUTF8: "1"
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - name: Check out toolkit
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Check out portable engine submodules
+        run: git submodule update --init --depth 1 libs/spylls libs/pythes
+
+      - name: Check out LibreOffice dictionary collection
+        uses: actions/checkout@v7
+        with:
+          repository: wachin/libreoffice-dictionaries-collection
+          path: test-data/libreoffice-dictionaries-collection
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install test and Qt dependencies
+        run: python -m pip install --upgrade pip ".[test,qt]"
+
+      - name: Create artifact directory
+        run: python -c "from pathlib import Path; Path('artifacts').mkdir(exist_ok=True)"
+
+      - name: Run deterministic fast suite
+        run: python -m pytest -m "not corpus and not platform"
+
+      - name: Run curated corpus suite
+        run: >-
+          python -m pytest -m "corpus and not full_corpus"
+          --dictionary-corpus=test-data/libreoffice-dictionaries-collection/dicts
+          --junitxml=artifacts/curated-${{ matrix.os }}.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: curated-report-${{ matrix.os }}
+          path: artifacts/curated-${{ matrix.os }}.xml
+          if-no-files-found: error
+          retention-days: 14
+
+  full:
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.suite == 'full')
+    name: Full corpus / Ubuntu
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      PYTHONUTF8: "1"
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - name: Check out toolkit
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Check out portable engine submodules
+        run: git submodule update --init --depth 1 libs/spylls libs/pythes
+
+      - name: Check out LibreOffice dictionary collection
+        uses: actions/checkout@v7
+        with:
+          repository: wachin/libreoffice-dictionaries-collection
+          path: test-data/libreoffice-dictionaries-collection
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install test and Qt dependencies
+        run: python -m pip install --upgrade pip ".[test,qt]"
+
+      - name: Create artifact directory
+        run: python -c "from pathlib import Path; Path('artifacts').mkdir(exist_ok=True)"
+
+      - name: Run deterministic fast suite
+        run: python -m pytest -m "not corpus and not platform"
+
+      - name: Run full corpus suite
+        run: >-
+          python -m pytest -m corpus
+          --dictionary-corpus=test-data/libreoffice-dictionaries-collection/dicts
+          --junitxml=artifacts/full-corpus.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: full-corpus-report
+          path: artifacts/full-corpus.xml
+          if-no-files-found: error
+          retention-days: 30
