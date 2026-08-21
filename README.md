@@ -4,6 +4,9 @@ Reusable linguistic infrastructure for Python and PyQt6 applications. The
 project will provide a single cross-platform API for spell checking, spelling
 suggestions, and synonyms.
 
+See [`docs/linguistics-architecture.md`](docs/linguistics-architecture.md) for
+a complete architecture overview, module map, and data-flow diagrams.
+
 Development is currently focused on stabilizing its portable engines:
 
 - [Spylls](https://github.com/zverok/spylls), for Hunspell dictionaries.

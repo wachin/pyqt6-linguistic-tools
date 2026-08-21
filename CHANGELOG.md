@@ -75,3 +75,5 @@ changes are recorded here before a release.
   deprecation policy in `docs/deprecation-policy.md`. Reorganize `__all__`
   in `__init__.py` by category. Add `py.typed` marker for PEP 561 static
   type checking support.
+- Add `docs/linguistics-architecture.md` with complete architecture overview,
+  layer diagram, module map, data-flow diagrams, and key design decisions.
