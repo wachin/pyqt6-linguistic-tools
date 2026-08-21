@@ -77,3 +77,7 @@ changes are recorded here before a release.
   type checking support.
 - Add `docs/linguistics-architecture.md` with complete architecture overview,
   layer diagram, module map, data-flow diagrams, and key design decisions.
+- Integrate the toolkit into GuitarChordStudio: create
+  `chordflow/linguistic_service.py` factory, use `LinguisticTextEditDecorator`
+  and `ThesaurusDialog` in ChordFlow, update `chordpages/spellcheck.py` to
+  re-export toolkit classes.
