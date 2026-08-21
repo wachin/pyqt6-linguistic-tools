@@ -79,16 +79,121 @@ one-directional integration boundary without making PyQt6 a core dependency.
 Install the `[qt]` extra for widgets. See
 [`docs/qt-architecture.md`](docs/qt-architecture.md).
 
-## Setting up the repository
+## Installation, development, and direct source use
+
+`pip` is an installation tool; it is not a runtime requirement. Running an
+application with `python -m application_name` does not inherently require
+`pip` or a virtual environment. It requires the application package, this
+toolkit, and the necessary runtime dependencies to be discoverable on Python's
+import path.
+
+There are three supported ways for a project to consume this toolkit:
+
+1. Install it in a project virtual environment. This is the recommended
+   development workflow.
+2. Vendor it as source, as GuitarChordStudio does with its Git submodule, and
+   arrange the source directories on the application's import path.
+3. Include or install it through an operating-system package, AppImage, or
+   another application packaging system. In this case the packaging system,
+   not the end user, supplies the import paths and dependencies.
+
+### Why a virtual environment is recommended
+
+Debian, Ubuntu, and some derived or other Linux distributions mark their system
+Python installation as externally managed. Under the PyPA externally managed
+environments specification, `pip` should refuse to add, upgrade, or remove
+packages in that interpreter's global environment and direct the user to a
+virtual environment instead. This protects packages owned by the operating
+system.
+
+This restriction is distribution-dependent; it does not mean that `pip` cannot
+be used on Linux. Use `pip` inside a virtual environment. Do not use
+`sudo pip`, and do not recommend bypassing the protection with
+`--break-system-packages` for normal development.
+
+If the standard `venv` module is unavailable on a Debian-family system, install
+the operating system package first:
+
+```bash
+sudo apt install python3-venv
+```
+
+Then create an isolated environment from the repository:
 
 ```bash
 git submodule update --init --recursive
-python -m pip install -e '.[test]'
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[test,qt]'
 python -m pytest
 ```
 
-The built distribution includes the maintained Spylls and PyThes packages;
-applications do not install those engine forks separately.
+The environment remains active only in the current shell. Leave it with:
+
+```bash
+deactivate
+```
+
+On Windows, the equivalent setup is:
+
+```powershell
+git submodule update --init --recursive
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e ".[test,qt]"
+python -m pytest
+```
+
+The `[test]` extra installs test dependencies. The `[qt]` extra requests
+`PyQt6>=6.6` for projects that do not already provide PyQt6. GuitarChordStudio
+does not need to install PyQt6 twice when its own development or packaging
+environment already supplies it.
+
+### Using the source checkout without pip
+
+Developers may use the toolkit without installing it through `pip`. This
+repository uses a `src` layout and vendors Spylls and PyThes in separate
+directories, so all three source roots must be discoverable.
+
+For a one-off Unix shell session from the GuitarChordStudio repository root:
+
+```bash
+export PYTHONPATH="$PWD/libs/pyqt6-linguistic-tools/src:$PWD/libs/pyqt6-linguistic-tools/libs/spylls:$PWD/libs/pyqt6-linguistic-tools/libs/pythes${PYTHONPATH:+:$PYTHONPATH}"
+python -m application_name
+```
+
+Replace `application_name` with the actual module used by the host program.
+This command is an example of source-path configuration, not an additional
+installation method.
+
+A host application may instead configure the same paths in its development
+launcher or bootstrap code before importing `pyqt6_linguistic_tools`. That is
+often more convenient for a Git-submodule workflow because contributors can
+run the program directly without modifying the system Python installation.
+Whichever mechanism is used, PyQt6 and any other non-vendored dependencies must
+still be available from the interpreter chosen to run the application.
+
+For released `.deb` packages or AppImages, the packager should install or
+bundle the toolkit, PyQt6, Spylls, PyThes, and the selected dictionaries in
+locations already known to the packaged interpreter. End users should not need
+to create a virtual environment or run `pip` merely to launch the packaged
+application.
+
+The maintained Spylls and PyThes source packages are included in toolkit
+distributions and in this repository. Applications do not install those engine
+forks separately.
+
+Official references:
+
+- [Python `venv` documentation](https://docs.python.org/3/library/venv.html)
+- [PyPA guide to installing with `pip` and `venv`](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
+- [PyPA externally managed environments specification](https://packaging.python.org/en/latest/specifications/externally-managed-environments/)
+
+## Running the test suite
+
+```bash
+python -m pytest
+```
 
 The fast tests do not require external dictionary downloads. The compatibility
 suite uses an explicitly configured LibreOffice dictionary collection:

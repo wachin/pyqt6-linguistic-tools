@@ -26,6 +26,10 @@ Spylls, PyThes, or GuitarChordStudio-specific code through this layer.
 
 ## Optional installation
 
+Run these installation commands inside an activated virtual environment. The
+repository README explains `venv`, externally managed Linux installations,
+direct source usage without `pip`, and application packaging in detail.
+
 The core remains installable without Qt:
 
 ```bash
