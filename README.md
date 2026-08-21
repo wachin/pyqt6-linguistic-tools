@@ -33,6 +33,11 @@ Hunspell and MyThes files, supports regional locales, and reports whether a
 language has spelling, a thesaurus, or both. See
 [`docs/dictionary-registry.md`](docs/dictionary-registry.md).
 
+On Linux, `LinuxSystemDictionaryProvider` automatically discovers supported
+Hunspell and MyThes files installed in the standard `/usr/share` locations.
+They remain read-only and are consumed by the portable Spylls/PyThes engines;
+loading `libhunspell` or `libmythes` is not required.
+
 `ManagedDictionaryProvider` and `UserDictionaryProvider` use shared
 cross-platform application-data locations and support safe manual imports.
 The validated `dictionaries.json` reader prepares future managed downloads
@@ -76,6 +81,8 @@ structured diagnostics can be bridged to Python logging. See
 
 Fast, Qt-offscreen, curated corpus, and full-corpus test workflows are kept
 separate and mapped to their contracts in [`docs/testing.md`](docs/testing.md).
+Current operating-system smoke tests and their explicit skip rules are
+documented in [`docs/platform-testing.md`](docs/platform-testing.md).
 
 Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
 registry and personal-dictionary revisions provide automatic invalidation.
@@ -227,6 +234,13 @@ The full thesaurus pass is reserved for manual or scheduled execution:
 
 ```bash
 python -m pytest -m full_corpus --dictionary-corpus=/path/to/dicts
+```
+
+Linux system-resource smoke tests can be selected independently. They skip
+with a visible reason when the required packages or `es_EC` data are absent:
+
+```bash
+python -m pytest -m platform
 ```
 
 The corpus path is never embedded in the package. See

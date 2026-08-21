@@ -56,8 +56,10 @@ from pyqt6_linguistic_tools.models import (
 from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.ignored import IgnoredWords, IgnoredWordsStore
 from pyqt6_linguistic_tools.providers import (
+    DEFAULT_LINUX_DICTIONARY_PATHS,
     DictionaryProvider,
     DirectoryDictionaryProvider,
+    LinuxSystemDictionaryProvider,
     ManagedDictionaryProvider,
     UserDictionaryProvider,
 )
@@ -121,6 +123,7 @@ __all__ = [
     "BACKUP_FORMAT",
     "BACKUP_VERSION",
     "CacheStats",
+    "DEFAULT_LINUX_DICTIONARY_PATHS",
     "DictionaryLoadError",
     "DictionaryCandidate",
     "DictionaryBundleValidation",
@@ -147,6 +150,7 @@ __all__ = [
     "LinguisticComponentFailure",
     "LinguisticService",
     "LinguisticServiceDiagnostic",
+    "LinuxSystemDictionaryProvider",
     "logging_diagnostic_handler",
     "LinguisticResultCacheStats",
     "IgnoredWords",

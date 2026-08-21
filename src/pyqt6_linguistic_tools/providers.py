@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 import os
 from pathlib import Path
 import re
 import shutil
+import sys
 import tempfile
 
 from pyqt6_linguistic_tools.errors import (
@@ -27,6 +29,13 @@ from pyqt6_linguistic_tools.storage import dictionary_storage_paths
 
 
 _SAFE_BUNDLE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+DEFAULT_LINUX_DICTIONARY_PATHS = (
+    Path("/usr/share/hunspell"),
+    Path("/usr/share/myspell"),
+    Path("/usr/share/myspell/dicts"),
+    Path("/usr/share/mythes"),
+)
 
 
 def _remove_owned_bundle(root: Path, bundle_name: str) -> bool:
@@ -150,6 +159,55 @@ class DirectoryDictionaryProvider(DictionaryProvider):
                     )
                 )
         return tuple(candidates)
+
+
+class LinuxSystemDictionaryProvider(DictionaryProvider):
+    """Discover read-only Hunspell and MyThes files installed by Linux."""
+
+    def __init__(
+        self,
+        roots: Iterable[str | Path] | str | Path | None = None,
+    ) -> None:
+        if roots is None:
+            configured = (
+                DEFAULT_LINUX_DICTIONARY_PATHS
+                if sys.platform.startswith("linux")
+                else ()
+            )
+        elif isinstance(roots, (str, Path)):
+            configured = (roots,)
+        else:
+            configured = tuple(roots)
+        self._roots = tuple(
+            dict.fromkeys(Path(root).expanduser().resolve() for root in configured)
+        )
+
+    @property
+    def roots(self) -> tuple[Path, ...]:
+        """Return the locations inspected without creating or changing them."""
+        return self._roots
+
+    @property
+    def source(self) -> str:
+        return "system"
+
+    @property
+    def priority(self) -> int:
+        return DictionarySourcePriority.SYSTEM
+
+    def discover(self) -> tuple[DictionaryCandidate, ...]:
+        candidates: list[DictionaryCandidate] = []
+        for root in self.roots:
+            if not root.is_dir():
+                continue
+            candidates.extend(
+                DirectoryDictionaryProvider(
+                    root,
+                    source=self.source,
+                    priority=self.priority,
+                ).discover()
+            )
+        return tuple(dict.fromkeys(candidates))
 
 
 class ManagedDictionaryProvider(DirectoryDictionaryProvider):
@@ -318,8 +376,10 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
 
 
 __all__ = [
+    "DEFAULT_LINUX_DICTIONARY_PATHS",
     "DictionaryProvider",
     "DirectoryDictionaryProvider",
+    "LinuxSystemDictionaryProvider",
     "ManagedDictionaryProvider",
     "UserDictionaryProvider",
 ]

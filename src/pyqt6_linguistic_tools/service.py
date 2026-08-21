@@ -36,6 +36,7 @@ from pyqt6_linguistic_tools.personal import (
 )
 from pyqt6_linguistic_tools.providers import (
     ManagedDictionaryProvider,
+    LinuxSystemDictionaryProvider,
     UserDictionaryProvider,
 )
 from pyqt6_linguistic_tools.registry import DictionaryRegistry
@@ -141,6 +142,7 @@ class LinguisticService:
         self._language = normalize_personal_locale(language)
         self.registry = registry or DictionaryRegistry(
             (
+                LinuxSystemDictionaryProvider(),
                 ManagedDictionaryProvider(namespace=namespace),
                 UserDictionaryProvider(namespace=namespace),
             )

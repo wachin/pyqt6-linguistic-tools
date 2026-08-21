@@ -21,6 +21,11 @@ Corpus tests call `pytest.skip()` with a concrete setup message when no corpus
 path is configured. They never create fake files under an expected external
 path or report a resource-dependent assertion as passing.
 
+Tests marked `platform` exercise resources installed by the current operating
+system and skip explicitly when those resources are unavailable. Run them
+alone with `python3 -m pytest -m platform`; see
+[`platform-testing.md`](platform-testing.md).
+
 ## LibreOffice corpus suite
 
 Point either the command-line option or environment variable at the collection
@@ -45,7 +50,8 @@ reports the complete compatibility picture.
 | Contract | Primary tests |
 |---|---|
 | Registry, priorities, regional fallback | `test_registry.py`, `corpus/test_registry_corpus.py` |
-| Directory, managed, and user providers | `test_registry.py`, `test_managed_providers.py` |
+| System, directory, managed, and user providers | `test_linux_system_provider.py`, `test_registry.py`, `test_managed_providers.py` |
+| Installed Linux dictionaries through portable engines | `platform/test_linux_system_dictionaries.py` |
 | Spylls backend and portable contract | `test_backends.py`, `corpus/test_backend_contracts.py` |
 | PyThes backend and portable contract | `test_backends.py`, `corpus/test_backend_contracts.py` |
 | Encodings and malformed sources | `test_validation.py`, `corpus/test_spylls_encodings.py`, `corpus/test_pythes_encodings.py` |

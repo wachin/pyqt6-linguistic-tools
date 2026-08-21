@@ -14,10 +14,11 @@ service.suggestions("computdora")
 service.synonyms("rápido")
 ```
 
-The default registry searches the toolkit's application-managed and manually
-imported user locations. Applications may inject a `DictionaryRegistry` with
-additional bundled providers. Linux system-dictionary discovery remains a
-separate optional provider planned for the final native-backend stage.
+The default registry searches Linux system locations followed by the toolkit's
+application-managed and manually imported user locations. On other platforms
+the system provider is empty. Applications may inject a `DictionaryRegistry`
+with additional bundled providers. Linux files are still read by portable
+Spylls/PyThes; native backends remain a separate optional post-1.0 decision.
 
 ## Capabilities and language selection
 

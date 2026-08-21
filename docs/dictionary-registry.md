@@ -91,7 +91,29 @@ discovery should run outside the GUI thread when a source may be slow.
 `Español (Ecuador)`. A code-based readable fallback remains available when the
 core package is used without Qt.
 
+## Linux system dictionaries
+
+`LinuxSystemDictionaryProvider` searches the conventional read-only locations:
+
+```text
+/usr/share/hunspell
+/usr/share/myspell
+/usr/share/myspell/dicts
+/usr/share/mythes
+```
+
+Missing directories are treated as empty sources and are never created. The
+provider exposes no import, removal, or directory-creation operations. On
+non-Linux platforms its default root list is empty, although explicit roots
+may be supplied for portable tests.
+
+The default `LinguisticService` registry orders system, managed, and user
+providers at priorities 100, 200, and 300. Consequently Linux applications
+use installed files automatically while still allowing an application-managed
+or manually imported component to override the corresponding system component.
+Discovery does not load a native library: Spylls reads `.aff/.dic` pairs and
+PyThes reads `.dat/.idx` data directly.
+
 The first LibreOffice corpus baseline discovers 90 locale entries: 89 offer
 spelling, and generic thesauri are explicitly shared with compatible regional
 variants. The corpus tests verify all 23 Spanish regional dictionaries.
-

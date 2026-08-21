@@ -38,4 +38,5 @@ pythonpath = ["src", "libs/spylls", "libs/pythes"]
 markers = [
   "corpus: requires an external LibreOffice dictionaries collection",
   "full_corpus: scans every compatible file in the external corpus",
+  "platform: exercises resources supplied by the current operating system",
 ]

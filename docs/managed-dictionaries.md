@@ -47,8 +47,10 @@ priority 300. Therefore a user bundle may override a managed component while
 retaining any non-conflicting managed thesaurus or spelling component.
 
 These providers work identically on Linux, Windows, and macOS. They neither
-inspect nor modify Linux system dictionary directories; that provider remains
-deferred to the final native-system stage.
+inspect nor modify Linux system dictionary directories. The separate
+`LinuxSystemDictionaryProvider` discovers those read-only files and passes
+them to Spylls/PyThes; this is independent of the optional, post-1.0 native
+backend stage.
 
 ## Manual import
 
