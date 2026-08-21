@@ -1,7 +1,21 @@
 # Changelog
 
-This project follows Semantic Versioning. During `0.x`, incompatible API
-changes are recorded here before a release.
+This project follows Semantic Versioning.
+
+## 1.0.0
+
+- Stable release of the portable linguistic toolkit for PyQt6 applications.
+- Spell checking through Spylls, thesaurus through PyThes, no native
+  dependencies required.
+- Optional Qt integration: `LinguisticTextEditDecorator`, `ThesaurusDialog`,
+  `DictionaryManagerDialog`, `SpellCheckHighlighter`, `LinguisticContextMenu`,
+  `AsyncSpellCheckController`.
+- Personal dictionaries, ignored words, Unicode tokenizer, and result caching.
+- Linux system dictionary discovery, cross-platform managed and user providers.
+- Dictionary validation, compatibility reports, and performance benchmarks.
+- Standalone examples, GuitarChordStudio integration, and documented reuse
+  procedure.
+- 276 fast tests, mypy-clean, documented public API with deprecation policy.
 
 ## 0.1.0.dev0
 
