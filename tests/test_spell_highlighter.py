@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 import os
+import time
 
 import pytest
 
@@ -21,6 +22,7 @@ from pyqt6_linguistic_tools import (
 )
 from pyqt6_linguistic_tools.qt import (
     LinguisticTextEditDecorator,
+    QtLinguisticSettings,
     SpellCheckHighlighter,
 )
 
@@ -57,6 +59,16 @@ def _format_ranges(editor):
         ranges.extend(block.layout().formats())
         block = block.next()
     return ranges
+
+
+def _wait_until(application, predicate, timeout: float = 2.0):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        application.processEvents()
+        if predicate():
+            return
+        time.sleep(0.001)
+    raise AssertionError("condition was not reached before timeout")
 
 
 @pytest.mark.parametrize("editor_type", [QTextEdit, QPlainTextEdit])
@@ -182,7 +194,13 @@ def test_decorator_owns_and_coordinates_highlighter(
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: False)
     first = QTextEdit("error")
     second = QPlainTextEdit("otro")
-    decorator = LinguisticTextEditDecorator(first, service)
+    decorator = LinguisticTextEditDecorator(
+        first,
+        service,
+        settings=QtLinguisticSettings(debounce_ms=0),
+    )
+
+    _wait_until(application, lambda: len(_format_ranges(first)) == 1)
 
     assert decorator.highlighter.parent() is decorator
     assert decorator.highlighter.document() is first.document()
@@ -205,7 +223,13 @@ def test_decorator_filters_immediately_refresh_highlighting(
 ):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: False)
     editor = QTextEdit("Am letra")
-    decorator = LinguisticTextEditDecorator(editor, service)
+    decorator = LinguisticTextEditDecorator(
+        editor,
+        service,
+        settings=QtLinguisticSettings(debounce_ms=0),
+    )
+
+    _wait_until(application, lambda: len(_format_ranges(editor)) == 2)
 
     assert len(_format_ranges(editor)) == 2
     decorator.add_token_filter(lambda token, _source: token.text != "Am")

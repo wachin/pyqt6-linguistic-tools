@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import unicodedata
 
 from pyqt6_linguistic_tools.cache import CacheStats, ResultCache
@@ -12,6 +13,7 @@ from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 
 require_pyqt6()
 
+from PyQt6 import sip  # noqa: E402
 from PyQt6.QtCore import QObject, pyqtSignal  # noqa: E402
 from PyQt6.QtGui import (  # noqa: E402
     QColor,
@@ -38,6 +40,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
     enabled_changed = pyqtSignal(bool)
     tokenizer_changed = pyqtSignal()
     misspelling_format_changed = pyqtSignal()
+    unknown_words_found = pyqtSignal(object)
 
     def __init__(
         self,
@@ -48,6 +51,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
         enabled: bool = True,
         misspelling_format: QTextCharFormat | None = None,
         cache_size: int = 2048,
+        check_on_cache_miss: bool = True,
         parent: QObject | None = None,
     ) -> None:
         if not isinstance(document, QTextDocument):
@@ -64,10 +68,13 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             raise TypeError("misspelling_format must be a QTextCharFormat")
         if parent is not None and not isinstance(parent, QObject):
             raise TypeError("parent must be a QObject or None")
+        if not isinstance(check_on_cache_miss, bool):
+            raise TypeError("check_on_cache_miss must be a boolean")
 
         self._service = service
         self._tokenizer = tokenizer or UnicodeTokenizer()
         self._enabled = enabled
+        self._check_on_cache_miss = check_on_cache_miss
         self._misspelling_format = QTextCharFormat(
             misspelling_format or default_misspelling_format()
         )
@@ -95,6 +102,10 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
 
     def cache_stats(self) -> CacheStats:
         return self._statuses.stats()
+
+    @property
+    def check_on_cache_miss(self) -> bool:
+        return self._check_on_cache_miss
 
     def set_enabled(self, enabled: bool) -> bool:
         if not isinstance(enabled, bool):
@@ -148,36 +159,69 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             self.rehighlight()
         return removed
 
+    def apply_statuses(self, locale: str, statuses: object) -> int:
+        """Cache one worker result batch and refresh only matching blocks."""
+        if not isinstance(locale, str):
+            raise TypeError("locale must be a string")
+        if not isinstance(statuses, Mapping):
+            raise TypeError("statuses must be a mapping")
+        normalized_statuses: dict[str, bool] = {}
+        for word, accepted in statuses.items():
+            if not isinstance(word, str) or not isinstance(accepted, bool):
+                raise TypeError("statuses must map strings to booleans")
+            normalized_statuses[unicodedata.normalize("NFC", word)] = accepted
+        if locale != self._service.language:
+            return 0
+        for word, accepted in normalized_statuses.items():
+            self._statuses.put((locale, word), accepted)
+        try:
+            self.rehighlight()
+        except RuntimeError:
+            return 0
+        return len(normalized_statuses)
+
     def highlightBlock(self, text: str) -> None:  # noqa: N802
         """Tokenize and underline one block; suggestion generation is forbidden."""
         if not self._enabled:
             return
         language = self._service.language
+        unknown: list[str] = []
         for token in self._tokenizer.iter_tokens(text):
             key = (language, token.normalized)
             found, accepted = self._statuses.try_get(key)
             if not found:
-                accepted = self._service.check_word(
-                    token.normalized,
-                    locale=language,
-                )
-                self._statuses.put(key, accepted)
+                if self._check_on_cache_miss:
+                    accepted = self._service.check_word(
+                        token.normalized,
+                        locale=language,
+                    )
+                    self._statuses.put(key, accepted)
+                else:
+                    unknown.append(token.normalized)
+                    continue
             if not accepted:
                 self.setFormat(
                     token.utf16_start,
                     token.utf16_end - token.utf16_start,
                     self._misspelling_format,
                 )
+        if unknown:
+            self.unknown_words_found.emit(tuple(dict.fromkeys(unknown)))
 
     def _blocks_containing(self, normalized_word: str) -> tuple[QTextBlock, ...]:
+        return self._blocks_containing_any({normalized_word})
+
+    def _blocks_containing_any(
+        self, normalized_words: set[str]
+    ) -> tuple[QTextBlock, ...]:
         document = self.document()
-        if document is None:
+        if document is None or sip.isdeleted(document) or not normalized_words:
             return ()
         result: list[QTextBlock] = []
         block = document.firstBlock()
         while block.isValid():
             if any(
-                token.normalized == normalized_word
+                token.normalized in normalized_words
                 for token in self._tokenizer.iter_tokens(block.text())
             ):
                 result.append(block)

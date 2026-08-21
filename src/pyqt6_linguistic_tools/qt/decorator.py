@@ -14,6 +14,7 @@ from pyqt6_linguistic_tools.tokenizer import (
     WordToken,
 )
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
+from pyqt6_linguistic_tools.qt.async_spellcheck import AsyncSpellCheckController
 from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 from pyqt6_linguistic_tools.qt.spell_highlighter import SpellCheckHighlighter
 
@@ -74,14 +75,25 @@ class LinguisticTextEditDecorator(QObject):
         self._token_filters: list[TokenFilter] = []
         self._context_action_providers: list[ContextActionProvider] = []
         self._highlighter: SpellCheckHighlighter | None = None
+        self._async_controller: AsyncSpellCheckController | None = None
         self.attach(editor)
         self._highlighter = SpellCheckHighlighter(
             editor.document(),
             service,
             tokenizer=self.create_tokenizer(),
             enabled=self.highlighting_active,
+            check_on_cache_miss=False,
             parent=self,
         )
+        self._async_controller = AsyncSpellCheckController(
+            self._highlighter,
+            service,
+            debounce_ms=self._settings.debounce_ms,
+            parent=self,
+        )
+        self._async_controller.set_document(editor.document())
+        self._async_controller.set_lifetime_guard(editor)
+        self._highlighter.rehighlight()
 
     @property
     def service(self) -> LinguisticService:
@@ -161,6 +173,13 @@ class LinguisticTextEditDecorator(QObject):
             raise RuntimeError("the highlighter has not been initialized")
         return self._highlighter
 
+    @property
+    def async_controller(self) -> AsyncSpellCheckController:
+        """Return the decorator-owned debounced spelling controller."""
+        if self._async_controller is None:
+            raise RuntimeError("the asynchronous controller has not been initialized")
+        return self._async_controller
+
     def attach(self, editor: QTextEdit | QPlainTextEdit) -> bool:
         """Attach to an existing supported editor and return whether it changed."""
         self._validate_editor(editor)
@@ -189,7 +208,11 @@ class LinguisticTextEditDecorator(QObject):
         editor.destroyed.connect(self._on_editor_destroyed)
         if self._highlighter is not None:
             self._highlighter.setDocument(editor.document())
+            if self._async_controller is not None:
+                self._async_controller.set_document(editor.document())
+                self._async_controller.set_lifetime_guard(editor)
             self._sync_highlighter_enabled()
+            self._highlighter.rehighlight()
         self.attached_changed.emit(True)
         return True
 
@@ -201,6 +224,9 @@ class LinguisticTextEditDecorator(QObject):
             return False
 
         if self._highlighter is not None:
+            if self._async_controller is not None:
+                self._async_controller.set_document(None)
+                self._async_controller.set_lifetime_guard(None)
             self._highlighter.setDocument(None)
 
         for watched in self._filtered_objects:
@@ -471,12 +497,17 @@ class LinguisticTextEditDecorator(QObject):
             raise TypeError("editor must be a QTextEdit or QPlainTextEdit")
 
     def _on_editor_destroyed(self, _editor: QObject | None = None) -> None:
+        if self._async_controller is not None:
+            self._async_controller.set_document(None)
+            self._async_controller.set_lifetime_guard(None)
         self._clear_attachment()
         self.attached_changed.emit(False)
 
     def _sync_highlighter_enabled(self) -> None:
         if self._highlighter is not None:
             self._highlighter.set_enabled(self.highlighting_active)
+        if self._async_controller is not None:
+            self._async_controller.set_enabled(self.highlighting_active)
 
     def _sync_highlighter_tokenizer(self) -> None:
         if self._highlighter is not None:

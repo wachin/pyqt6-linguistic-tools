@@ -235,6 +235,36 @@ blocks containing that word are passed to `rehighlightBlock()`. Passing no word
 clears the complete local cache, which is appropriate after a broader external
 dictionary change.
 
-Phase 23 performs cache misses synchronously through the service. Phase 24
-replaces that initial work with debounced, cancellable background jobs so a
-large dictionary can never delay the user interface while typing.
+When used directly, `SpellCheckHighlighter` can resolve cache misses
+synchronously for small standalone integrations. The decorator disables that
+fallback and routes every miss through `AsyncSpellCheckController`.
+
+## Asynchronous spelling checks
+
+The decorator-owned controller collects unique unknown words emitted by the
+highlighter. A single-shot `QTimer` restarts after each edit and uses the
+configured `QtLinguisticSettings.debounce_ms` value, which defaults to 300 ms.
+No engine work occurs in `highlightBlock()` when this integration is active.
+
+After the debounce interval, one `QRunnable` checks the complete pending batch
+sequentially through `LinguisticService` on `QThreadPool`. It never creates a
+thread or runnable per word. The GUI thread only receives the final mapping,
+places it in the highlighter cache and requests a new highlight pass.
+
+Every request has a monotonically increasing generation. Editing, detaching,
+disabling highlighting or switching documents signals cancellation to the
+active worker. A check already executing is allowed to finish safely, while
+remaining words observe the cancellation flag. Results are applied only when
+their generation, locale, document and component lifetimes are still current.
+
+Queued results temporarily retain the owning editor until delivery. This
+closes the narrow Qt destruction window where an editor could otherwise vanish
+between validating a worker result and repainting its document. Explicitly
+deleting an editor with an active job is tested and safely disconnects the
+queued receiver.
+
+`AsyncSpellCheckController` exposes job, discard and idle signals plus small
+read-only counters for diagnostics and tests. Applications normally interact
+with it through `integration.async_controller`; they do not need to manage a
+thread pool themselves. A strict-mode service exception is returned through
+`job_failed`, restores the controller to idle and never modifies the document.
