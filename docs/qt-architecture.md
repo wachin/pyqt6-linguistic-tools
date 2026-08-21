@@ -305,3 +305,38 @@ their menu and cursor to append the same linguistic actions to their own
 integrated automatically. Registered context-action providers receive the
 editor, menu and current `WordToken`, and may return additional `QAction`
 objects.
+
+## Thesaurus dialog
+
+`ThesaurusDialog` is a modeless, reusable browser over engine-neutral
+`ThesaurusEntry` and `ThesaurusMeaning` values. It displays the current query,
+parts of speech, meanings and nested synonyms, with an explicit no-results
+state. Search, Search Selected, Back and Forward maintain a branching history:
+a new search after navigating backward discards the obsolete forward branch.
+
+```python
+from pyqt6_linguistic_tools.qt import ThesaurusDialog
+
+dialog = ThesaurusDialog(service, "bright")
+dialog.replacement_requested.connect(replace_word)
+dialog.show()
+```
+
+The context-menu component opens this dialog automatically for both
+`Open Thesaurus…` and `More synonyms…`. It saves a copy of the exact editor
+cursor and the original word. Navigation changes only the thesaurus query;
+replacement continues to validate the original source through
+`replace_word_at_cursor()`. If the document changed meanwhile, no text is
+replaced.
+
+`preserve_simple_capitalization()` handles only unambiguous patterns:
+lowercase remains unchanged, title-case source text capitalizes an all-lowercase
+replacement, and uppercase source text uppercases the replacement. Mixed-case
+source words and already mixed-case replacements remain untouched. The toolkit
+does not guess inflection, conjugation, number, gender or other morphological
+transformations.
+
+All labels and status messages use English source text in the
+`PyQt6LinguisticTools.ThesaurusDialog` Qt translation context. Words, meanings,
+parts of speech and synonyms originate in the selected dictionary and are not
+translated by the widget.

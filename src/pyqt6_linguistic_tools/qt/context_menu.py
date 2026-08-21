@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from pyqt6_linguistic_tools.locales import locale_display_name
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
+from pyqt6_linguistic_tools.qt.thesaurus_dialog import ThesaurusDialog
 
 if TYPE_CHECKING:
     from pyqt6_linguistic_tools.qt.decorator import LinguisticTextEditDecorator
@@ -54,6 +55,7 @@ class LinguisticContextMenu(QObject):
         super().__init__(parent)
         self._integration = integration
         self._action_enabled = {action: True for action in LinguisticAction}
+        self._dialogs: set[ThesaurusDialog] = set()
 
     def action_enabled(self, action: LinguisticAction | str) -> bool:
         return self._action_enabled[self._coerce_action(action)]
@@ -213,12 +215,14 @@ class LinguisticContextMenu(QObject):
                     submenu.addSeparator()
                     action = submenu.addAction(_tr("More synonyms…"))
                     action.triggered.connect(
-                        lambda: self.more_synonyms_requested.emit(word)
+                        lambda: self._request_thesaurus(word, cursor, more=True)
                     )
                 count += 1
         if self.action_enabled(LinguisticAction.OPEN_THESAURUS):
             action = menu.addAction(_tr("Open Thesaurus…"))
-            action.triggered.connect(lambda: self.open_thesaurus_requested.emit(word))
+            action.triggered.connect(
+                lambda: self._request_thesaurus(word, cursor, more=False)
+            )
             count += 1
         return count
 
@@ -284,6 +288,50 @@ class LinguisticContextMenu(QObject):
     def _set_language(self, locale: str) -> None:
         if self._integration.set_language(locale):
             self.language_changed.emit(locale)
+
+    def open_thesaurus_dialog(
+        self,
+        word: str,
+        cursor: QTextCursor,
+    ) -> ThesaurusDialog:
+        """Open a modeless dialog tied to one stale-safe editor cursor."""
+        editor = self._integration.editor
+        if editor is None:
+            raise RuntimeError("the linguistic integration is detached")
+        if not isinstance(cursor, QTextCursor):
+            raise TypeError("cursor must be a QTextCursor")
+        saved_cursor = QTextCursor(cursor)
+        dialog = ThesaurusDialog(
+            self._integration.service,
+            word,
+            replacement_source=word,
+            parent=editor,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        dialog.replacement_requested.connect(
+            lambda expected, replacement: self._integration.replace_word_at_cursor(
+                replacement,
+                saved_cursor,
+                expected_word=expected,
+            )
+        )
+        self._dialogs.add(dialog)
+        dialog.destroyed.connect(lambda: self._dialogs.discard(dialog))
+        dialog.show()
+        return dialog
+
+    def _request_thesaurus(
+        self,
+        word: str,
+        cursor: QTextCursor,
+        *,
+        more: bool,
+    ) -> None:
+        if more:
+            self.more_synonyms_requested.emit(word)
+        else:
+            self.open_thesaurus_requested.emit(word)
+        self.open_thesaurus_dialog(word, cursor)
 
     @staticmethod
     def _coerce_action(action: LinguisticAction | str) -> LinguisticAction:

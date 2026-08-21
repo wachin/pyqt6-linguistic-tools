@@ -27,6 +27,10 @@ if TYPE_CHECKING:
         SpellCheckHighlighter,
         default_misspelling_format,
     )
+    from pyqt6_linguistic_tools.qt.thesaurus_dialog import (
+        ThesaurusDialog,
+        preserve_simple_capitalization,
+    )
 
 
 __all__ = [
@@ -36,11 +40,13 @@ __all__ = [
     "LinguisticAction",
     "LinguisticContextMenu",
     "SpellCheckHighlighter",
+    "ThesaurusDialog",
     "QtIntegrationUnavailableError",
     "QtLinguisticSettings",
     "QtRuntimeInfo",
     "pyqt6_available",
     "default_misspelling_format",
+    "preserve_simple_capitalization",
     "qt_runtime_info",
     "require_pyqt6",
 ]
@@ -64,6 +70,10 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import context_menu
 
         return getattr(context_menu, name)
+    if name in {"ThesaurusDialog", "preserve_simple_capitalization"}:
+        from pyqt6_linguistic_tools.qt import thesaurus_dialog
+
+        return getattr(thesaurus_dialog, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
