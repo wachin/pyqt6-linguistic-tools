@@ -83,7 +83,7 @@ Fast, Qt-offscreen, curated corpus, and full-corpus test workflows are kept
 separate and mapped to their contracts in [`docs/testing.md`](docs/testing.md).
 Current operating-system smoke tests and their explicit skip rules are
 documented in [`docs/platform-testing.md`](docs/platform-testing.md).
-The GitHub Actions fast matrix and separately scheduled corpus workflows are
+The manually dispatched GitHub Actions fast matrix and corpus workflows are
 documented in [`docs/continuous-integration.md`](docs/continuous-integration.md).
 
 Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
@@ -235,7 +235,7 @@ python -m pytest -m 'corpus and not full_corpus' \
   --dictionary-corpus=/path/to/dicts
 ```
 
-The full thesaurus pass is reserved for manual or scheduled execution:
+The full thesaurus pass is reserved for explicit manual execution:
 
 ```bash
 python -m pytest -m full_corpus --dictionary-corpus=/path/to/dicts

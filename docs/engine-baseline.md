@@ -89,9 +89,10 @@ All 26 corpus thesauri still pass after recovery.
 PyThes now also exposes explicit `.idx` regeneration. It calculates offsets
 from the source file in binary mode, preserves the encoding declaration, BOM,
 and line endings, validates the temporary result, and publishes it atomically.
-Existing files require `overwrite=True`. A scheduled corpus test regenerates
-all 26 indexes into temporary storage and validates lookups without writing to
-the LibreOffice collection.
+Existing files require `overwrite=True`. The full corpus test regenerates all
+26 indexes into temporary storage and validates lookups without writing to the
+LibreOffice collection. That test runs only when explicitly selected locally
+or through the manual corpus workflow.
 
 Index keys and lookup input now share NFC normalization, so precomposed and
 combining-mark spellings resolve consistently without rewriting dictionary

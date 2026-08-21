@@ -1,9 +1,6 @@
 name: LibreOffice corpus
 
 on:
-  pull_request:
-  schedule:
-    - cron: "17 4 * * 0"
   workflow_dispatch:
     inputs:
       suite:
@@ -14,19 +11,22 @@ on:
         options:
           - curated
           - full
+      upload_reports:
+        description: Upload JUnit reports as temporary artifacts
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
   group: corpus-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   curated:
-    if: >-
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && inputs.suite == 'curated')
+    if: inputs.suite == 'curated'
     name: Curated / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -79,18 +79,16 @@ jobs:
           --junitxml=artifacts/curated-${{ matrix.os }}.xml
 
       - name: Upload test report
-        if: always()
+        if: ${{ always() && inputs.upload_reports }}
         uses: actions/upload-artifact@v7
         with:
           name: curated-report-${{ matrix.os }}
           path: artifacts/curated-${{ matrix.os }}.xml
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
 
   full:
-    if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && inputs.suite == 'full')
+    if: inputs.suite == 'full'
     name: Full corpus / Ubuntu
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -136,10 +134,10 @@ jobs:
           --junitxml=artifacts/full-corpus.xml
 
       - name: Upload test report
-        if: always()
+        if: ${{ always() && inputs.upload_reports }}
         uses: actions/upload-artifact@v7
         with:
           name: full-corpus-report
           path: artifacts/full-corpus.xml
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3

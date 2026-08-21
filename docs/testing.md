@@ -26,9 +26,10 @@ system and skip explicitly when those resources are unavailable. Run them
 alone with `python3 -m pytest -m platform`; see
 [`platform-testing.md`](platform-testing.md).
 
-GitHub Actions runs the deterministic suite across supported Python and host
-operating systems, while real-corpus jobs have separate pull-request and
-scheduled/manual triggers. See
+GitHub Actions can run the deterministic suite across supported Python and host
+operating systems, while real-corpus jobs remain separately selectable. Both
+workflows require an explicit manual dispatch and never run on a push, pull
+request, or schedule. See
 [`continuous-integration.md`](continuous-integration.md).
 
 Run the same static analysis locally after installing the `typing` extra:

@@ -1,13 +1,15 @@
 # Continuous integration
 
 The toolkit keeps fast cross-platform checks separate from the large
-LibreOffice dictionary corpus. This makes ordinary commits inexpensive while
-preserving real dictionary coverage before changes are merged.
+LibreOffice dictionary corpus. Both workflows are deliberately manual-only to
+avoid consuming GitHub Actions minutes, artifact storage, or notification
+quota when commits and pull requests are created. A push, pull request, tag,
+or schedule does not start either workflow.
 
 ## Fast CI
 
-`.github/workflows/ci.yml` runs on pushes, pull requests, and manual dispatches.
-Its compact matrix covers:
+`.github/workflows/ci.yml` runs only when a repository user selects
+**Actions → Fast CI → Run workflow**. Its compact matrix covers:
 
 - Ubuntu 24.04 with Python 3.10, the minimum supported version;
 - Ubuntu 24.04 with Python 3.14;
@@ -43,23 +45,27 @@ the toolkit itself never invokes a package manager or requests privileges.
 `wachin/libreoffice-dictionaries-collection` into an explicit test-data
 directory. It never hard-codes a GuitarChordStudio checkout path.
 
-Pull requests run the curated corpus tests on Ubuntu, Windows, and macOS. The
-full corpus runs on Ubuntu every Sunday and can also be selected from the
-GitHub Actions **Run workflow** form. A manual dispatch can choose `curated` or
-`full`. Every corpus and platform job runs the deterministic fast suite first,
-so a specialized job never replaces the shared engine and Qt contracts.
+The GitHub Actions **Run workflow** form allows the user to choose `curated` or
+`full`. Curated tests run on Ubuntu, Windows, and macOS; the full corpus runs on
+Ubuntu. Neither suite runs automatically. Every corpus job runs the
+deterministic fast suite first, so a specialized job never replaces the shared
+engine and Qt contracts.
 
-Both suites produce JUnit XML and upload it even when pytest fails. These files
+Both suites produce JUnit XML locally in the disposable runner. The
+`upload_reports` input defaults to `false`, so no artifact storage is consumed
+unless the user explicitly enables it before starting the workflow. Enabled
+artifacts are retained for three days, including when pytest fails. These files
 are machine-readable test results, not the planned locale-by-locale dictionary
-compatibility report; that richer report remains a separate roadmap item.
+compatibility report; that richer report remains a separate roadmap item and
+must follow the same explicit upload policy.
 
 ## Required checks and releases
 
-Workflow failures make their jobs fail, but repository policy determines
-whether merging or releasing is blocked. Once the first remote runs are green,
-configure branch protection for `main` and require the relevant Fast CI and
-curated-corpus checks. A future release workflow must depend on those checks;
-this repository currently has no release automation to gate.
+Workflow failures make manually requested jobs fail, but they do not run as
+required checks on every commit. This repository currently has no release
+automation. Any future release workflow must use `workflow_dispatch` only and
+must never publish a release because of a push, tag, pull request, schedule, or
+successful CI run. The repository user must explicitly request every release.
 
 Static typing is a normal failing CI job. In particular, Qt return values that
 its bindings declare as optional are checked before use, and toolkit widget

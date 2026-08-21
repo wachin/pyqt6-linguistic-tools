@@ -61,3 +61,5 @@ changes are recorded here before a release.
   guarantees.
 - Add complete core and Qt mypy coverage under the Python 3.10 contract, with
   a dedicated dependency extra and a failing GitHub Actions typing job.
+- Make every GitHub Actions workflow manually dispatched, make corpus artifact
+  uploads opt-in, and retain requested reports for only three days.

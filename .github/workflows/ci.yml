@@ -1,8 +1,6 @@
 name: Fast CI
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 permissions:

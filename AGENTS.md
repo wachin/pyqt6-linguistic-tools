@@ -31,6 +31,10 @@ hard-code paths from a parent checkout.
   commands, packaging, or CI changes.
 - Do not mark roadmap work complete until its tests and documented acceptance
   criteria have actually run.
+- Keep GitHub Actions manual-only. Do not add `push`, `pull_request`,
+  `schedule`, or tag-driven workflow triggers. Artifact uploads must be an
+  explicit user choice with short retention, and any future release workflow
+  must require `workflow_dispatch` rather than publishing automatically.
 
 ## Validation
 
@@ -51,4 +55,3 @@ iterating.
 This repository is a Git submodule. Commit it before committing the updated
 pointer in its parent. Nested Spylls/PyThes changes must be committed first on
 their `master` branches.
-
