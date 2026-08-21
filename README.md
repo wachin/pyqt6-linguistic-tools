@@ -269,6 +269,39 @@ per-locale spelling and thesaurus validation results, classifications
 encodings, and reproducibility metadata (toolkit and engine versions,
 Python/platform, generation time).
 
+## Examples
+
+The `examples/` directory contains standalone PyQt6 applications that
+demonstrate the toolkit's features. Each example can be run directly:
+
+```bash
+# QTextEdit with spell checking
+python examples/basic_qtextedit.py
+
+# QPlainTextEdit with spell checking
+python examples/basic_qplaintextedit.py
+
+# Spell checking, suggestions, and personal dictionary
+python examples/spellcheck_demo.py
+
+# Thesaurus browser
+python examples/thesaurus_demo.py
+
+# Dictionary Manager dialog
+python examples/dictionary_manager_demo.py
+
+# Full demo combining all features
+python examples/full_demo.py
+```
+
+Set `LIBREOFFICE_DICTIONARIES_PATH` to use a LibreOffice dictionary corpus for
+additional languages. On Linux, system-installed hunspell and mythes
+dictionaries are discovered automatically.
+
+The full demo (`full_demo.py`) shows how a PyQt6 application can integrate
+the complete toolkit with minimal code — editor, spell checking, thesaurus,
+dictionary management, and language switching.
+
 ## Performance benchmark
 
 The portable engines include a reproducible, subprocess-isolated benchmark for

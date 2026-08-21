@@ -68,3 +68,6 @@ changes are recorded here before a release.
   and independent spelling/thesaurus classifications (`ready`, `limited`,
   `unsupported`). Includes CLI entry point and GitHub Actions artifact upload
   opt-in with 3-day retention.
+- Add standalone examples under `examples/` demonstrating QTextEdit,
+  QPlainTextEdit, spell checking, thesaurus, dictionary manager, and a
+  full-featured demo that integrates all toolkit features.
