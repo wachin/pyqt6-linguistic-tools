@@ -74,6 +74,9 @@ Healthy languages remain available, repeated failures are suppressed, and
 structured diagnostics can be bridged to Python logging. See
 [`docs/error-handling.md`](docs/error-handling.md).
 
+Fast, Qt-offscreen, curated corpus, and full-corpus test workflows are kept
+separate and mapped to their contracts in [`docs/testing.md`](docs/testing.md).
+
 Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
 registry and personal-dictionary revisions provide automatic invalidation.
 Cache statistics remain available for tuning without exposing engine objects.
