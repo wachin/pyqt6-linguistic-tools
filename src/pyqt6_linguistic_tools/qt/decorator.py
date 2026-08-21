@@ -15,6 +15,7 @@ from pyqt6_linguistic_tools.tokenizer import (
 )
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 from pyqt6_linguistic_tools.qt.async_spellcheck import AsyncSpellCheckController
+from pyqt6_linguistic_tools.qt.context_menu import LinguisticContextMenu
 from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 from pyqt6_linguistic_tools.qt.spell_highlighter import SpellCheckHighlighter
 
@@ -47,6 +48,7 @@ class LinguisticTextEditDecorator(QObject):
     context_menu_enabled_changed = pyqtSignal(bool)
     token_filters_changed = pyqtSignal()
     context_action_providers_changed = pyqtSignal()
+    language_changed = pyqtSignal(str)
 
     def __init__(
         self,
@@ -76,6 +78,7 @@ class LinguisticTextEditDecorator(QObject):
         self._context_action_providers: list[ContextActionProvider] = []
         self._highlighter: SpellCheckHighlighter | None = None
         self._async_controller: AsyncSpellCheckController | None = None
+        self._context_menu: LinguisticContextMenu | None = None
         self.attach(editor)
         self._highlighter = SpellCheckHighlighter(
             editor.document(),
@@ -93,6 +96,7 @@ class LinguisticTextEditDecorator(QObject):
         )
         self._async_controller.set_document(editor.document())
         self._async_controller.set_lifetime_guard(editor)
+        self._context_menu = LinguisticContextMenu(self, parent=self)
         self._highlighter.rehighlight()
 
     @property
@@ -180,6 +184,13 @@ class LinguisticTextEditDecorator(QObject):
             raise RuntimeError("the asynchronous controller has not been initialized")
         return self._async_controller
 
+    @property
+    def context_menu(self) -> LinguisticContextMenu:
+        """Return the decorator-owned additive context-menu component."""
+        if self._context_menu is None:
+            raise RuntimeError("the context menu has not been initialized")
+        return self._context_menu
+
     def attach(self, editor: QTextEdit | QPlainTextEdit) -> bool:
         """Attach to an existing supported editor and return whether it changed."""
         self._validate_editor(editor)
@@ -207,6 +218,7 @@ class LinguisticTextEditDecorator(QObject):
         self._filtered_objects = tuple(objects)
         editor.destroyed.connect(self._on_editor_destroyed)
         if self._highlighter is not None:
+            self._highlighter.set_document_id(id(editor.document()))
             self._highlighter.setDocument(editor.document())
             if self._async_controller is not None:
                 self._async_controller.set_document(editor.document())
@@ -279,6 +291,15 @@ class LinguisticTextEditDecorator(QObject):
         return self._update_setting(
             "context_menu_enabled", enabled, self.context_menu_enabled_changed
         )
+
+    def set_language(self, language: str) -> bool:
+        """Change the shared service locale and refresh asynchronous highlighting."""
+        changed = self._service.set_language(language)
+        if changed:
+            self._async_controller.cancel(clear_pending=True)
+            self._highlighter.clear_cache(rehighlight=True)
+            self.language_changed.emit(self._service.language)
+        return changed
 
     def add_token_filter(self, token_filter: TokenFilter) -> bool:
         """Register one editor-specific token filter by object identity."""
@@ -454,6 +475,9 @@ class LinguisticTextEditDecorator(QObject):
 
     def eventFilter(self, watched: QObject, event: object) -> bool:  # noqa: N802
         """Observe editor events without consuming or changing host behavior."""
+        context_menu = getattr(self, "_context_menu", None)
+        if context_menu is not None and context_menu.handle_event(watched, event):
+            return True
         return False
 
     def _update_setting(self, name: str, enabled: bool, signal: object) -> bool:

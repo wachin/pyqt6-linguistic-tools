@@ -15,6 +15,10 @@ from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 
 if TYPE_CHECKING:
     from pyqt6_linguistic_tools.qt.async_spellcheck import AsyncSpellCheckController
+    from pyqt6_linguistic_tools.qt.context_menu import (
+        LinguisticAction,
+        LinguisticContextMenu,
+    )
     from pyqt6_linguistic_tools.qt.decorator import (
         ContextActionProvider,
         LinguisticTextEditDecorator,
@@ -29,6 +33,8 @@ __all__ = [
     "AsyncSpellCheckController",
     "ContextActionProvider",
     "LinguisticTextEditDecorator",
+    "LinguisticAction",
+    "LinguisticContextMenu",
     "SpellCheckHighlighter",
     "QtIntegrationUnavailableError",
     "QtLinguisticSettings",
@@ -54,6 +60,10 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import async_spellcheck
 
         return async_spellcheck.AsyncSpellCheckController
+    if name in {"LinguisticAction", "LinguisticContextMenu"}:
+        from pyqt6_linguistic_tools.qt import context_menu
+
+        return getattr(context_menu, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

@@ -72,6 +72,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             raise TypeError("check_on_cache_miss must be a boolean")
 
         self._service = service
+        self._document_id: object = id(document)
         self._tokenizer = tokenizer or UnicodeTokenizer()
         self._enabled = enabled
         self._check_on_cache_miss = check_on_cache_miss
@@ -102,6 +103,15 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
 
     def cache_stats(self) -> CacheStats:
         return self._statuses.stats()
+
+    @property
+    def document_id(self) -> object:
+        return self._document_id
+
+    def set_document_id(self, document_id: object) -> None:
+        if document_id is None:
+            raise TypeError("document_id must not be None")
+        self._document_id = document_id
 
     @property
     def check_on_cache_miss(self) -> bool:
@@ -185,8 +195,16 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
         if not self._enabled:
             return
         language = self._service.language
+        block_position = self.currentBlock().position()
+        ignored = self._service.ignored_words(language)
         unknown: list[str] = []
         for token in self._tokenizer.iter_tokens(text):
+            if ignored.is_ignored(
+                token.normalized,
+                document_id=self._document_id,
+                occurrence_id=block_position + token.utf16_start,
+            ):
+                continue
             key = (language, token.normalized)
             found, accepted = self._statuses.try_get(key)
             if not found:

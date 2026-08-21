@@ -268,3 +268,40 @@ read-only counters for diagnostics and tests. Applications normally interact
 with it through `integration.async_controller`; they do not need to manage a
 thread pool themselves. A strict-mode service exception is returned through
 `job_failed`, restores the controller to idle and never modifies the document.
+
+## Context-menu integration
+
+`LinguisticContextMenu` augments the editor's standard menu and preserves
+actions already registered by the host. Misspelled words receive bounded
+suggestions plus `Ignore`, `Ignore All` and `Add to Dictionary`. Correctly
+spelled words never manufacture a spelling error merely to expose `Synonyms`,
+`Open Thesaurus…` or `Language`.
+
+```python
+integration.context_menu.set_action_enabled("ignore_all", False)
+integration.context_menu.open_thesaurus_requested.connect(open_thesaurus)
+```
+
+`Ignore` records only the selected UTF-16 occurrence. `Ignore All` records the
+word for the current document, and adding to the dictionary writes to the
+separate persistent personal dictionary. Each operation invalidates the
+relevant visual cache without attempting to edit an installed system
+dictionary.
+
+Suggestions and synonyms use `suggestion_limit` and `synonym_limit` from
+`QtLinguisticSettings`. Additional synonyms are represented by the translatable
+`More synonyms…` action and `more_synonyms_requested` signal; Phase 26 connects
+that signal to the complete reusable thesaurus dialog.
+
+Every toolkit-owned label uses English source text through the
+`PyQt6LinguisticTools` Qt translation context. Dictionary suggestions, synonyms
+and localized language display names remain source data and are not translated
+again.
+
+Applications using Qt's `CustomContextMenu` policy remain in complete control:
+the decorator does not consume their event. They call `populate_menu()` with
+their menu and cursor to append the same linguistic actions to their own
+`QMenu`. For other policies, right-click and keyboard context-menu events are
+integrated automatically. Registered context-action providers receive the
+editor, menu and current `WordToken`, and may return additional `QAction`
+objects.
