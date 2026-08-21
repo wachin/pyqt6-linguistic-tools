@@ -80,6 +80,13 @@ from pyqt6_linguistic_tools.storage import (
     application_data_directory,
     dictionary_storage_paths,
 )
+from pyqt6_linguistic_tools.tokenizer import (
+    TokenFilter,
+    TokenizerConfig,
+    UnicodeTokenizer,
+    WordToken,
+    tokenize,
+)
 from pyqt6_linguistic_tools.validation import (
     DictionaryValidator,
     regenerate_thesaurus_index,
@@ -142,10 +149,14 @@ __all__ = [
     "ThesaurusBackendResolver",
     "ThesaurusEntry",
     "ThesaurusMeaning",
+    "TokenFilter",
+    "TokenizerConfig",
+    "UnicodeTokenizer",
     "UnsupportedOperationError",
     "UserDictionaryProvider",
     "ValidationCheck",
     "ValidationStatus",
+    "WordToken",
     "application_data_directory",
     "dictionary_storage_paths",
     "load_dictionary_catalog",
@@ -154,5 +165,6 @@ __all__ = [
     "normalize_personal_locale",
     "normalize_personal_word",
     "regenerate_thesaurus_index",
+    "tokenize",
     "__version__",
 ]

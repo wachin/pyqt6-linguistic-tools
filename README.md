@@ -59,6 +59,11 @@ exports, and transactional merge or replace restoration across locales. Its
 portable backups contain only personal words and never alter official source
 dictionaries. See [`docs/personal-backups.md`](docs/personal-backups.md).
 
+`UnicodeTokenizer` recognizes words and combining marks across scripts,
+preserves linguistic apostrophes and hyphens, excludes configurable technical
+regions, and returns exact Python plus Qt-compatible UTF-16 positions. See
+[`docs/unicode-tokenizer.md`](docs/unicode-tokenizer.md).
+
 ## Setting up the repository
 
 ```bash

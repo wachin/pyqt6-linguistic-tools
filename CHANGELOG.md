@@ -44,3 +44,7 @@ changes are recorded here before a release.
   and rollback on multi-locale restore failures.
 - Reject unsafe personal-dictionary locale basenames before they can form a
   filesystem path.
+- Add a dependency-free Unicode tokenizer with exact Python and UTF-16 source
+  offsets, multilingual combining-mark support, internal apostrophes and
+  hyphens, URL/email and numeric exclusions, configurable technical tokens,
+  and host-supplied contextual filters.
