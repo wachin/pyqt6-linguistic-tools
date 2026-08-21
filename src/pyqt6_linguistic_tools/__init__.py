@@ -1,4 +1,17 @@
-"""Cross-platform linguistic services for Python and PyQt6 applications."""
+"""Cross-platform linguistic services for Python and PyQt6 applications.
+
+The stable public API surface is documented in ``docs/public-api.md``.
+Modules, classes, and functions not listed there are implementation details
+that may change without notice.
+
+Typical usage::
+
+    from pyqt6_linguistic_tools import LinguisticService
+    from pyqt6_linguistic_tools.qt import LinguisticTextEditDecorator
+
+    service = LinguisticService(language="en_US")
+    decorator = LinguisticTextEditDecorator(editor, service)
+"""
 
 from pyqt6_linguistic_tools.backends import (
     PyThesBackend,
@@ -120,90 +133,110 @@ from pyqt6_linguistic_tools.validation import (
 __version__ = "0.1.0.dev0"
 
 __all__ = [
-    "BackendCache",
-    "BackendCapabilities",
-    "BackendMetadata",
-    "BackendOperationError",
-    "BackendResolution",
-    "BackendResolutionCode",
-    "BackendResolutionDiagnostic",
-    "BackendResolutionError",
-    "BackendResolver",
-    "BackendUnavailableError",
-    "BACKUP_FORMAT",
-    "BACKUP_VERSION",
-    "CacheStats",
+    # Core service
+    "DiagnosticHandler",
+    "LinguisticService",
+    "logging_diagnostic_handler",
+    # Registry and providers
     "DEFAULT_LINUX_DICTIONARY_PATHS",
-    "DictionaryLoadError",
     "DictionaryCandidate",
-    "DictionaryBundleValidation",
-    "DictionaryCatalog",
-    "DictionaryCatalogEntry",
-    "DictionaryCatalogError",
-    "DictionaryDiscoveryError",
     "DictionaryInfo",
-    "DictionaryImportError",
-    "DictionaryImportResult",
-    "DictionaryMetadata",
-    "DictionaryNotFoundError",
     "DictionaryProvider",
     "DictionaryRegistry",
     "DictionarySourcePriority",
-    "DictionaryStoragePaths",
-    "DictionaryValidationReport",
-    "DictionaryValidator",
-    "DictionaryValidationError",
-    "DiagnosticHandler",
     "DirectoryDictionaryProvider",
-    "LinguisticError",
-    "LinguisticCapabilities",
-    "LinguisticComponentFailure",
-    "LinguisticService",
-    "LinguisticServiceDiagnostic",
     "LinuxSystemDictionaryProvider",
-    "logging_diagnostic_handler",
-    "LinguisticResultCacheStats",
-    "IgnoredWords",
-    "IgnoredWordsStore",
     "ManagedDictionaryProvider",
-    "PersonalDictionary",
-    "PersonalDictionaryBackupEntry",
-    "PersonalDictionaryBackupError",
-    "PersonalDictionaryBackupManager",
-    "PersonalDictionaryBackupPreview",
-    "PersonalDictionaryError",
-    "PersonalDictionaryRestoreEntry",
-    "PersonalDictionaryRestoreResult",
-    "PersonalDictionaryStore",
+    "UserDictionaryProvider",
+    # Backends
+    "BackendCache",
+    "BackendCapabilities",
+    "BackendMetadata",
+    "BackendResolution",
+    "BackendResolutionCode",
+    "BackendResolutionDiagnostic",
+    "BackendResolver",
+    "CacheStats",
+    "LinguisticResultCacheStats",
     "PyThesBackend",
-    "RestoreMode",
     "ResultCache",
     "SpellCheckerBackend",
     "SpellBackendResolver",
     "SpyllsBackend",
     "ThesaurusBackend",
     "ThesaurusBackendResolver",
-    "ThesaurusEntry",
-    "ThesaurusMeaning",
+    # Validation
+    "DictionaryBundleValidation",
+    "DictionaryImportResult",
+    "DictionaryValidationReport",
+    "DictionaryValidator",
+    "regenerate_thesaurus_index",
+    "ValidationCheck",
+    "ValidationStatus",
+    # Compatibility report
+    "CompatibilityClassification",
+    "CompatibilityComponentResult",
+    "CompatibilityLocaleResult",
+    "CompatibilityReportMetadata",
+    "DictionaryCompatibilityReport",
+    "generate_compatibility_report",
+    "serialize_report",
+    "write_report",
+    # Personal dictionary
+    "BACKUP_FORMAT",
+    "BACKUP_VERSION",
+    "PersonalDictionary",
+    "PersonalDictionaryBackupEntry",
+    "PersonalDictionaryBackupManager",
+    "PersonalDictionaryBackupPreview",
+    "PersonalDictionaryRestoreEntry",
+    "PersonalDictionaryRestoreResult",
+    "PersonalDictionaryStore",
+    "RestoreMode",
+    "normalize_personal_locale",
+    "normalize_personal_word",
+    # Ignored words
+    "IgnoredWords",
+    "IgnoredWordsStore",
+    # Locales
+    "locale_display_name",
+    "normalize_locale",
+    # Tokenizer
     "TokenFilter",
     "TokenizerConfig",
     "UnicodeTokenizer",
-    "UnsupportedOperationError",
-    "UserDictionaryProvider",
-    "ValidationCheck",
-    "ValidationStatus",
     "WordToken",
+    "tokenize",
+    # Capabilities
+    "LinguisticCapabilities",
+    "LinguisticComponentFailure",
+    "LinguisticServiceDiagnostic",
+    # Models
+    "DictionaryMetadata",
+    "ThesaurusEntry",
+    "ThesaurusMeaning",
+    # Errors
+    "BackendOperationError",
+    "BackendResolutionError",
+    "BackendUnavailableError",
+    "DictionaryCatalogError",
+    "DictionaryDiscoveryError",
+    "DictionaryImportError",
+    "DictionaryLoadError",
+    "DictionaryNotFoundError",
+    "DictionaryValidationError",
+    "LinguisticError",
+    "PersonalDictionaryBackupError",
+    "PersonalDictionaryError",
+    "UnsupportedOperationError",
+    # Catalog
+    "DictionaryCatalog",
+    "DictionaryCatalogEntry",
+    "load_dictionary_catalog",
+    # Storage
+    "DictionaryStoragePaths",
     "application_data_directory",
     "dictionary_storage_paths",
-    "generate_compatibility_report",
-    "load_dictionary_catalog",
-    "locale_display_name",
-    "normalize_locale",
-    "normalize_personal_locale",
-    "normalize_personal_word",
-    "regenerate_thesaurus_index",
-    "serialize_report",
-    "tokenize",
-    "write_report",
+    # Version
     "__version__",
 ]

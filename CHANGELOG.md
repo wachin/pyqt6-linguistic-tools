@@ -71,3 +71,7 @@ changes are recorded here before a release.
 - Add standalone examples under `examples/` demonstrating QTextEdit,
   QPlainTextEdit, spell checking, thesaurus, dictionary manager, and a
   full-featured demo that integrates all toolkit features.
+- Define the stable public API surface in `docs/public-api.md` and a
+  deprecation policy in `docs/deprecation-policy.md`. Reorganize `__all__`
+  in `__init__.py` by category. Add `py.typed` marker for PEP 561 static
+  type checking support.
