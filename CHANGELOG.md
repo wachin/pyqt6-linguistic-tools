@@ -63,3 +63,8 @@ changes are recorded here before a release.
   a dedicated dependency extra and a failing GitHub Actions typing job.
 - Make every GitHub Actions workflow manually dispatched, make corpus artifact
   uploads opt-in, and retain requested reports for only three days.
+- Add machine-readable dictionary compatibility report by locale and component
+  with versioned UTF-8 JSON, deterministic ordering, reproducibility metadata,
+  and independent spelling/thesaurus classifications (`ready`, `limited`,
+  `unsupported`). Includes CLI entry point and GitHub Actions artifact upload
+  opt-in with 3-day retention.

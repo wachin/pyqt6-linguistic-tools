@@ -105,3 +105,17 @@ LibreOffice languages are verified through complete registry discovery rather
 than duplicated word lists. When the pinned collection changes, acceptance
 expectations must be reviewed against that release before updating this
 baseline.
+
+## Compatibility report
+
+Generate a machine-readable dictionary compatibility report for a corpus:
+
+```bash
+python -m pyqt6_linguistic_tools.compatibility_report \
+  /path/to/dicts \
+  compatibility-report.json
+```
+
+The report uses the same validation infrastructure as the corpus tests and
+accepts the corpus root through the same `--dictionary-corpus` pytest option or
+`LIBREOFFICE_DICTIONARIES_PATH` environment variable.

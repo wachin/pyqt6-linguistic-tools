@@ -16,6 +16,11 @@ on:
         required: true
         default: false
         type: boolean
+      upload_compatibility_report:
+        description: Upload dictionary compatibility report as artifact
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -87,6 +92,22 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
+      - name: Generate compatibility report
+        if: ${{ inputs.upload_compatibility_report }}
+        run: >-
+          python -m pyqt6_linguistic_tools.compatibility_report
+          test-data/libreoffice-dictionaries-collection/dicts
+          artifacts/compatibility-report-${{ matrix.os }}.json
+
+      - name: Upload compatibility report
+        if: ${{ always() && inputs.upload_compatibility_report }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-report-${{ matrix.os }}
+          path: artifacts/compatibility-report-${{ matrix.os }}.json
+          if-no-files-found: error
+          retention-days: 3
+
   full:
     if: inputs.suite == 'full'
     name: Full corpus / Ubuntu
@@ -139,5 +160,21 @@ jobs:
         with:
           name: full-corpus-report
           path: artifacts/full-corpus.xml
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Generate compatibility report
+        if: ${{ inputs.upload_compatibility_report }}
+        run: >-
+          python -m pyqt6_linguistic_tools.compatibility_report
+          test-data/libreoffice-dictionaries-collection/dicts
+          artifacts/compatibility-report-full.json
+
+      - name: Upload compatibility report
+        if: ${{ always() && inputs.upload_compatibility_report }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-report-full
+          path: artifacts/compatibility-report-full.json
           if-no-files-found: error
           retention-days: 3

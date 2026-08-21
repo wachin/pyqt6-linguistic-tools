@@ -52,6 +52,11 @@ from pyqt6_linguistic_tools.models import (
     ThesaurusMeaning,
     ValidationCheck,
     ValidationStatus,
+    CompatibilityClassification,
+    CompatibilityComponentResult,
+    CompatibilityLocaleResult,
+    CompatibilityReportMetadata,
+    DictionaryCompatibilityReport,
 )
 from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.ignored import IgnoredWords, IgnoredWordsStore
@@ -101,6 +106,11 @@ from pyqt6_linguistic_tools.tokenizer import (
     UnicodeTokenizer,
     WordToken,
     tokenize,
+)
+from pyqt6_linguistic_tools.compatibility_report import (
+    generate_compatibility_report,
+    serialize_report,
+    write_report,
 )
 from pyqt6_linguistic_tools.validation import (
     DictionaryValidator,
@@ -185,12 +195,15 @@ __all__ = [
     "WordToken",
     "application_data_directory",
     "dictionary_storage_paths",
+    "generate_compatibility_report",
     "load_dictionary_catalog",
     "locale_display_name",
     "normalize_locale",
     "normalize_personal_locale",
     "normalize_personal_word",
     "regenerate_thesaurus_index",
+    "serialize_report",
     "tokenize",
+    "write_report",
     "__version__",
 ]

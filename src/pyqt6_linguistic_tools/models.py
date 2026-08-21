@@ -261,3 +261,120 @@ class LinguisticComponentFailure:
     locale: str
     component: str
     diagnostic: LinguisticServiceDiagnostic
+
+
+class CompatibilityClassification(str, Enum):
+    """Dictionary compatibility classification for a locale/component."""
+
+    READY = "ready"
+    LIMITED = "limited"
+    UNSUPPORTED = "unsupported"
+
+
+@dataclass(frozen=True, slots=True)
+class CompatibilityComponentResult:
+    """Validation result for one spelling or thesaurus component."""
+
+    component: str
+    locale: str
+    source_path: str | None
+    source_encoding: str | None
+    checks: tuple[ValidationCheck, ...]
+    classification: CompatibilityClassification
+    sampled_entries: tuple[str, ...] = ()
+
+    @property
+    def status(self) -> ValidationStatus:
+        statuses = {check.status for check in self.checks}
+        if ValidationStatus.FAIL in statuses:
+            return ValidationStatus.FAIL
+        if ValidationStatus.WARNING in statuses:
+            return ValidationStatus.WARNING
+        return ValidationStatus.PASS
+
+
+@dataclass(frozen=True, slots=True)
+class CompatibilityLocaleResult:
+    """Combined compatibility results for all components of one locale."""
+
+    locale: str
+    display_name: str
+    spelling: CompatibilityComponentResult | None
+    thesaurus: CompatibilityComponentResult | None
+
+    @property
+    def overall_classification(self) -> CompatibilityClassification:
+        classifications = []
+        if self.spelling is not None:
+            classifications.append(self.spelling.classification)
+        if self.thesaurus is not None:
+            classifications.append(self.thesaurus.classification)
+        if not classifications:
+            return CompatibilityClassification.UNSUPPORTED
+        if CompatibilityClassification.UNSUPPORTED in classifications:
+            return CompatibilityClassification.UNSUPPORTED
+        if CompatibilityClassification.LIMITED in classifications:
+            return CompatibilityClassification.LIMITED
+        return CompatibilityClassification.READY
+
+
+@dataclass(frozen=True, slots=True)
+class CompatibilityReportMetadata:
+    """Reproducibility metadata for the compatibility report."""
+
+    schema_version: int
+    generated_at_utc: str
+    toolkit_version: str
+    spylls_version: str
+    pythes_version: str
+    python_version: str
+    platform: str
+    machine: str
+    corpus_identity: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DictionaryCompatibilityReport:
+    """Complete machine-readable dictionary compatibility report."""
+
+    metadata: CompatibilityReportMetadata
+    locales: tuple[CompatibilityLocaleResult, ...]
+
+    @property
+    def summary(self) -> dict[str, int]:
+        counts: dict[str, int] = {
+            "ready": 0,
+            "limited": 0,
+            "unsupported": 0,
+        }
+        for locale in self.locales:
+            counts[locale.overall_classification.value] += 1
+        return counts
+
+
+__all__ = [
+    "BackendCapabilities",
+    "DictionaryMetadata",
+    "BackendMetadata",
+    "ThesaurusMeaning",
+    "ThesaurusEntry",
+    "BackendResolutionCode",
+    "BackendResolutionDiagnostic",
+    "BackendResolution",
+    "DictionarySourcePriority",
+    "DictionaryCandidate",
+    "DictionaryInfo",
+    "ValidationStatus",
+    "ValidationCheck",
+    "DictionaryValidationReport",
+    "DictionaryBundleValidation",
+    "DictionaryImportResult",
+    "LinguisticCapabilities",
+    "LinguisticServiceDiagnostic",
+    "LinguisticComponentFailure",
+    "CompatibilityClassification",
+    "CompatibilityComponentResult",
+    "CompatibilityLocaleResult",
+    "CompatibilityReportMetadata",
+    "DictionaryCompatibilityReport",
+]

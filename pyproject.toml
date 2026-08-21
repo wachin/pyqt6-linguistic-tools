@@ -21,6 +21,10 @@ test = ["pytest>=8"]
 qt = ["PyQt6>=6.6"]
 typing = ["mypy>=1.15,<2"]
 
+[project.scripts]
+pyqt6-linguistic-compatibility-report = "pyqt6_linguistic_tools.compatibility_report:main"
+pyqt6-linguistic-performance = "pyqt6_linguistic_tools.performance:main"
+
 [tool.setuptools.packages.find]
 where = ["src", "libs/spylls", "libs/pythes"]
 include = ["pyqt6_linguistic_tools*", "spylls*", "pythes*"]

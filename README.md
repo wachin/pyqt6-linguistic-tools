@@ -252,6 +252,23 @@ The corpus path is never embedded in the package. See
 [`docs/engine-baseline.md`](docs/engine-baseline.md) for the verified initial
 engine status.
 
+## Compatibility report
+
+The portable engines include a machine-readable dictionary compatibility report
+by locale and component:
+
+```bash
+python -m pyqt6_linguistic_tools.compatibility_report \
+  /path/to/dicts \
+  compatibility-report.json
+```
+
+The report is versioned UTF-8 JSON with deterministic ordering, containing
+per-locale spelling and thesaurus validation results, classifications
+(`ready`, `limited`, `unsupported`), source paths relative to the corpus root,
+encodings, and reproducibility metadata (toolkit and engine versions,
+Python/platform, generation time).
+
 ## Performance benchmark
 
 The portable engines include a reproducible, subprocess-isolated benchmark for
