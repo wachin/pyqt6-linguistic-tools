@@ -6,6 +6,7 @@ from collections.abc import Mapping
 import unicodedata
 
 from pyqt6_linguistic_tools.cache import CacheStats, ResultCache
+from pyqt6_linguistic_tools.locales import normalize_locale
 from pyqt6_linguistic_tools.service import LinguisticService
 from pyqt6_linguistic_tools.tokenizer import UnicodeTokenizer
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
@@ -48,6 +49,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
         service: LinguisticService,
         *,
         tokenizer: UnicodeTokenizer | None = None,
+        language: str | None = None,
         enabled: bool = True,
         misspelling_format: QTextCharFormat | None = None,
         cache_size: int = 2048,
@@ -72,6 +74,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             raise TypeError("check_on_cache_miss must be a boolean")
 
         self._service = service
+        self._language = normalize_locale(language or service.language)
         self._document_id: object = id(document)
         self._tokenizer = tokenizer or UnicodeTokenizer()
         self._enabled = enabled
@@ -96,6 +99,18 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
     @property
     def enabled(self) -> bool:
         return self._enabled
+
+    @property
+    def language(self) -> str:
+        return self._language
+
+    def set_language(self, language: str) -> bool:
+        language = normalize_locale(language)
+        if language == self._language:
+            return False
+        self._language = language
+        self.clear_cache(rehighlight=True)
+        return True
 
     @property
     def misspelling_format(self) -> QTextCharFormat:
@@ -180,7 +195,8 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             if not isinstance(word, str) or not isinstance(accepted, bool):
                 raise TypeError("statuses must map strings to booleans")
             normalized_statuses[unicodedata.normalize("NFC", word)] = accepted
-        if locale != self._service.language:
+        locale = normalize_locale(locale)
+        if locale != self._language:
             return 0
         for word, accepted in normalized_statuses.items():
             self._statuses.put((locale, word), accepted)
@@ -194,7 +210,7 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
         """Tokenize and underline one block; suggestion generation is forbidden."""
         if not self._enabled:
             return
-        language = self._service.language
+        language = self._language
         block_position = self.currentBlock().position()
         ignored = self._service.ignored_words(language)
         unknown: list[str] = []

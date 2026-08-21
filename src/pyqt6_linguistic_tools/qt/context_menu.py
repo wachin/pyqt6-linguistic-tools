@@ -196,7 +196,9 @@ class LinguisticContextMenu(QObject):
         integration = self._integration
         count = 0
         if self.action_enabled(LinguisticAction.SYNONYMS):
-            synonyms = integration.service.synonyms(word)
+            synonyms = integration.service.synonyms(
+                word, locale=integration.language
+            )
             if synonyms:
                 submenu = menu.addMenu(_tr("Synonyms"))
                 limit = integration.settings.synonym_limit
@@ -233,14 +235,29 @@ class LinguisticContextMenu(QObject):
         if not locales:
             return 0
         submenu = menu.addMenu(_tr("Language"))
-        active = self._integration.service.language
+        active = self._integration.language
         for locale in locales:
-            action = submenu.addAction(locale_display_name(locale))
+            info = self._integration.service.dictionary_info(locale)
+            availability: list[str] = []
+            if info is not None and info.has_spelling:
+                availability.append(_tr("Spelling"))
+            if info is not None and info.has_thesaurus:
+                availability.append(_tr("Thesaurus"))
+            capability_text = ", ".join(availability) or _tr("No dictionaries")
+            action = submenu.addAction(
+                f"{locale_display_name(locale)} [{locale}] — {capability_text}"
+            )
             action.setCheckable(True)
             action.setChecked(locale == active)
             action.setData(locale)
             action.triggered.connect(
                 lambda _checked=False, value=locale: self._set_language(value)
+            )
+        if self._integration.language_settings is not None:
+            submenu.addSeparator()
+            action = submenu.addAction(_tr("Set Current Language as Default"))
+            action.triggered.connect(
+                lambda _checked=False: self._integration.set_default_language()
             )
         return 1
 
@@ -268,11 +285,13 @@ class LinguisticContextMenu(QObject):
         if all_occurrences:
             changed = integration.service.ignore_for_document(
                 word,
+                locale=integration.language,
                 document_id=document_id,
             )
         else:
             changed = integration.service.ignore_once(
                 word,
+                locale=integration.language,
                 document_id=document_id,
                 occurrence_id=occurrence_id,
             )
@@ -281,7 +300,9 @@ class LinguisticContextMenu(QObject):
             self.word_ignored.emit(word, all_occurrences)
 
     def _add_to_dictionary(self, word: str) -> None:
-        if self._integration.service.add_to_personal_dictionary(word):
+        if self._integration.service.add_to_personal_dictionary(
+            word, locale=self._integration.language
+        ):
             self._integration.invalidate_spelling(word)
             self.word_added_to_dictionary.emit(word)
 
@@ -305,6 +326,7 @@ class LinguisticContextMenu(QObject):
             self._integration.service,
             word,
             replacement_source=word,
+            locale=self._integration.language,
             parent=editor,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)

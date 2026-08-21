@@ -15,6 +15,7 @@ from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 
 if TYPE_CHECKING:
     from pyqt6_linguistic_tools.qt.async_spellcheck import AsyncSpellCheckController
+    from pyqt6_linguistic_tools.qt.language_settings import QtLanguageSettingsStore
     from pyqt6_linguistic_tools.qt.context_menu import (
         LinguisticAction,
         LinguisticContextMenu,
@@ -42,6 +43,7 @@ __all__ = [
     "SpellCheckHighlighter",
     "ThesaurusDialog",
     "QtIntegrationUnavailableError",
+    "QtLanguageSettingsStore",
     "QtLinguisticSettings",
     "QtRuntimeInfo",
     "pyqt6_available",
@@ -66,6 +68,10 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import async_spellcheck
 
         return async_spellcheck.AsyncSpellCheckController
+    if name == "QtLanguageSettingsStore":
+        from pyqt6_linguistic_tools.qt import language_settings
+
+        return language_settings.QtLanguageSettingsStore
     if name in {"LinguisticAction", "LinguisticContextMenu"}:
         from pyqt6_linguistic_tools.qt import context_menu
 

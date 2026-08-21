@@ -7,6 +7,7 @@ from dataclasses import replace
 import unicodedata
 import weakref
 
+from pyqt6_linguistic_tools.locales import normalize_locale
 from pyqt6_linguistic_tools.service import LinguisticService
 from pyqt6_linguistic_tools.tokenizer import (
     TokenFilter,
@@ -16,6 +17,7 @@ from pyqt6_linguistic_tools.tokenizer import (
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 from pyqt6_linguistic_tools.qt.async_spellcheck import AsyncSpellCheckController
 from pyqt6_linguistic_tools.qt.context_menu import LinguisticContextMenu
+from pyqt6_linguistic_tools.qt.language_settings import QtLanguageSettingsStore
 from pyqt6_linguistic_tools.qt.settings import QtLinguisticSettings
 from pyqt6_linguistic_tools.qt.spell_highlighter import SpellCheckHighlighter
 
@@ -57,6 +59,9 @@ class LinguisticTextEditDecorator(QObject):
         *,
         settings: QtLinguisticSettings | None = None,
         tokenizer: UnicodeTokenizer | None = None,
+        language: str | None = None,
+        language_settings: QtLanguageSettingsStore | None = None,
+        document_key: str | None = None,
     ) -> None:
         if not isinstance(service, LinguisticService):
             raise TypeError("service must be a LinguisticService")
@@ -64,11 +69,34 @@ class LinguisticTextEditDecorator(QObject):
             raise TypeError("settings must be a QtLinguisticSettings")
         if tokenizer is not None and not isinstance(tokenizer, UnicodeTokenizer):
             raise TypeError("tokenizer must be a UnicodeTokenizer")
+        if language_settings is not None and not isinstance(
+            language_settings, QtLanguageSettingsStore
+        ):
+            raise TypeError("language_settings must be a QtLanguageSettingsStore")
+        if document_key is not None and (
+            not isinstance(document_key, str) or not document_key.strip()
+        ):
+            raise ValueError("document_key must be a non-empty string or None")
 
         super().__init__()
         self._service = service
         self._settings = settings or QtLinguisticSettings()
         self._base_tokenizer = tokenizer or UnicodeTokenizer()
+        self._language_settings = language_settings
+        self._document_key = (
+            document_key.strip() if document_key is not None else None
+        )
+        stored_language = None
+        if language_settings is not None:
+            if self._document_key is not None:
+                stored_language = language_settings.document_language(
+                    self._document_key
+                )
+            if stored_language is None:
+                stored_language = language_settings.default_language()
+        self._language = normalize_locale(
+            language or stored_language or service.language
+        )
         self._enabled = True
         self._editor_ref: weakref.ReferenceType[
             QTextEdit | QPlainTextEdit
@@ -84,6 +112,7 @@ class LinguisticTextEditDecorator(QObject):
             editor.document(),
             service,
             tokenizer=self.create_tokenizer(),
+            language=self._language,
             enabled=self.highlighting_active,
             check_on_cache_miss=False,
             parent=self,
@@ -129,6 +158,19 @@ class LinguisticTextEditDecorator(QObject):
     @property
     def settings(self) -> QtLinguisticSettings:
         return self._settings
+
+    @property
+    def language(self) -> str:
+        """Return this editor's language, independent of other editors."""
+        return self._language
+
+    @property
+    def language_settings(self) -> QtLanguageSettingsStore | None:
+        return self._language_settings
+
+    @property
+    def document_key(self) -> str | None:
+        return self._document_key
 
     @property
     def spellcheck_enabled(self) -> bool:
@@ -292,14 +334,35 @@ class LinguisticTextEditDecorator(QObject):
             "context_menu_enabled", enabled, self.context_menu_enabled_changed
         )
 
-    def set_language(self, language: str) -> bool:
-        """Change the shared service locale and refresh asynchronous highlighting."""
-        changed = self._service.set_language(language)
-        if changed:
-            self._async_controller.cancel(clear_pending=True)
-            self._highlighter.clear_cache(rehighlight=True)
-            self.language_changed.emit(self._service.language)
-        return changed
+    def set_language(self, language: str, *, persist: bool = True) -> bool:
+        """Change only this editor's locale and refresh its linguistic state."""
+        if not isinstance(persist, bool):
+            raise TypeError("persist must be a boolean")
+        language = normalize_locale(language)
+        if language == self._language:
+            return False
+        self._async_controller.cancel(clear_pending=True)
+        self._language = language
+        self._service.personal_dictionary(language)
+        self._highlighter.set_language(language)
+        if (
+            persist
+            and self._language_settings is not None
+            and self._document_key is not None
+        ):
+            self._language_settings.set_document_language(
+                self._document_key, language
+            )
+        self.language_changed.emit(language)
+        return True
+
+    def set_default_language(self, language: str | None = None) -> bool:
+        """Persist a toolkit default through the host-provided QSettings store."""
+        if self._language_settings is None:
+            raise RuntimeError("no language settings store is configured")
+        return self._language_settings.set_default_language(
+            language or self._language
+        )
 
     def add_token_filter(self, token_filter: TokenFilter) -> bool:
         """Register one editor-specific token filter by object identity."""
@@ -394,7 +457,7 @@ class LinguisticTextEditDecorator(QObject):
         token = self.word_at_cursor(cursor)
         if token is None:
             return None
-        return self._service.check_word(token.normalized)
+        return self._service.check_word(token.normalized, locale=self._language)
 
     def suggestions_at_cursor(
         self,
@@ -409,7 +472,11 @@ class LinguisticTextEditDecorator(QObject):
         if token is None:
             return ()
         effective_limit = self._settings.suggestion_limit if limit is None else limit
-        return self._service.suggestions(token.normalized, limit=effective_limit)
+        return self._service.suggestions(
+            token.normalized,
+            locale=self._language,
+            limit=effective_limit,
+        )
 
     def replace_word_at_cursor(
         self,

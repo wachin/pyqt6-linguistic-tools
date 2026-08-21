@@ -205,7 +205,7 @@ class AsyncSpellCheckController(QObject):
         words = tuple(sorted(self._pending))
         self._pending.clear()
         generation = self._generation
-        locale = self._service.language
+        locale = self._highlighter.language
         cancelled = Event()
         self._cancelled = cancelled
         self._inflight = set(words)
@@ -267,7 +267,7 @@ class AsyncSpellCheckController(QObject):
         if (
             was_cancelled
             or generation != self._generation
-            or locale != self._service.language
+            or locale != self._highlighter.language
             or self._document is None
             or sip.isdeleted(self._document)
             or sip.isdeleted(self._highlighter)

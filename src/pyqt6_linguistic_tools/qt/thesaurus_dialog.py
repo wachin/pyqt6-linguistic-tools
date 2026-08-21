@@ -5,6 +5,7 @@ from __future__ import annotations
 import unicodedata
 
 from pyqt6_linguistic_tools.models import ThesaurusEntry
+from pyqt6_linguistic_tools.locales import normalize_locale
 from pyqt6_linguistic_tools.service import LinguisticService
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 
@@ -60,6 +61,7 @@ class ThesaurusDialog(QDialog):
         word: str,
         *,
         replacement_source: str | None = None,
+        locale: str | None = None,
         parent: QWidget | None = None,
     ) -> None:
         if not isinstance(service, LinguisticService):
@@ -70,6 +72,7 @@ class ThesaurusDialog(QDialog):
             raise TypeError("replacement_source must be a string or None")
         super().__init__(parent)
         self._service = service
+        self._locale = normalize_locale(locale or service.language)
         self._replacement_source = replacement_source or word
         self._history: list[str] = []
         self._history_index = -1
@@ -91,6 +94,10 @@ class ThesaurusDialog(QDialog):
     @property
     def replacement_source(self) -> str:
         return self._replacement_source
+
+    @property
+    def locale(self) -> str:
+        return self._locale
 
     @property
     def entry(self) -> ThesaurusEntry | None:
@@ -127,7 +134,7 @@ class ThesaurusDialog(QDialog):
             self._history_index = len(self._history) - 1
         self.search_edit.setText(word)
         self.query_label.setText(_tr("Results for: %1").replace("%1", word))
-        self._entry = self._service.thesaurus_entry(word)
+        self._entry = self._service.thesaurus_entry(word, locale=self._locale)
         self._populate_results()
         self._update_navigation()
         self.query_changed.emit(word)

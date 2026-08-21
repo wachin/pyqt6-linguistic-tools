@@ -83,7 +83,7 @@ def _action(menu: QMenu, text: str) -> QAction:
 
 def test_preserves_standard_host_and_provider_actions(application, service, monkeypatch):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: True)
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("correcta")
     host_action = QAction("Host action", editor)
@@ -111,7 +111,7 @@ def test_misspelled_word_gets_bounded_suggestions_and_safe_replacement(
         "suggestions",
         lambda _word, **_kwargs: ("canción", "cansión")[: _kwargs["limit"]],
     )
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("cansion final")
     integration = _integration(editor, service, suggestion_limit=1)
@@ -134,7 +134,9 @@ def test_correct_word_has_thesaurus_and_language_but_no_spelling_actions(
         raise AssertionError("correct words must not request spelling suggestions")
 
     monkeypatch.setattr(service, "suggestions", fail_suggestions)
-    monkeypatch.setattr(service, "synonyms", lambda _word: ("tema", "canto"))
+    monkeypatch.setattr(
+        service, "synonyms", lambda _word, **_kwargs: ("tema", "canto")
+    )
     monkeypatch.setattr(service, "available_languages", lambda: ("en_US", "es_EC"))
     editor = QTextEdit("canción")
     integration = _integration(editor, service)
@@ -152,7 +154,9 @@ def test_synonyms_are_bounded_and_more_action_emits_request(
     application, service, monkeypatch
 ):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: True)
-    monkeypatch.setattr(service, "synonyms", lambda _word: ("uno", "dos", "tres"))
+    monkeypatch.setattr(
+        service, "synonyms", lambda _word, **_kwargs: ("uno", "dos", "tres")
+    )
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("palabra")
     integration = _integration(editor, service, synonym_limit=2)
@@ -173,7 +177,7 @@ def test_ignore_once_and_ignore_all_keep_scopes_separate(
 ):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: False)
     monkeypatch.setattr(service, "suggestions", lambda *_args, **_kwargs: ())
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("error error")
     integration = _integration(editor, service)
@@ -201,7 +205,7 @@ def test_ignore_once_and_ignore_all_keep_scopes_separate(
 def test_add_to_dictionary_updates_personal_words(application, service, monkeypatch):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: False)
     monkeypatch.setattr(service, "suggestions", lambda *_args, **_kwargs: ())
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("ChordFlow")
     integration = _integration(editor, service)
@@ -217,7 +221,7 @@ def test_individual_actions_and_custom_policy_remain_host_controlled(
 ):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: False)
     monkeypatch.setattr(service, "suggestions", lambda *_args, **_kwargs: ("fixed",))
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ())
     editor = QTextEdit("error")
     editor.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -236,7 +240,7 @@ def test_individual_actions_and_custom_policy_remain_host_controlled(
 
 def test_language_and_thesaurus_actions_emit_and_update(application, service, monkeypatch):
     monkeypatch.setattr(service, "check_word", lambda _word, **_kwargs: True)
-    monkeypatch.setattr(service, "synonyms", lambda _word: ())
+    monkeypatch.setattr(service, "synonyms", lambda _word, **_kwargs: ())
     monkeypatch.setattr(service, "available_languages", lambda: ("en_US", "es_EC"))
     editor = QTextEdit("palabra")
     integration = _integration(editor, service)
@@ -254,4 +258,5 @@ def test_language_and_thesaurus_actions_emit_and_update(application, service, mo
 
     assert thesaurus_requests == ["palabra"]
     assert language_changes == ["en_US"]
-    assert service.language == "en_US"
+    assert integration.language == "en_US"
+    assert service.language == "es_EC"

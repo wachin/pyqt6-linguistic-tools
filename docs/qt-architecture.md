@@ -69,6 +69,7 @@ qt/
 ├── spell_highlighter.py   narrow cached spelling visualization
 ├── context_menu.py        non-destructive, translatable editor actions
 ├── thesaurus_dialog.py    reusable meanings, navigation, and replacement UI
+├── language_settings.py   optional QSettings language persistence adapter
 ├── dictionary_manager.py  source/capability display and safe app data actions
 └── settings.py            validated Qt integration defaults
 ```
@@ -93,8 +94,50 @@ components:
 - twelve inline synonyms;
 - a 300 ms asynchronous typing debounce.
 
-It is an immutable value object and performs no persistence. Phase 27 will add
-a `QSettings` adapter without making core service preferences depend on Qt.
+It is an immutable value object and performs no persistence.
+`QtLanguageSettingsStore` is the separate optional persistence adapter. The
+host supplies its own `QSettings`, so the toolkit does not choose an
+organization name, application name, or settings file on the host's behalf.
+
+## Language selection and persistence
+
+Language belongs to each `LinguisticTextEditDecorator`, not to the shared
+service. ChordFlow and ChordPages may therefore share one service while two
+documents use different regional dictionaries. Every spelling, suggestion,
+ignored-word, personal-dictionary, and thesaurus request passes that locale
+explicitly.
+
+```python
+from PyQt6.QtCore import QSettings
+
+from pyqt6_linguistic_tools.qt import (
+    LinguisticTextEditDecorator,
+    QtLanguageSettingsStore,
+)
+
+languages = QtLanguageSettingsStore(QSettings())
+integration = LinguisticTextEditDecorator(
+    editor,
+    service,
+    language_settings=languages,
+    document_key="songs/album-one/song.chord",
+)
+
+integration.set_language("es_EC")  # persisted for this document
+integration.set_default_language()  # optional application-wide default
+```
+
+An explicit constructor `language` takes precedence, followed by the stored
+document language, stored default language, and finally `service.language`.
+The context menu shows native friendly names, exact locale identifiers, and
+whether spelling and thesaurus resources are available. Regional variants
+remain separate.
+
+Changing a document language cancels obsolete asynchronous work, clears the
+editor highlighter's locale-bound status cache, and opens the matching
+personal dictionary. Service result caches remain safely keyed by locale and
+the bounded backend LRU unloads portable engines only when they are evicted;
+this avoids needless reloads when a user returns to a recent language.
 
 ## Translation and host ownership rules
 

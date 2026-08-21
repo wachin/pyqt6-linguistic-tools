@@ -52,7 +52,7 @@ def service(tmp_path):
     )
 
 
-def _entry(word: str) -> ThesaurusEntry | None:
+def _entry(word: str, **_kwargs) -> ThesaurusEntry | None:
     entries = {
         "bright": ThesaurusEntry(
             word="bright",
@@ -134,7 +134,7 @@ def test_new_search_after_back_discards_forward_history(
 
 
 def test_no_result_state_is_explicit(application, service, monkeypatch):
-    monkeypatch.setattr(service, "thesaurus_entry", lambda _word: None)
+    monkeypatch.setattr(service, "thesaurus_entry", lambda _word, **_kwargs: None)
     missing: list[str] = []
     dialog = ThesaurusDialog(service, "unknown")
     dialog.no_results.connect(missing.append)
