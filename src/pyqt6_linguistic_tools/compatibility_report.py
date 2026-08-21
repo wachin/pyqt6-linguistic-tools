@@ -7,6 +7,7 @@ import json
 import platform
 import sys
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,8 @@ from pyqt6_linguistic_tools.models import (
     CompatibilityLocaleResult,
     CompatibilityReportMetadata,
     DictionaryCompatibilityReport,
+    DictionaryInfo,
+    DictionaryValidationReport,
     ValidationCheck,
     ValidationStatus,
 )
@@ -47,7 +50,7 @@ def _relative_to_corpus(path: Path, corpus_root: Path) -> str | None:
 
 
 def _classify_component(
-    report: "pyqt6_linguistic_tools.models.DictionaryValidationReport",
+    report: DictionaryValidationReport,
 ) -> CompatibilityClassification:
     if report.status is ValidationStatus.FAIL:
         return CompatibilityClassification.UNSUPPORTED
@@ -58,7 +61,7 @@ def _classify_component(
 
 def _component_result(
     validator: DictionaryValidator,
-    registry_entry: "pyqt6_linguistic_tools.models.DictionaryInfo",
+    registry_entry: DictionaryInfo,
     corpus_root: Path,
     *,
     is_spelling: bool,
@@ -183,8 +186,6 @@ def serialize_report(report: DictionaryCompatibilityReport) -> str:
         if isinstance(obj, Enum):
             return obj.value
         raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
-
-    from enum import Enum
 
     return json.dumps(
         report,

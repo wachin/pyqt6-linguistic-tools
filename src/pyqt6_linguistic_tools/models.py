@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from enum import IntEnum
 from pathlib import Path
@@ -301,21 +301,23 @@ class CompatibilityLocaleResult:
     display_name: str
     spelling: CompatibilityComponentResult | None
     thesaurus: CompatibilityComponentResult | None
+    overall_classification: CompatibilityClassification = field(init=False)
 
-    @property
-    def overall_classification(self) -> CompatibilityClassification:
-        classifications = []
+    def __post_init__(self) -> None:
+        classifications: list[CompatibilityClassification] = []
         if self.spelling is not None:
             classifications.append(self.spelling.classification)
         if self.thesaurus is not None:
             classifications.append(self.thesaurus.classification)
         if not classifications:
-            return CompatibilityClassification.UNSUPPORTED
-        if CompatibilityClassification.UNSUPPORTED in classifications:
-            return CompatibilityClassification.UNSUPPORTED
-        if CompatibilityClassification.LIMITED in classifications:
-            return CompatibilityClassification.LIMITED
-        return CompatibilityClassification.READY
+            value = CompatibilityClassification.UNSUPPORTED
+        elif CompatibilityClassification.UNSUPPORTED in classifications:
+            value = CompatibilityClassification.UNSUPPORTED
+        elif CompatibilityClassification.LIMITED in classifications:
+            value = CompatibilityClassification.LIMITED
+        else:
+            value = CompatibilityClassification.READY
+        object.__setattr__(self, "overall_classification", value)
 
 
 @dataclass(frozen=True, slots=True)

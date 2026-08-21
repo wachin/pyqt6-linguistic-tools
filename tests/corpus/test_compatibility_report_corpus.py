@@ -1,5 +1,7 @@
 """Corpus integration tests for dictionary compatibility report."""
 
+import json
+
 import pytest
 
 from pyqt6_linguistic_tools import (
@@ -8,7 +10,7 @@ from pyqt6_linguistic_tools import (
 )
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_basic_structure(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -23,7 +25,7 @@ def test_compatibility_report_basic_structure(dictionary_corpus):
     assert len(report.locales) > 0
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_locale_count_matches_registry(dictionary_corpus):
     from pyqt6_linguistic_tools import DictionaryRegistry, DirectoryDictionaryProvider, DictionarySourcePriority
 
@@ -40,7 +42,7 @@ def test_compatibility_report_locale_count_matches_registry(dictionary_corpus):
     assert len(report.locales) == len(registry_entries)
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_ecuador_spelling_ready(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -52,7 +54,7 @@ def test_compatibility_report_ecuador_spelling_ready(dictionary_corpus):
     assert ecuador.spelling.source_path is not None
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_spanish_thesaurus_ready(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -64,7 +66,7 @@ def test_compatibility_report_spanish_thesaurus_ready(dictionary_corpus):
     assert spanish.thesaurus.source_path is not None
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_spelling_only_locale(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -72,7 +74,7 @@ def test_compatibility_report_spelling_only_locale(dictionary_corpus):
     assert len(spelling_only) > 0
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_thesaurus_only_locale(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -80,7 +82,7 @@ def test_compatibility_report_thesaurus_only_locale(dictionary_corpus):
     assert len(thesaurus_only) > 0
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_both_components_locale(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -88,7 +90,7 @@ def test_compatibility_report_both_components_locale(dictionary_corpus):
     assert len(both) > 0
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_locale_ordering(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -96,7 +98,7 @@ def test_compatibility_report_locale_ordering(dictionary_corpus):
     assert locales == sorted(locales, key=lambda x: (x.split('_')[0], x))
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_summary_counts(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -107,7 +109,7 @@ def test_compatibility_report_summary_counts(dictionary_corpus):
     assert sum(summary.values()) == len(report.locales)
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_checks_present(dictionary_corpus):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
 
@@ -131,7 +133,7 @@ def test_compatibility_report_checks_present(dictionary_corpus):
             assert "representative_entries" in check_codes
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_deterministic_output(dictionary_corpus):
     report1 = generate_compatibility_report(dictionary_corpus, sample_size=2)
     report2 = generate_compatibility_report(dictionary_corpus, sample_size=2)
@@ -140,7 +142,7 @@ def test_compatibility_report_deterministic_output(dictionary_corpus):
     assert serialize_report(report1) == serialize_report(report2)
 
 
-@pytest.mark.corpus
+@pytest.mark.full_corpus
 def test_compatibility_report_serialization(dictionary_corpus, tmp_path):
     report = generate_compatibility_report(dictionary_corpus, sample_size=2)
     output = tmp_path / "compat-report.json"
@@ -153,6 +155,3 @@ def test_compatibility_report_serialization(dictionary_corpus, tmp_path):
     parsed = json.loads(content)
     assert parsed["metadata"]["schema_version"] == 1
     assert len(parsed["locales"]) == len(report.locales)
-
-
-import json
