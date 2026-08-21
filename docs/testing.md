@@ -57,6 +57,7 @@ reports the complete compatibility picture.
 | Highlighting and asynchronous checks | `test_spell_highlighter.py`, `test_async_spellcheck.py` |
 | Context menu, thesaurus, languages | `test_context_menu.py`, `test_thesaurus_dialog.py`, `test_language_selection.py` |
 | Dictionary Manager | `test_dictionary_manager.py` |
+| Pinned multilingual acceptance matrix | `corpus/test_language_matrix.py` |
 
 The tokenizer fixtures explicitly cover `Señor`, `creación`, `Straße`,
 `français`, `Москва`, `d’Artagnan`, and `O'Connor`. The PyThes adapter fixture
@@ -71,3 +72,18 @@ They must not assume an entire suggestion order or synonym list when a newer
 LibreOffice dictionary may legitimately change it. The service tests verify
 that backend suggestions pass through unchanged rather than replacing them
 with toolkit-authored guesses.
+
+## Pinned language acceptance matrix
+
+`corpus/test_language_matrix.py` checks the portable Spylls backend against
+real English, Ecuadorian Spanish, French, German, Italian, Brazilian and
+European Portuguese, Dutch, Polish, Russian, Ukrainian, Greek, and Turkish
+dictionaries. Each case contains several recorded valid words and one clearly
+invented rejected word. Both Portuguese regional variants are independent
+cases.
+
+The matrix is test data, not an application spelling list. Additional
+LibreOffice languages are verified through complete registry discovery rather
+than duplicated word lists. When the pinned collection changes, acceptance
+expectations must be reviewed against that release before updating this
+baseline.
