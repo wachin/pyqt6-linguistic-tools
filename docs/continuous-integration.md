@@ -26,6 +26,12 @@ Qt uses the offscreen platform so tests do not open windows. The fast suite
 already contains backend loading, Unicode, UTF-16 offsets, and small UTF-8 and
 legacy-encoding regression fixtures.
 
+An independent typing job installs the `typing` and `qt` extras and runs
+`python -m mypy`. The checked target is the complete core and Qt implementation
+under the Python 3.10 language contract. Missing third-party annotations are
+ignored, but toolkit errors, unused suppressions, redundant casts, and typed or
+untyped function bodies remain checked. No toolkit package is excluded.
+
 A separate Ubuntu job installs the distribution's `hunspell-es` and
 `mythes-es` data packages, then runs the Linux platform smoke tests. Installing
 these packages is an action performed only inside the disposable CI runner;
@@ -55,7 +61,6 @@ configure branch protection for `main` and require the relevant Fast CI and
 curated-corpus checks. A future release workflow must depend on those checks;
 this repository currently has no release automation to gate.
 
-The static typing job is intentionally not enabled yet. `mypy` currently
-identifies genuine annotations and Qt override issues. Those should be fixed
-incrementally instead of suppressing the entire Qt package or allowing the CI
-step to succeed on errors.
+Static typing is a normal failing CI job. In particular, Qt return values that
+its bindings declare as optional are checked before use, and toolkit widget
+properties must not override Qt methods with incompatible return types.

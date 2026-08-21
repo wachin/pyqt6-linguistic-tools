@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from pyqt6_linguistic_tools.catalog import DictionaryCatalog, DictionaryCatalogEntry
@@ -131,7 +132,10 @@ class DictionaryManagerDialog(QDialog):
             None,
         )
         self._catalog = catalog
-        self._thread_pool = thread_pool or QThreadPool.globalInstance()
+        selected_pool = thread_pool or QThreadPool.globalInstance()
+        if selected_pool is None:
+            raise RuntimeError("Qt did not provide a global thread pool")
+        self._thread_pool: QThreadPool = selected_pool
         self._entries: dict[str, DictionaryInfo] = {}
         self._catalog_entries: dict[str, DictionaryCatalogEntry] = {}
         self._workers: set[_ImportTask] = set()
@@ -179,7 +183,7 @@ class DictionaryManagerDialog(QDialog):
 
     def import_files(
         self,
-        files: tuple[str | Path, ...] | list[str | Path],
+        files: Sequence[str | Path],
         *,
         bundle_name: str | None = None,
     ) -> bool:

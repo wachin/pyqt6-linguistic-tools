@@ -206,9 +206,9 @@ class SpellCheckHighlighter(QSyntaxHighlighter):
             return 0
         return len(normalized_statuses)
 
-    def highlightBlock(self, text: str) -> None:  # noqa: N802
+    def highlightBlock(self, text: str | None) -> None:  # noqa: N802
         """Tokenize and underline one block; suggestion generation is forbidden."""
-        if not self._enabled:
+        if not self._enabled or text is None:
             return
         language = self._language
         block_position = self.currentBlock().position()

@@ -13,6 +13,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  typing:
+    name: Static typing / Python 3.10 contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out toolkit
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Check out portable engine submodules
+        run: git submodule update --init --depth 1 libs/spylls libs/pythes
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install Qt and typing dependencies
+        run: python -m pip install --upgrade pip ".[qt,typing]"
+
+      - name: Check the complete public implementation
+        run: python -m mypy
+
   tests:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}

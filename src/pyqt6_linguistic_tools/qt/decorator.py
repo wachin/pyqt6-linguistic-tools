@@ -24,7 +24,7 @@ from pyqt6_linguistic_tools.qt.spell_highlighter import SpellCheckHighlighter
 
 require_pyqt6()
 
-from PyQt6.QtCore import QObject, Qt, pyqtSignal  # noqa: E402
+from PyQt6.QtCore import QObject, Qt, pyqtBoundSignal, pyqtSignal  # noqa: E402
 from PyQt6.QtGui import QTextCursor  # noqa: E402
 from PyQt6.QtWidgets import QPlainTextEdit, QTextEdit  # noqa: E402
 
@@ -108,8 +108,11 @@ class LinguisticTextEditDecorator(QObject):
         self._async_controller: AsyncSpellCheckController | None = None
         self._context_menu: LinguisticContextMenu | None = None
         self.attach(editor)
+        document = editor.document()
+        if document is None:
+            raise RuntimeError("the editor did not provide a text document")
         self._highlighter = SpellCheckHighlighter(
-            editor.document(),
+            document,
             service,
             tokenizer=self.create_tokenizer(),
             language=self._language,
@@ -123,7 +126,7 @@ class LinguisticTextEditDecorator(QObject):
             debounce_ms=self._settings.debounce_ms,
             parent=self,
         )
-        self._async_controller.set_document(editor.document())
+        self._async_controller.set_document(document)
         self._async_controller.set_lifetime_guard(editor)
         self._context_menu = LinguisticContextMenu(self, parent=self)
         self._highlighter.rehighlight()
@@ -341,10 +344,10 @@ class LinguisticTextEditDecorator(QObject):
         language = normalize_locale(language)
         if language == self._language:
             return False
-        self._async_controller.cancel(clear_pending=True)
+        self.async_controller.cancel(clear_pending=True)
         self._language = language
         self._service.personal_dictionary(language)
-        self._highlighter.set_language(language)
+        self.highlighter.set_language(language)
         if (
             persist
             and self._language_settings is not None
@@ -540,14 +543,20 @@ class LinguisticTextEditDecorator(QObject):
         self.context_action_providers_changed.emit()
         return True
 
-    def eventFilter(self, watched: QObject, event: object) -> bool:  # noqa: N802
+    def eventFilter(  # noqa: N802
+        self, watched: QObject | None, event: object
+    ) -> bool:
         """Observe editor events without consuming or changing host behavior."""
+        if watched is None:
+            return False
         context_menu = getattr(self, "_context_menu", None)
         if context_menu is not None and context_menu.handle_event(watched, event):
             return True
         return False
 
-    def _update_setting(self, name: str, enabled: bool, signal: object) -> bool:
+    def _update_setting(
+        self, name: str, enabled: bool, signal: pyqtBoundSignal
+    ) -> bool:
         enabled = self._validate_boolean(enabled)
         if getattr(self._settings, name) == enabled:
             return False

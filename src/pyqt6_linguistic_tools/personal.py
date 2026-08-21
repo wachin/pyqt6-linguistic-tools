@@ -242,7 +242,10 @@ class PersonalDictionary:
                 payload = json.load(personal_file)
             if not isinstance(payload, dict) or payload.get("version") != _FORMAT_VERSION:
                 raise ValueError("unsupported personal dictionary format")
-            stored_locale = normalize_locale(payload.get("locale"))
+            locale_value = payload.get("locale")
+            if not isinstance(locale_value, str):
+                raise ValueError("personal dictionary locale must be a string")
+            stored_locale = normalize_locale(locale_value)
             if stored_locale != self.locale:
                 raise ValueError(
                     f"stored locale {stored_locale!r} does not match {self.locale!r}"

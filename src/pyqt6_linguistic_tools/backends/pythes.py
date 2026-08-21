@@ -72,7 +72,7 @@ class PyThesBackend(ThesaurusBackend):
 
     @property
     def metadata(self) -> BackendMetadata:
-        paths = (self._data_path,)
+        paths: tuple[Path, ...] = (self._data_path,)
         if self._index_path.is_file():
             paths += (self._index_path,)
         return BackendMetadata(
@@ -134,8 +134,16 @@ class PyThesBackend(ThesaurusBackend):
             raise TypeError("word must be a string")
         with self._lock:
             self.load_dictionary()
+            engine = self._engine
+            if engine is None:  # Defensive guard for alternative engine loaders.
+                raise BackendUnavailableError(
+                    "PyThes did not retain a loaded thesaurus",
+                    backend=self.NAME,
+                    operation="lookup",
+                    path=self._data_path,
+                )
             try:
-                result = self._engine.lookup(word)
+                result = engine.lookup(word)
             except Exception as error:
                 raise BackendOperationError(
                     "PyThes failed to look up a word",
@@ -157,4 +165,3 @@ class PyThesBackend(ThesaurusBackend):
                 for meaning in result.meanings
             ),
         )
-

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
+from collections.abc import Iterable
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from pyqt6_linguistic_tools.locales import locale_display_name
@@ -27,7 +28,19 @@ def _tr(text: str) -> str:
     return QCoreApplication.translate(_TRANSLATION_CONTEXT, text)
 
 
-class LinguisticAction(StrEnum):
+def _require_action(action: QAction | None) -> QAction:
+    if action is None:
+        raise RuntimeError("Qt did not create the requested menu action")
+    return action
+
+
+def _require_menu(menu: QMenu | None) -> QMenu:
+    if menu is None:
+        raise RuntimeError("Qt did not create the requested menu")
+    return menu
+
+
+class LinguisticAction(str, Enum):
     SUGGESTIONS = "suggestions"
     IGNORE = "ignore"
     IGNORE_ALL = "ignore_all"
@@ -80,7 +93,7 @@ class LinguisticContextMenu(QObject):
             cursor = editor.textCursor()
         elif not isinstance(cursor, QTextCursor):
             raise TypeError("cursor must be a QTextCursor or None")
-        menu = editor.createStandardContextMenu()
+        menu = _require_menu(editor.createStandardContextMenu())
         existing = set(menu.actions())
         for action in editor.actions():
             if action not in existing:
@@ -125,6 +138,8 @@ class LinguisticContextMenu(QObject):
         ):
             return False
         viewport = editor.viewport()
+        if viewport is None:
+            return False
         position = event.pos()
         if watched is editor:
             position = viewport.mapFrom(editor, position)
@@ -151,7 +166,7 @@ class LinguisticContextMenu(QObject):
             if suggestions:
                 menu.addSeparator()
                 for suggestion in suggestions:
-                    action = menu.addAction(suggestion)
+                    action = _require_action(menu.addAction(suggestion))
                     action.triggered.connect(
                         lambda _checked=False, value=suggestion: (
                             integration.replace_word_at_cursor(
@@ -164,7 +179,9 @@ class LinguisticContextMenu(QObject):
                     count += 1
             else:
                 menu.addSeparator()
-                action = menu.addAction(_tr("No spelling suggestions"))
+                action = _require_action(
+                    menu.addAction(_tr("No spelling suggestions"))
+                )
                 action.setEnabled(False)
                 count += 1
         scope_actions = []
@@ -200,10 +217,10 @@ class LinguisticContextMenu(QObject):
                 word, locale=integration.language
             )
             if synonyms:
-                submenu = menu.addMenu(_tr("Synonyms"))
+                submenu = _require_menu(menu.addMenu(_tr("Synonyms")))
                 limit = integration.settings.synonym_limit
                 for synonym in synonyms[:limit]:
-                    action = submenu.addAction(synonym)
+                    action = _require_action(submenu.addAction(synonym))
                     action.triggered.connect(
                         lambda _checked=False, value=synonym: (
                             integration.replace_word_at_cursor(
@@ -215,13 +232,15 @@ class LinguisticContextMenu(QObject):
                     )
                 if len(synonyms) > limit:
                     submenu.addSeparator()
-                    action = submenu.addAction(_tr("More synonyms…"))
+                    action = _require_action(
+                        submenu.addAction(_tr("More synonyms…"))
+                    )
                     action.triggered.connect(
                         lambda: self._request_thesaurus(word, cursor, more=True)
                     )
                 count += 1
         if self.action_enabled(LinguisticAction.OPEN_THESAURUS):
-            action = menu.addAction(_tr("Open Thesaurus…"))
+            action = _require_action(menu.addAction(_tr("Open Thesaurus…")))
             action.triggered.connect(
                 lambda: self._request_thesaurus(word, cursor, more=False)
             )
@@ -234,7 +253,7 @@ class LinguisticContextMenu(QObject):
         locales = self._integration.service.available_languages()
         if not locales:
             return 0
-        submenu = menu.addMenu(_tr("Language"))
+        submenu = _require_menu(menu.addMenu(_tr("Language")))
         active = self._integration.language
         for locale in locales:
             info = self._integration.service.dictionary_info(locale)
@@ -254,8 +273,10 @@ class LinguisticContextMenu(QObject):
             elif info is not None and info.has_thesaurus:
                 availability.append(_tr("Thesaurus"))
             capability_text = ", ".join(availability) or _tr("No dictionaries")
-            action = submenu.addAction(
-                f"{locale_display_name(locale)} [{locale}] — {capability_text}"
+            action = _require_action(
+                submenu.addAction(
+                    f"{locale_display_name(locale)} [{locale}] — {capability_text}"
+                )
             )
             action.setCheckable(True)
             action.setChecked(locale == active)
@@ -265,7 +286,9 @@ class LinguisticContextMenu(QObject):
             )
         if self._integration.language_settings is not None:
             submenu.addSeparator()
-            action = submenu.addAction(_tr("Set Current Language as Default"))
+            action = _require_action(
+                submenu.addAction(_tr("Set Current Language as Default"))
+            )
             action.triggered.connect(
                 lambda _checked=False: self._integration.set_default_language()
             )
@@ -279,6 +302,10 @@ class LinguisticContextMenu(QObject):
                 continue
             if isinstance(supplied, QAction):
                 supplied = (supplied,)
+            elif not isinstance(supplied, Iterable):
+                raise TypeError(
+                    "context action providers must return QActions or an iterable"
+                )
             for action in supplied:
                 if not isinstance(action, QAction):
                     raise TypeError("context action providers must return QActions")

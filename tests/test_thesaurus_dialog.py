@@ -8,6 +8,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PyQt6", reason="PyQt6 is an optional dependency")
 
+from PyQt6.QtCore import QLocale
 from PyQt6.QtWidgets import QApplication, QTextEdit
 
 from pyqt6_linguistic_tools import (
@@ -88,6 +89,8 @@ def test_displays_query_meanings_parts_of_speech_and_synonyms(
     dialog = ThesaurusDialog(service, "bright")
 
     assert dialog.query == "bright"
+    assert dialog.language == "en_US"
+    assert isinstance(dialog.locale(), QLocale)
     assert dialog.entry.word == "bright"
     assert dialog.results.topLevelItemCount() == 2
     first = dialog.results.topLevelItem(0)

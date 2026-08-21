@@ -19,6 +19,7 @@ classifiers = [
 [project.optional-dependencies]
 test = ["pytest>=8"]
 qt = ["PyQt6>=6.6"]
+typing = ["mypy>=1.15,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src", "libs/spylls", "libs/pythes"]
@@ -40,3 +41,12 @@ markers = [
   "full_corpus: scans every compatible file in the external corpus",
   "platform: exercises resources supplied by the current operating system",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/pyqt6_linguistic_tools"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true

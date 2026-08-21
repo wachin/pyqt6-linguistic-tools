@@ -124,8 +124,16 @@ class SpyllsBackend(SpellCheckerBackend):
         _validate_word(word)
         with self._lock:
             self.load_dictionary()
+            engine = self._engine
+            if engine is None:  # Defensive guard for alternative engine loaders.
+                raise BackendUnavailableError(
+                    "Spylls did not retain a loaded dictionary",
+                    backend=self.NAME,
+                    operation="check_word",
+                    path=self._root,
+                )
             try:
-                return bool(self._engine.lookup(word))
+                return bool(engine.lookup(word))
             except Exception as error:
                 raise BackendOperationError(
                     "Spylls failed to check a word",
@@ -145,8 +153,16 @@ class SpyllsBackend(SpellCheckerBackend):
 
         with self._lock:
             self.load_dictionary()
+            engine = self._engine
+            if engine is None:  # Defensive guard for alternative engine loaders.
+                raise BackendUnavailableError(
+                    "Spylls did not retain a loaded dictionary",
+                    backend=self.NAME,
+                    operation="suggest",
+                    path=self._root,
+                )
             try:
-                suggestions = self._engine.suggest(word)
+                suggestions = engine.suggest(word)
                 return tuple(suggestions if limit is None else islice(suggestions, limit))
             except Exception as error:
                 raise BackendOperationError(

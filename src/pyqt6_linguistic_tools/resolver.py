@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
-from typing import Generic, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast
 
 from pyqt6_linguistic_tools.backends import (
     PyThesBackend,
@@ -43,7 +43,9 @@ def _always_compatible(dictionary: Path, locale: str) -> bool:
 class BackendResolver(Generic[BackendT]):
     """Select registered backends without platform checks in host applications."""
 
-    def __init__(self, *, default: str, backend_type: type[BackendT]) -> None:
+    def __init__(
+        self, *, default: str, backend_type: type[Any]
+    ) -> None:
         self._default = self._normalize_name(default)
         self._backend_type = backend_type
         self._registrations: dict[str, _Registration[BackendT]] = {}

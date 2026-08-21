@@ -31,6 +31,12 @@ operating systems, while real-corpus jobs have separate pull-request and
 scheduled/manual triggers. See
 [`continuous-integration.md`](continuous-integration.md).
 
+Run the same static analysis locally after installing the `typing` extra:
+
+```bash
+python -m mypy
+```
+
 ## LibreOffice corpus suite
 
 Point either the command-line option or environment variable at the collection

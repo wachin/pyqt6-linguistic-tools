@@ -104,7 +104,10 @@ class AsyncSpellCheckController(QObject):
         self._highlighter = highlighter
         self._service = service
         self._debounce_ms = debounce_ms
-        self._thread_pool = thread_pool or QThreadPool.globalInstance()
+        selected_pool = thread_pool or QThreadPool.globalInstance()
+        if selected_pool is None:
+            raise RuntimeError("Qt did not provide a global thread pool")
+        self._thread_pool: QThreadPool = selected_pool
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self.flush)

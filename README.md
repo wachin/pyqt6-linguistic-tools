@@ -146,8 +146,9 @@ Then create an isolated environment from the repository:
 git submodule update --init --recursive
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[test,qt]'
+python -m pip install -e '.[test,qt,typing]'
 python -m pytest
+python -m mypy
 ```
 
 The environment remains active only in the current shell. Leave it with:
@@ -162,12 +163,14 @@ On Windows, the equivalent setup is:
 git submodule update --init --recursive
 py -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install -e ".[test,qt]"
+python -m pip install -e ".[test,qt,typing]"
 python -m pytest
+python -m mypy
 ```
 
-The `[test]` extra installs test dependencies. The `[qt]` extra requests
-`PyQt6>=6.6` for projects that do not already provide PyQt6. GuitarChordStudio
+The `[test]` extra installs test dependencies, and `[typing]` installs mypy for
+contributors. The `[qt]` extra requests `PyQt6>=6.6` for projects that do not
+already provide PyQt6. GuitarChordStudio
 does not need to install PyQt6 twice when its own development or packaging
 environment already supplies it.
 

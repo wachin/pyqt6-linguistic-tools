@@ -168,6 +168,7 @@ class LinuxSystemDictionaryProvider(DictionaryProvider):
         self,
         roots: Iterable[str | Path] | str | Path | None = None,
     ) -> None:
+        configured: tuple[str | Path, ...]
         if roots is None:
             configured = (
                 DEFAULT_LINUX_DICTIONARY_PATHS

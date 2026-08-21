@@ -472,17 +472,24 @@ class DictionaryValidator:
     def validate_candidate(self, candidate: DictionaryCandidate) -> DictionaryBundleValidation:
         reports: list[DictionaryValidationReport] = []
         if candidate.has_spelling:
+            aff_path = candidate.aff_path
+            dic_path = candidate.dic_path
+            if aff_path is None or dic_path is None:
+                raise ValueError("spelling candidate is missing a required path")
             reports.append(
                 self.validate_spelling(
-                    candidate.aff_path,
-                    candidate.dic_path,
+                    aff_path,
+                    dic_path,
                     locale=candidate.locale,
                 )
             )
         if candidate.has_thesaurus:
+            thesaurus_dat = candidate.thesaurus_dat
+            if thesaurus_dat is None:
+                raise ValueError("thesaurus candidate is missing its data path")
             reports.append(
                 self.validate_thesaurus(
-                    candidate.thesaurus_dat,
+                    thesaurus_dat,
                     candidate.thesaurus_idx,
                     locale=candidate.locale,
                 )

@@ -259,14 +259,18 @@ class LinguisticService:
         suggestions = False
         thesaurus = False
         if info is not None and info.has_spelling and self.spell_check_enabled:
-            backend = self._get_spell_backend(info, normalized, "capabilities")
-            if backend is not None:
-                spelling = backend.metadata.capabilities.spell_check
-                suggestions = backend.metadata.capabilities.suggestions
+            spell_backend = self._get_spell_backend(
+                info, normalized, "capabilities"
+            )
+            if spell_backend is not None:
+                spelling = spell_backend.metadata.capabilities.spell_check
+                suggestions = spell_backend.metadata.capabilities.suggestions
         if info is not None and info.has_thesaurus and self.thesaurus_enabled:
-            backend = self._get_thesaurus_backend(info, normalized, "capabilities")
-            if backend is not None:
-                thesaurus = backend.metadata.capabilities.thesaurus
+            thesaurus_backend = self._get_thesaurus_backend(
+                info, normalized, "capabilities"
+            )
+            if thesaurus_backend is not None:
+                thesaurus = thesaurus_backend.metadata.capabilities.thesaurus
         return LinguisticCapabilities(
             locale=normalized,
             spell_check=spelling,
@@ -654,15 +658,16 @@ class LinguisticService:
     def _get_spell_backend(
         self, info: DictionaryInfo, locale: str, operation: str
     ) -> SpellCheckerBackend | None:
-        if info.aff_path is None:
+        dictionary_path = info.aff_path
+        if dictionary_path is None:
             return None
         if self.component_failure(locale, "spelling") is not None:
             return None
-        key = (locale, info.aff_path, self.spell_backend)
+        key = (locale, dictionary_path, self.spell_backend)
 
         def create() -> SpellCheckerBackend:
             resolution = self.spell_resolver.resolve(
-                info.aff_path,
+                dictionary_path,
                 locale=locale,
                 backend=self.spell_backend,
                 allow_fallback=self.allow_backend_fallback,
@@ -685,15 +690,16 @@ class LinguisticService:
     def _get_thesaurus_backend(
         self, info: DictionaryInfo, locale: str, operation: str
     ) -> ThesaurusBackend | None:
-        if info.thesaurus_dat is None:
+        dictionary_path = info.thesaurus_dat
+        if dictionary_path is None:
             return None
         if self.component_failure(locale, "thesaurus") is not None:
             return None
-        key = (locale, info.thesaurus_dat, self.thesaurus_backend)
+        key = (locale, dictionary_path, self.thesaurus_backend)
 
         def create() -> ThesaurusBackend:
             resolution = self.thesaurus_resolver.resolve(
-                info.thesaurus_dat,
+                dictionary_path,
                 locale=locale,
                 backend=self.thesaurus_backend,
                 allow_fallback=self.allow_backend_fallback,

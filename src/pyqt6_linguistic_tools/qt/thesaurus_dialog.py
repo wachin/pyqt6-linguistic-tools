@@ -96,7 +96,8 @@ class ThesaurusDialog(QDialog):
         return self._replacement_source
 
     @property
-    def locale(self) -> str:
+    def language(self) -> str:
+        """Return the linguistic locale without overriding QWidget.locale()."""
         return self._locale
 
     @property

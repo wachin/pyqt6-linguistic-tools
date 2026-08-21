@@ -339,7 +339,10 @@ class PersonalDictionaryBackupManager:
         for dictionary in dictionaries:
             if not isinstance(dictionary, dict):
                 raise ValueError("backup dictionary entry must be an object")
-            locale = normalize_personal_locale(dictionary.get("locale"))
+            locale_value = dictionary.get("locale")
+            if not isinstance(locale_value, str):
+                raise ValueError("backup dictionary locale must be a string")
+            locale = normalize_personal_locale(locale_value)
             if locale in seen_locales:
                 raise ValueError(f"duplicate backup locale: {locale}")
             words = dictionary.get("words")

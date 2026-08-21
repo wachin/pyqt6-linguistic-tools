@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import gc
+import importlib
 import itertools
 import json
 import os
@@ -17,7 +18,7 @@ import tracemalloc
 from typing import Any, Iterable
 
 try:
-    import resource
+    resource: Any = importlib.import_module("resource")
 except ImportError:  # pragma: no cover - unavailable on Windows
     resource = None
 

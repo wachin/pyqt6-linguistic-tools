@@ -59,3 +59,5 @@ changes are recorded here before a release.
   PyQt6 detection and version checks, validated shared UI defaults, explicit
   component ownership, packaging through the `[qt]` extra, and core-only import
   guarantees.
+- Add complete core and Qt mypy coverage under the Python 3.10 contract, with
+  a dedicated dependency extra and a failing GitHub Actions typing job.
