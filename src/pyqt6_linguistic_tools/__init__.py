@@ -46,6 +46,7 @@ from pyqt6_linguistic_tools.models import (
     DictionarySourcePriority,
     DictionaryValidationReport,
     LinguisticCapabilities,
+    LinguisticComponentFailure,
     LinguisticServiceDiagnostic,
     ThesaurusEntry,
     ThesaurusMeaning,
@@ -82,7 +83,11 @@ from pyqt6_linguistic_tools.resolver import (
     SpellBackendResolver,
     ThesaurusBackendResolver,
 )
-from pyqt6_linguistic_tools.service import DiagnosticHandler, LinguisticService
+from pyqt6_linguistic_tools.service import (
+    DiagnosticHandler,
+    LinguisticService,
+    logging_diagnostic_handler,
+)
 from pyqt6_linguistic_tools.storage import (
     DictionaryStoragePaths,
     application_data_directory,
@@ -139,8 +144,10 @@ __all__ = [
     "DirectoryDictionaryProvider",
     "LinguisticError",
     "LinguisticCapabilities",
+    "LinguisticComponentFailure",
     "LinguisticService",
     "LinguisticServiceDiagnostic",
+    "logging_diagnostic_handler",
     "LinguisticResultCacheStats",
     "IgnoredWords",
     "IgnoredWordsStore",

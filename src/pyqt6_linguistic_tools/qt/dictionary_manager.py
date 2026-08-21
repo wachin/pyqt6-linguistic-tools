@@ -140,7 +140,9 @@ class DictionaryManagerDialog(QDialog):
         self.setWindowTitle(_tr("Dictionary Manager"))
         self.resize(820, 560)
         self._create_widgets()
-        self._populate_installed(self._service.registry.discover())
+        self._populate_installed(
+            self._service.registry.discover(tolerate_provider_errors=True)
+        )
         self._populate_catalog()
 
     @property
@@ -170,7 +172,7 @@ class DictionaryManagerDialog(QDialog):
     def refresh(self) -> tuple[DictionaryInfo, ...]:
         """Rediscover providers, clear obsolete backends, and rebuild the view."""
         self._service.refresh_dictionaries()
-        entries = self._service.registry.discover()
+        entries = self._service.registry.discover(tolerate_provider_errors=True)
         self._populate_installed(entries)
         self.dictionaries_changed.emit(entries)
         return entries
@@ -316,6 +318,16 @@ class DictionaryManagerDialog(QDialog):
         rows.extend(self._hidden_owned_entries(entries))
         self._entries = {key: entry for key, entry, _active in rows}
         for key, entry, active in rows:
+            spelling_failure = (
+                self._service.component_failure(entry.locale, "spelling")
+                if active
+                else None
+            )
+            thesaurus_failure = (
+                self._service.component_failure(entry.locale, "thesaurus")
+                if active
+                else None
+            )
             sources = []
             if entry.spelling_source:
                 sources.append(f"{_tr('Spelling')}: {entry.spelling_source}")
@@ -329,8 +341,24 @@ class DictionaryManagerDialog(QDialog):
                         else f"{entry.display_name} ({_tr('Inactive')})"
                     ),
                     entry.locale,
-                    _tr("Available") if entry.has_spelling else _tr("Missing"),
-                    _tr("Available") if entry.has_thesaurus else _tr("Missing"),
+                    (
+                        _tr("Failed")
+                        if spelling_failure is not None
+                        else (
+                            _tr("Available")
+                            if entry.has_spelling
+                            else _tr("Missing")
+                        )
+                    ),
+                    (
+                        _tr("Failed")
+                        if thesaurus_failure is not None
+                        else (
+                            _tr("Available")
+                            if entry.has_thesaurus
+                            else _tr("Missing")
+                        )
+                    ),
                     "; ".join(sources),
                 )
             )
@@ -359,7 +387,11 @@ class DictionaryManagerDialog(QDialog):
         for provider in (self._managed_provider, self._user_provider):
             if provider is None:
                 continue
-            for candidate in provider.discover():
+            try:
+                candidates = provider.discover()
+            except Exception:
+                continue
+            for candidate in candidates:
                 paths = tuple(
                     path
                     for path in (
@@ -441,6 +473,13 @@ class DictionaryManagerDialog(QDialog):
             f"{_tr('Thesaurus .dat')}: {info.thesaurus_dat or '-'}",
             f"{_tr('Thesaurus .idx')}: {info.thesaurus_idx or '-'}",
         ]
+        for component in ("spelling", "thesaurus"):
+            failure = self._service.component_failure(info.locale, component)
+            if failure is not None:
+                lines.append(
+                    f"{_tr('Failure')} ({component}): "
+                    f"{failure.diagnostic.message}"
+                )
         self.details.setPlainText("\n".join(lines))
 
     def _update_catalog_selection(self) -> None:

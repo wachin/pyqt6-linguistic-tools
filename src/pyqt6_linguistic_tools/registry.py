@@ -24,6 +24,7 @@ class DictionaryRegistry:
         self._by_locale: dict[str, DictionaryInfo] = {}
         self._spelling: dict[str, DictionaryCandidate] = {}
         self._thesauri: dict[str, DictionaryCandidate] = {}
+        self._discovery_errors: tuple[DictionaryDiscoveryError, ...] = ()
         self._revision = 0
         self._lock = RLock()
         for provider in providers:
@@ -39,7 +40,11 @@ class DictionaryRegistry:
     def remove_providers(self, source: str) -> int:
         """Remove every provider named *source* and return the count."""
         with self._lock:
-            retained = [provider for provider in self._providers if provider.source != source]
+            retained = [
+                provider
+                for provider in self._providers
+                if provider.source != source
+            ]
             removed = len(self._providers) - len(retained)
             if removed:
                 self._providers = retained
@@ -56,27 +61,43 @@ class DictionaryRegistry:
         with self._lock:
             return self._revision
 
-    def discover(self, *, force: bool = False) -> tuple[DictionaryInfo, ...]:
+    def discover(
+        self,
+        *,
+        force: bool = False,
+        tolerate_provider_errors: bool = False,
+    ) -> tuple[DictionaryInfo, ...]:
         """Discover and cache all exact locales exposed by the providers."""
         if not isinstance(force, bool):
             raise TypeError("force must be a boolean")
+        if not isinstance(tolerate_provider_errors, bool):
+            raise TypeError("tolerate_provider_errors must be a boolean")
         with self._lock:
             if self._cache is not None and not force:
+                if self._discovery_errors and not tolerate_provider_errors:
+                    raise self._discovery_errors[0]
                 return self._cache
             providers = tuple(self._providers)
 
         candidates: list[DictionaryCandidate] = []
+        discovery_errors: list[DictionaryDiscoveryError] = []
         for provider in providers:
             try:
                 candidates.extend(provider.discover())
-            except DictionaryDiscoveryError:
-                raise
+            except DictionaryDiscoveryError as error:
+                if not tolerate_provider_errors:
+                    raise
+                discovery_errors.append(error)
             except Exception as error:
-                raise DictionaryDiscoveryError(
+                wrapped = DictionaryDiscoveryError(
                     f"dictionary provider failed: {provider.source}",
                     source=provider.source,
                     path=getattr(provider, "root", None),
-                ) from error
+                )
+                wrapped.__cause__ = error
+                if not tolerate_provider_errors:
+                    raise wrapped
+                discovery_errors.append(wrapped)
 
         spelling: dict[str, DictionaryCandidate] = {}
         thesauri: dict[str, DictionaryCandidate] = {}
@@ -87,7 +108,10 @@ class DictionaryRegistry:
             if candidate.has_thesaurus:
                 self._prefer(thesauri, locale, candidate)
 
-        locales = sorted(set(spelling) | set(thesauri), key=lambda item: (language_of(item), item))
+        locales = sorted(
+            set(spelling) | set(thesauri),
+            key=lambda item: (language_of(item), item),
+        )
         entries = tuple(
             self._make_info(locale, spelling, thesauri, allow_language_fallback=True)
             for locale in locales
@@ -95,23 +119,38 @@ class DictionaryRegistry:
         with self._lock:
             self._spelling = spelling
             self._thesauri = thesauri
+            self._discovery_errors = tuple(discovery_errors)
             self._cache = entries
             self._by_locale = {entry.locale: entry for entry in entries}
             self._revision += 1
             return entries
 
-    def refresh(self) -> tuple[DictionaryInfo, ...]:
+    def refresh(
+        self, *, tolerate_provider_errors: bool = False
+    ) -> tuple[DictionaryInfo, ...]:
         """Discard cached discovery data and query every provider again."""
-        return self.discover(force=True)
+        return self.discover(
+            force=True,
+            tolerate_provider_errors=tolerate_provider_errors,
+        )
+
+    def discovery_errors(self) -> tuple[DictionaryDiscoveryError, ...]:
+        """Return provider failures retained by tolerant discovery."""
+        with self._lock:
+            return self._discovery_errors
 
     def get(
-        self, locale: str, *, allow_language_fallback: bool = True
+        self,
+        locale: str,
+        *,
+        allow_language_fallback: bool = True,
+        tolerate_provider_errors: bool = False,
     ) -> DictionaryInfo | None:
         """Return resources for *locale*, optionally using language-only data."""
         if not isinstance(allow_language_fallback, bool):
             raise TypeError("allow_language_fallback must be a boolean")
         normalized = normalize_locale(locale)
-        self.discover()
+        self.discover(tolerate_provider_errors=tolerate_provider_errors)
         with self._lock:
             exact = self._by_locale.get(normalized)
             spelling = dict(self._spelling)
@@ -191,6 +230,7 @@ class DictionaryRegistry:
         self._by_locale = {}
         self._spelling = {}
         self._thesauri = {}
+        self._discovery_errors = ()
         self._revision += 1
 
 

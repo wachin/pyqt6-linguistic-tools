@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from pyqt6_linguistic_tools import (
     DictionarySourcePriority,
     DirectoryDictionaryProvider,
     LinguisticService,
+    logging_diagnostic_handler,
     PersonalDictionaryStore,
     SpellBackendResolver,
     SpellCheckerBackend,
@@ -543,11 +545,20 @@ class BrokenSpellBackend(SpellCheckerBackend):
         )
 
 
-def _broken_resolver() -> SpellBackendResolver:
+def _broken_resolver(
+    created: list[BrokenSpellBackend] | None = None,
+) -> SpellBackendResolver:
     resolver = SpellBackendResolver()
+
+    def factory(path, locale):
+        backend = BrokenSpellBackend(path, locale)
+        if created is not None:
+            created.append(backend)
+        return backend
+
     resolver.register(
         "broken",
-        lambda path, locale: BrokenSpellBackend(path, locale),
+        factory,
         available=lambda: True,
     )
     return resolver
@@ -573,9 +584,130 @@ def test_recoverable_backend_failure_returns_safe_result_and_diagnostic(tmp_path
     assert diagnostic.locale == "en_US"
     assert diagnostic.error_type == "BackendOperationError"
     assert diagnostic.backend == "broken"
+    assert diagnostic.component == "spelling"
+    assert diagnostic.disabled
+    assert service.component_failure("en_US", "spelling").diagnostic == diagnostic
     assert received == [diagnostic]
     assert service.clear_diagnostics()
     assert not service.clear_diagnostics()
+
+
+def test_component_circuit_breaker_avoids_repeated_failures_and_can_retry(
+    tmp_path: Path,
+):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("hello",))
+    created: list[BrokenSpellBackend] = []
+    service = LinguisticService(
+        "en_US",
+        registry=_registry(dictionaries),
+        spell_resolver=_broken_resolver(created),
+        spell_backend="broken",
+        allow_backend_fallback=False,
+    )
+
+    assert service.check_word("first")
+    assert service.check_word("second")
+    assert len(created) == 1
+    assert len(service.diagnostics()) == 1
+    assert len(service.disabled_components()) == 1
+
+    assert service.retry_component("en_US", "spelling")
+    assert not service.retry_component("en_US", "spelling")
+    assert service.check_word("third")
+    assert len(created) == 2
+    assert len(service.diagnostics()) == 2
+
+
+def test_malformed_thesaurus_disables_only_that_component_and_locale(
+    tmp_path: Path,
+):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("hello",))
+    _spelling(dictionaries, "es_EC", ("hola",))
+    thesaurus = dictionaries / "th_en_US_v2.dat"
+    thesaurus.write_text("NOT-A-CODEC\nbroken", encoding="utf-8")
+    service = LinguisticService("en_US", registry=_registry(dictionaries))
+
+    assert not service.check_word("wrong", locale="en_US")
+    assert service.thesaurus_entry("bright", locale="en_US") is None
+    assert service.component_failure("en_US", "thesaurus") is not None
+    assert service.component_failure("en_US", "spelling") is None
+    assert not service.check_word("wrong", locale="en_US")
+    assert service.check_word("hola", locale="es_EC")
+    assert service.component_failure("es_EC", "thesaurus") is None
+
+    thesaurus.write_text(
+        "UTF-8\nbright|1\nadj|shining|radiant\n",
+        encoding="utf-8",
+    )
+    assert service.retry_component("en_US", "thesaurus")
+    assert service.thesaurus_entry("bright", locale="en_US") is not None
+
+
+def test_malformed_hunspell_disables_only_spelling_for_its_locale(tmp_path: Path):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    broken = _spelling(dictionaries, "en_US", ("hello",))
+    broken.with_suffix(".aff").write_text(
+        "SET UTF-8\nFLAG malformed\n",
+        encoding="utf-8",
+    )
+    _spelling(dictionaries, "es_EC", ("hola",))
+    _thesaurus(dictionaries, "en_US")
+    service = LinguisticService("en_US", registry=_registry(dictionaries))
+
+    assert service.check_word("word", locale="en_US")
+    failure = service.component_failure("en_US", "spelling")
+    assert failure is not None
+    assert failure.diagnostic.error_type == "DictionaryLoadError"
+    assert failure.diagnostic.cause_type is not None
+    assert failure.diagnostic.cause_message
+    assert service.thesaurus_entry("bright", locale="en_US") is not None
+    assert service.check_word("hola", locale="es_EC")
+    assert not service.check_word("wrong", locale="es_EC")
+
+
+def test_deleted_dictionary_file_isolated_until_registry_refresh(tmp_path: Path):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    root = _spelling(dictionaries, "en_US", ("hello",))
+    service = LinguisticService("en_US", registry=_registry(dictionaries))
+    assert service.dictionary_info("en_US") is not None
+    root.with_suffix(".dic").unlink()
+
+    assert service.check_word("word")
+    failure = service.component_failure("en_US", "spelling")
+    assert failure is not None
+    assert failure.diagnostic.error_type == "DictionaryNotFoundError"
+
+    _spelling(dictionaries, "en_US", ("word",))
+    assert service.refresh_dictionaries() == ("en_US",)
+    assert service.component_failure("en_US", "spelling") is None
+    assert service.check_word("word")
+
+
+def test_logging_diagnostic_handler_uses_standard_logging(tmp_path: Path, caplog):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("hello",))
+    logger = logging.getLogger("linguistic-test")
+    service = LinguisticService(
+        "en_US",
+        registry=_registry(dictionaries),
+        spell_resolver=_broken_resolver(),
+        spell_backend="broken",
+        allow_backend_fallback=False,
+        diagnostic_handler=logging_diagnostic_handler(logger),
+    )
+
+    with caplog.at_level(logging.WARNING, logger="linguistic-test"):
+        assert service.check_word("word")
+
+    assert "check_word failed for en_US (spelling)" in caplog.text
+    assert caplog.records[-1].linguistic_diagnostic.disabled
 
 
 def test_strict_mode_preserves_structured_backend_error(tmp_path: Path):
@@ -607,13 +739,40 @@ def test_discovery_failure_is_graceful_and_bounded(tmp_path: Path):
     )
 
     assert service.available_languages() == ()
-    assert service.available_languages() == ()
-    assert service.available_languages() == ()
+    assert service.refresh_dictionaries() == ()
+    assert service.refresh_dictionaries() == ()
     assert len(service.diagnostics()) == 2
     assert all(
         item.error_type == "DictionaryDiscoveryError"
         for item in service.diagnostics()
     )
+
+
+def test_failing_provider_does_not_hide_healthy_languages(tmp_path: Path):
+    dictionaries = tmp_path / "dicts"
+    dictionaries.mkdir()
+    _spelling(dictionaries, "en_US", ("hello",))
+    missing = DirectoryDictionaryProvider(
+        tmp_path / "missing", source="missing", priority=300
+    )
+    healthy = DirectoryDictionaryProvider(
+        dictionaries, source="healthy", priority=100
+    )
+    service = LinguisticService(
+        "en_US",
+        registry=DictionaryRegistry((missing, healthy)),
+    )
+
+    assert service.available_languages() == ("en_US",)
+    assert service.check_word("hello")
+    assert not service.check_word("wrong")
+    assert len(service.diagnostics()) == 1
+    diagnostic = service.diagnostics()[0]
+    assert diagnostic.operation == "dictionary_discovery"
+    assert diagnostic.path == (tmp_path / "missing").resolve()
+
+    assert service.available_languages() == ("en_US",)
+    assert len(service.diagnostics()) == 1
 
 
 def test_refresh_rediscovers_languages_and_unloads_old_snapshot(tmp_path: Path):

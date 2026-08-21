@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Hashable
+import logging
 from pathlib import Path
 from threading import RLock
 from typing import TypeVar
@@ -23,6 +24,7 @@ from pyqt6_linguistic_tools.models import (
     BackendResolutionDiagnostic,
     DictionaryInfo,
     LinguisticCapabilities,
+    LinguisticComponentFailure,
     LinguisticServiceDiagnostic,
     ThesaurusEntry,
 )
@@ -50,6 +52,33 @@ _RECOVERABLE_ERRORS = (
     LinguisticError,
     PersonalDictionaryError,
 )
+_COMPONENTS = frozenset({"spelling", "thesaurus"})
+
+
+def logging_diagnostic_handler(
+    logger: logging.Logger | None = None,
+    *,
+    level: int = logging.WARNING,
+) -> DiagnosticHandler:
+    """Create a standard-library logging bridge for service diagnostics."""
+    if logger is not None and not isinstance(logger, logging.Logger):
+        raise TypeError("logger must be a logging.Logger or None")
+    if isinstance(level, bool) or not isinstance(level, int):
+        raise TypeError("level must be an integer")
+    selected = logger or logging.getLogger("pyqt6_linguistic_tools")
+
+    def report(diagnostic: LinguisticServiceDiagnostic) -> None:
+        selected.log(
+            level,
+            "%s failed for %s%s: %s",
+            diagnostic.operation,
+            diagnostic.locale,
+            f" ({diagnostic.component})" if diagnostic.component else "",
+            diagnostic.message,
+            extra={"linguistic_diagnostic": diagnostic},
+        )
+
+    return report
 
 
 class LinguisticService:
@@ -132,6 +161,9 @@ class LinguisticService:
         self._diagnostic_limit = diagnostic_limit
         self._diagnostics: list[LinguisticServiceDiagnostic] = []
         self._resolution_diagnostics: list[BackendResolutionDiagnostic] = []
+        self._component_failures: dict[
+            tuple[str, str], LinguisticComponentFailure
+        ] = {}
         self._personal: dict[str, PersonalDictionary] = {}
         self._spell_cache: BackendCache[
             tuple[str, Path, str | None], SpellCheckerBackend
@@ -150,6 +182,7 @@ class LinguisticService:
         ] = ResultCache(result_cache_size)
         self._personal_revisions: dict[str, int] = {}
         self._registry_revision = self.registry.revision
+        self._reported_registry_error_revision = -1
         self._lock = RLock()
 
     @property
@@ -197,7 +230,7 @@ class LinguisticService:
         """Return exact locales having spelling, a thesaurus, or both."""
         locale = self.language
         try:
-            entries = self.registry.discover()
+            entries = self.registry.discover(tolerate_provider_errors=True)
             self._sync_registry_revision()
             return tuple(info.locale for info in entries)
         except _RECOVERABLE_ERRORS as error:
@@ -207,7 +240,10 @@ class LinguisticService:
         """Return resolved source information for one requested locale."""
         normalized = self._locale(locale)
         try:
-            info = self.registry.get(normalized)
+            info = self.registry.get(
+                normalized,
+                tolerate_provider_errors=True,
+            )
             self._sync_registry_revision()
             return info
         except _RECOVERABLE_ERRORS as error:
@@ -268,6 +304,8 @@ class LinguisticService:
         info = self.dictionary_info(normalized_locale)
         if info is None or not info.has_spelling:
             return True
+        if self.component_failure(normalized_locale, "spelling") is not None:
+            return True
         cache_key = (normalized_locale, normalized_word)
         found, cached = self._spelling_results.try_get(cache_key)
         if found:
@@ -280,7 +318,9 @@ class LinguisticService:
             self._spelling_results.put(cache_key, accepted)
             return accepted
         except _RECOVERABLE_ERRORS as error:
-            return self._recover(error, "check_word", normalized_locale, True)
+            return self._disable_component(
+                error, "check_word", normalized_locale, "spelling", True
+            )
 
     def suggestions(
         self,
@@ -293,13 +333,17 @@ class LinguisticService:
     ) -> tuple[str, ...]:
         """Return spelling suggestions or an empty safe fallback."""
         normalized_word = normalize_personal_word(word)
-        if limit is not None and (isinstance(limit, bool) or not isinstance(limit, int)):
+        if limit is not None and (
+            isinstance(limit, bool) or not isinstance(limit, int)
+        ):
             raise TypeError("limit must be an integer or None")
         if limit is not None and limit < 0:
             raise ValueError("limit must be zero or greater")
         if limit == 0:
             return ()
         normalized_locale = self._locale(locale)
+        if self.component_failure(normalized_locale, "spelling") is not None:
+            return ()
         if self.check_word(
             normalized_word,
             locale=normalized_locale,
@@ -322,7 +366,9 @@ class LinguisticService:
             self._suggestion_results.put(cache_key, suggestions)
             return self._limit_suggestions(suggestions, limit)
         except _RECOVERABLE_ERRORS as error:
-            return self._recover(error, "suggestions", normalized_locale, ())
+            return self._disable_component(
+                error, "suggestions", normalized_locale, "spelling", ()
+            )
 
     def thesaurus_entry(
         self, word: str, *, locale: str | None = None
@@ -334,6 +380,8 @@ class LinguisticService:
             return None
         info = self.dictionary_info(normalized_locale)
         if info is None or not info.has_thesaurus:
+            return None
+        if self.component_failure(normalized_locale, "thesaurus") is not None:
             return None
         cache_key = (normalized_locale, normalized_word)
         found, cached = self._thesaurus_results.try_get(cache_key)
@@ -347,7 +395,9 @@ class LinguisticService:
             self._thesaurus_results.put(cache_key, entry)
             return entry
         except _RECOVERABLE_ERRORS as error:
-            return self._recover(error, "thesaurus", normalized_locale, None)
+            return self._disable_component(
+                error, "thesaurus", normalized_locale, "thesaurus", None
+            )
 
     def synonyms(self, word: str, *, locale: str | None = None) -> tuple[str, ...]:
         """Return unique synonyms across all meanings in source order."""
@@ -396,7 +446,9 @@ class LinguisticService:
                 self._invalidate_personal_locale(normalized_locale, dictionary)
             return changed
         except PersonalDictionaryError as error:
-            return self._recover(error, "remove_personal_word", normalized_locale, False)
+            return self._recover(
+                error, "remove_personal_word", normalized_locale, False
+            )
 
     def personal_words(self, locale: str | None = None) -> tuple[str, ...]:
         normalized_locale = self._locale(locale)
@@ -462,14 +514,10 @@ class LinguisticService:
         """Rediscover sources and unload backends pointing at the old snapshot."""
         locale = self.language
         try:
-            entries = self.registry.refresh()
+            entries = self.registry.refresh(tolerate_provider_errors=True)
         except _RECOVERABLE_ERRORS as error:
             return self._recover(error, "refresh_dictionaries", locale, ())
-        self._spell_cache.clear()
-        self._thesaurus_cache.clear()
-        self.clear_result_caches()
-        with self._lock:
-            self._registry_revision = self.registry.revision
+        self._sync_registry_revision()
         return tuple(entry.locale for entry in entries)
 
     def result_cache_stats(self) -> LinguisticResultCacheStats:
@@ -498,6 +546,39 @@ class LinguisticService:
     def diagnostics(self) -> tuple[LinguisticServiceDiagnostic, ...]:
         with self._lock:
             return tuple(self._diagnostics)
+
+    def disabled_components(self) -> tuple[LinguisticComponentFailure, ...]:
+        """Return spelling/thesaurus failures isolated by exact locale."""
+        with self._lock:
+            return tuple(
+                self._component_failures[key]
+                for key in sorted(self._component_failures)
+            )
+
+    def component_failure(
+        self, locale: str, component: str
+    ) -> LinguisticComponentFailure | None:
+        normalized = normalize_personal_locale(locale)
+        component = self._validate_component(component)
+        with self._lock:
+            return self._component_failures.get((normalized, component))
+
+    def retry_component(self, locale: str, component: str) -> bool:
+        """Clear one circuit breaker so a repaired dictionary can be retried."""
+        normalized = normalize_personal_locale(locale)
+        component = self._validate_component(component)
+        with self._lock:
+            removed = self._component_failures.pop(
+                (normalized, component), None
+            )
+        if removed is None:
+            return False
+        if component == "spelling":
+            self._remove_locale_backends(self._spell_cache, normalized)
+        else:
+            self._remove_locale_backends(self._thesaurus_cache, normalized)
+        self.clear_result_caches(normalized)
+        return True
 
     def resolution_diagnostics(self) -> tuple[BackendResolutionDiagnostic, ...]:
         with self._lock:
@@ -535,6 +616,20 @@ class LinguisticService:
         self._spell_cache.clear()
         self._thesaurus_cache.clear()
         self.clear_result_caches()
+        with self._lock:
+            self._component_failures.clear()
+            report_errors = revision != self._reported_registry_error_revision
+            self._reported_registry_error_revision = revision
+        if report_errors:
+            for error in self.registry.discovery_errors():
+                if self.strict:
+                    raise error
+                self._recover(
+                    error,
+                    "dictionary_discovery",
+                    self.language,
+                    None,
+                )
 
     def _sync_personal_revision(
         self, locale: str, dictionary: PersonalDictionary
@@ -559,6 +654,8 @@ class LinguisticService:
     ) -> SpellCheckerBackend | None:
         if info.aff_path is None:
             return None
+        if self.component_failure(locale, "spelling") is not None:
+            return None
         key = (locale, info.aff_path, self.spell_backend)
 
         def create() -> SpellCheckerBackend:
@@ -579,12 +676,16 @@ class LinguisticService:
         try:
             return self._spell_cache.get_or_create(key, create)
         except _RECOVERABLE_ERRORS as error:
-            return self._recover(error, operation, locale, None)
+            return self._disable_component(
+                error, operation, locale, "spelling", None
+            )
 
     def _get_thesaurus_backend(
         self, info: DictionaryInfo, locale: str, operation: str
     ) -> ThesaurusBackend | None:
         if info.thesaurus_dat is None:
+            return None
+        if self.component_failure(locale, "thesaurus") is not None:
             return None
         key = (locale, info.thesaurus_dat, self.thesaurus_backend)
 
@@ -606,7 +707,40 @@ class LinguisticService:
         try:
             return self._thesaurus_cache.get_or_create(key, create)
         except _RECOVERABLE_ERRORS as error:
-            return self._recover(error, operation, locale, None)
+            return self._disable_component(
+                error, operation, locale, "thesaurus", None
+            )
+
+    def _disable_component(
+        self,
+        error: Exception,
+        operation: str,
+        locale: str,
+        component: str,
+        fallback: ResultT,
+    ) -> ResultT:
+        diagnostic = self._make_diagnostic(
+            error,
+            operation,
+            locale,
+            component=component,
+            disabled=True,
+        )
+        failure = LinguisticComponentFailure(locale, component, diagnostic)
+        with self._lock:
+            first_failure = (locale, component) not in self._component_failures
+            if first_failure:
+                self._component_failures[(locale, component)] = failure
+        if first_failure:
+            self._record_diagnostic(diagnostic)
+        if component == "spelling":
+            self._remove_locale_backends(self._spell_cache, locale)
+        else:
+            self._remove_locale_backends(self._thesaurus_cache, locale)
+        self.clear_result_caches(locale)
+        if self.strict:
+            raise error
+        return fallback
 
     def _recover(
         self,
@@ -615,14 +749,36 @@ class LinguisticService:
         locale: str,
         fallback: ResultT,
     ) -> ResultT:
-        diagnostic = LinguisticServiceDiagnostic(
+        diagnostic = self._make_diagnostic(error, operation, locale)
+        self._record_diagnostic(diagnostic)
+        if self.strict:
+            raise error
+        return fallback
+
+    @staticmethod
+    def _make_diagnostic(
+        error: Exception,
+        operation: str,
+        locale: str,
+        *,
+        component: str | None = None,
+        disabled: bool = False,
+    ) -> LinguisticServiceDiagnostic:
+        cause = error.__cause__
+        return LinguisticServiceDiagnostic(
             operation=operation,
             locale=locale,
             error_type=type(error).__name__,
             message=str(error),
             backend=getattr(error, "backend", None),
             path=getattr(error, "path", None),
+            component=component,
+            disabled=disabled,
+            cause_type=type(cause).__name__ if cause is not None else None,
+            cause_message=str(cause) if cause is not None else None,
         )
+
+    def _record_diagnostic(self, diagnostic: LinguisticServiceDiagnostic) -> None:
         with self._lock:
             self._diagnostics.append(diagnostic)
             if len(self._diagnostics) > self._diagnostic_limit:
@@ -632,9 +788,24 @@ class LinguisticService:
                 self._diagnostic_handler(diagnostic)
             except Exception:
                 pass
-        if self.strict:
-            raise error
-        return fallback
+
+    @staticmethod
+    def _validate_component(component: str) -> str:
+        if not isinstance(component, str):
+            raise TypeError("component must be a string")
+        if component not in _COMPONENTS:
+            raise ValueError("component must be 'spelling' or 'thesaurus'")
+        return component
+
+    @staticmethod
+    def _remove_locale_backends(cache: BackendCache, locale: str) -> None:
+        for key in cache.keys():
+            if key[0] == locale:
+                cache.remove(key)
 
 
-__all__ = ["DiagnosticHandler", "LinguisticService"]
+__all__ = [
+    "DiagnosticHandler",
+    "LinguisticService",
+    "logging_diagnostic_handler",
+]

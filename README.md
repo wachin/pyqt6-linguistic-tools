@@ -69,6 +69,11 @@ backends, personal dictionaries, ignored-word scopes, capability reporting,
 language switching, and bounded diagnostics behind the application-facing API.
 See [`docs/linguistic-service.md`](docs/linguistic-service.md).
 
+Malformed or missing resources are isolated by exact locale and component.
+Healthy languages remain available, repeated failures are suppressed, and
+structured diagnostics can be bridged to Python logging. See
+[`docs/error-handling.md`](docs/error-handling.md).
+
 Bounded LRU caches reuse spelling, suggestion, and thesaurus results while
 registry and personal-dictionary revisions provide automatic invalidation.
 Cache statistics remain available for tuning without exposing engine objects.

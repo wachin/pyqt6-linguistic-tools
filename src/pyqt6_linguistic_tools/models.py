@@ -248,3 +248,16 @@ class LinguisticServiceDiagnostic:
     message: str
     backend: str | None = None
     path: Path | None = None
+    component: str | None = None
+    disabled: bool = False
+    cause_type: str | None = None
+    cause_message: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class LinguisticComponentFailure:
+    """One isolated spelling or thesaurus component disabled after failure."""
+
+    locale: str
+    component: str
+    diagnostic: LinguisticServiceDiagnostic

@@ -128,8 +128,11 @@ service = LinguisticService(
 ```
 
 Diagnostics include operation, locale, stable error type, backend, path, and
-message. They are bounded and can be inspected or cleared. A failing diagnostic
-handler is isolated from the linguistic operation.
+message, plus an optional disabled component and underlying cause. They are
+bounded and can be inspected or cleared. A failing diagnostic handler is
+isolated from the linguistic operation. Repeated component failures are
+suppressed by a per-locale circuit breaker; see
+[`error-handling.md`](error-handling.md).
 
 Set `strict=True` in tests, command-line tools, or other environments that need
 the original structured exception. Invalid API arguments are always raised and

@@ -239,9 +239,19 @@ class LinguisticContextMenu(QObject):
         for locale in locales:
             info = self._integration.service.dictionary_info(locale)
             availability: list[str] = []
-            if info is not None and info.has_spelling:
+            spelling_failure = self._integration.service.component_failure(
+                locale, "spelling"
+            )
+            thesaurus_failure = self._integration.service.component_failure(
+                locale, "thesaurus"
+            )
+            if spelling_failure is not None:
+                availability.append(_tr("Spelling failed"))
+            elif info is not None and info.has_spelling:
                 availability.append(_tr("Spelling"))
-            if info is not None and info.has_thesaurus:
+            if thesaurus_failure is not None:
+                availability.append(_tr("Thesaurus failed"))
+            elif info is not None and info.has_thesaurus:
                 availability.append(_tr("Thesaurus"))
             capability_text = ", ".join(availability) or _tr("No dictionaries")
             action = submenu.addAction(
