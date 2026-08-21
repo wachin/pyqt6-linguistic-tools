@@ -66,9 +66,16 @@ files and duplicate names, stages copies inside the destination filesystem,
 loads every staged component through Spylls/PyThes, and publishes the complete
 directory with one atomic rename. A failed deep validation removes staging and
 attaches its structured report to `DictionaryImportError`. Existing bundles
-are never overwritten. Archive extraction and removal require separate,
-explicit policies and are not performed by this API. See
+are never overwritten. Archive extraction requires a separate, explicit
+policy and is not performed by this API. See
 [`dictionary-validation.md`](dictionary-validation.md).
+
+Application-owned providers expose `remove_bundle(name)` for one direct bundle
+directory. The name cannot contain path separators, symbolic links are
+refused, and the operation is unavailable on `DirectoryDictionaryProvider`.
+Consequently a generic provider used for Linux system dictionaries has no
+removal API. The Qt Dictionary Manager applies the same ownership checks and
+asks for confirmation before removal.
 
 ## dictionaries.json catalog
 
@@ -92,3 +99,29 @@ not implement automatic downloading or extraction. A future downloader should
 require checksums in the release catalog, verify archive size and SHA-256, and
 protect extraction against path traversal before publishing into the managed
 directory.
+
+## Qt Dictionary Manager
+
+`DictionaryManagerDialog` displays effective languages and any application
+bundle hidden by a higher-priority source. It shows locale, spelling and
+thesaurus availability, source ownership, and an optional advanced view of the
+exact files. Manual imports run through `import_validated_files()` in a Qt
+thread pool so loading a large Spylls or PyThes dictionary does not block the
+GUI.
+
+```python
+from pyqt6_linguistic_tools import load_dictionary_catalog
+from pyqt6_linguistic_tools.qt import DictionaryManagerDialog
+
+catalog = load_dictionary_catalog("/path/to/dictionaries.json")
+manager = DictionaryManagerDialog(service, catalog=catalog, parent=window)
+manager.dictionaries_changed.connect(refresh_language_selectors)
+manager.show()
+```
+
+The Available Downloads tab integrates the validated catalog metadata but
+performs no network access. Entries without SHA-256 remain visibly unverified
+and disabled. A future host downloader may handle `download_requested`, verify
+the advertised size and checksum, extract safely, and publish through a
+managed provider. The current LibreOffice collection catalog therefore
+remains inspection-only until checksums are added.

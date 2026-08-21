@@ -79,7 +79,9 @@ one-directional integration boundary without making PyQt6 a core dependency.
 Its editor decorators keep independent per-document languages, optionally
 persisted through a host-provided `QSettings`, while sharing one linguistic
 service. The language menu distinguishes regional variants and reports
-spelling and thesaurus availability. Install the `[qt]` extra for widgets. See
+spelling and thesaurus availability. Its Dictionary Manager safely inspects,
+imports, and removes only application-owned bundles while leaving system
+dictionaries immutable. Install the `[qt]` extra for widgets. See
 [`docs/qt-architecture.md`](docs/qt-architecture.md).
 
 ## Installation, development, and direct source use

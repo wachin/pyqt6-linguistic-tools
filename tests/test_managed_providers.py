@@ -101,6 +101,35 @@ def test_manual_import_refuses_incomplete_or_existing_bundle(tmp_path: Path):
     assert not any(path.name.startswith(".import-") for path in provider.root.iterdir())
 
 
+def test_only_direct_application_owned_bundles_can_be_removed(tmp_path: Path):
+    managed = ManagedDictionaryProvider(tmp_path / "managed")
+    user = UserDictionaryProvider(tmp_path / "user")
+    managed_bundle = managed.ensure_directory() / "es_EC"
+    user_bundle = user.ensure_directory() / "en_US"
+    managed_bundle.mkdir()
+    user_bundle.mkdir()
+    (managed_bundle / "es_EC.aff").write_text("SET UTF-8\n", encoding="utf-8")
+
+    assert managed.remove_bundle("es_EC")
+    assert user.remove_bundle("missing") is False
+    assert user_bundle.is_dir()
+    with pytest.raises(ValueError):
+        user.remove_bundle("../en_US")
+
+
+def test_owned_bundle_removal_refuses_symbolic_links(tmp_path: Path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    provider = ManagedDictionaryProvider(tmp_path / "managed")
+    provider.ensure_directory()
+    (provider.root / "linked").symlink_to(outside, target_is_directory=True)
+
+    with pytest.raises(DictionaryImportError, match="symbolic-link"):
+        provider.remove_bundle("linked")
+
+    assert outside.is_dir()
+
+
 def test_catalog_validates_entries_and_normalizes_lookup(tmp_path: Path):
     catalog_path = tmp_path / "dictionaries.json"
     catalog_path.write_text(

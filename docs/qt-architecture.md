@@ -383,3 +383,18 @@ All labels and status messages use English source text in the
 `PyQt6LinguisticTools.ThesaurusDialog` Qt translation context. Words, meanings,
 parts of speech and synonyms originate in the selected dictionary and are not
 translated by the widget.
+
+## Dictionary Manager
+
+`DictionaryManagerDialog` lists effective and shadowed application-owned
+dictionaries with their exact locales, component availability, sources, and
+optional file-path details. Manual imports are deeply validated in a worker
+thread. Refreshing after import or removal invalidates obsolete service
+backends and result caches.
+
+Removal is offered only when the selected paths belong to a direct bundle
+under `ManagedDictionaryProvider` or `UserDictionaryProvider`. System
+`DirectoryDictionaryProvider` entries remain visible but cannot be removed.
+The catalog tab accepts a validated `DictionaryCatalog`; it exposes verified
+entries through `download_requested` for future host integration and never
+downloads or extracts files itself.

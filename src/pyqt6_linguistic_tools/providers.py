@@ -29,6 +29,26 @@ from pyqt6_linguistic_tools.storage import dictionary_storage_paths
 _SAFE_BUNDLE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
+def _remove_owned_bundle(root: Path, bundle_name: str) -> bool:
+    """Remove one direct, non-symlinked application-owned bundle."""
+    if not isinstance(bundle_name, str):
+        raise TypeError("bundle_name must be a string")
+    if (
+        not _SAFE_BUNDLE_NAME.fullmatch(bundle_name)
+        or bundle_name in {".", ".."}
+    ):
+        raise ValueError("bundle_name must be one safe path component")
+    target = root / bundle_name
+    if target.is_symlink():
+        raise DictionaryImportError("refusing to remove a symbolic-link bundle")
+    if not target.exists():
+        return False
+    if not target.is_dir():
+        raise DictionaryImportError("dictionary bundle must be a directory")
+    shutil.rmtree(target)
+    return True
+
+
 class DictionaryProvider(ABC):
     """Enumerate dictionary candidates from one named, prioritized source."""
 
@@ -160,6 +180,10 @@ class ManagedDictionaryProvider(DirectoryDictionaryProvider):
         self.root.mkdir(parents=True, exist_ok=True)
         return self.root
 
+    def remove_bundle(self, bundle_name: str) -> bool:
+        """Remove one direct application-managed bundle, never system data."""
+        return _remove_owned_bundle(self.root, bundle_name)
+
 
 class UserDictionaryProvider(DirectoryDictionaryProvider):
     """Discover and safely import user-supplied dictionary files."""
@@ -188,6 +212,10 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
         """Create the user root only when explicitly requested."""
         self.root.mkdir(parents=True, exist_ok=True)
         return self.root
+
+    def remove_bundle(self, bundle_name: str) -> bool:
+        """Remove one direct manually imported bundle, never source files."""
+        return _remove_owned_bundle(self.root, bundle_name)
 
     def import_files(
         self,

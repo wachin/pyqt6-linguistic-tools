@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         ContextActionProvider,
         LinguisticTextEditDecorator,
     )
+    from pyqt6_linguistic_tools.qt.dictionary_manager import DictionaryManagerDialog
     from pyqt6_linguistic_tools.qt.spell_highlighter import (
         SpellCheckHighlighter,
         default_misspelling_format,
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
 __all__ = [
     "AsyncSpellCheckController",
     "ContextActionProvider",
+    "DictionaryManagerDialog",
     "LinguisticTextEditDecorator",
     "LinguisticAction",
     "LinguisticContextMenu",
@@ -60,6 +62,10 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import decorator
 
         return getattr(decorator, name)
+    if name == "DictionaryManagerDialog":
+        from pyqt6_linguistic_tools.qt import dictionary_manager
+
+        return dictionary_manager.DictionaryManagerDialog
     if name in {"SpellCheckHighlighter", "default_misspelling_format"}:
         from pyqt6_linguistic_tools.qt import spell_highlighter
 
