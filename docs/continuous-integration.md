@@ -16,9 +16,11 @@ or schedule does not start either workflow.
 - the current GitHub-hosted Windows image with Python 3.14;
 - the current GitHub-hosted macOS image with Python 3.14.
 
-Every matrix entry initializes only the Spylls and PyThes submodules. Hunspell,
-MyThes, and Sonnet source-reference submodules are deliberately excluded from
-runtime CI. The job installs the toolkit's `test` and `qt` extras and runs:
+Every matrix entry initializes only the Spylls and PyThes submodules. The
+Hunspell, MyThes and Sonnet sources used during development were removed from
+the repository; see
+[`hunspell-sonnet-mythes-study.md`](hunspell-sonnet-mythes-study.md). The job
+installs the toolkit's `test` and `qt` extras and runs:
 
 ```bash
 python -m pytest -m "not corpus and not platform"

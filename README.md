@@ -15,6 +15,11 @@ Development is currently focused on stabilizing its portable engines:
 Native Hunspell and MyThes are outside the scope of this first stage. They may
 be added later as optional backends without changing the public API.
 
+The Hunspell, MyThes and Sonnet sources that informed the design were studied
+from temporary submodules and have been removed from the repository. The study
+notes are in
+[`docs/hunspell-sonnet-mythes-study.md`](docs/hunspell-sonnet-mythes-study.md).
+
 ## Portable backend API
 
 `SpyllsBackend` and `PyThesBackend` implement stable engine-neutral contracts.

@@ -2,6 +2,14 @@
 
 This project follows Semantic Versioning.
 
+## Unreleased
+
+- Remove the Hunspell, MyThes and Sonnet study submodules from `third-party/`.
+  The toolkit never imported, built or tested them, and CI only initialized the
+  Spylls and PyThes engines. The lessons that shaped the architecture and the
+  engine forks are preserved in
+  [`docs/hunspell-sonnet-mythes-study.md`](docs/hunspell-sonnet-mythes-study.md).
+
 ## 1.0.0
 
 - Stable release of the portable linguistic toolkit for PyQt6 applications.
