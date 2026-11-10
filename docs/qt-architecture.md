@@ -395,6 +395,24 @@ empty category column, switches to a single "Meaning / synonym" column, renders
 each meaning as a bold group and indents its synonyms, and shows a short note.
 Dictionaries that provide real categories keep the two-column layout.
 
+The window follows the LibreOffice layout closely:
+
+- **Current word** is the editable query field.
+- **Language** lists only locales with an installed thesaurus. Item labels use
+  `locale_display_name()`, so the Spanish dictionary appears as *Español
+  (Ecuador)*. Changing the item calls `set_locale()` and re-runs the query
+  without changing the host application's spelling language. Managed thesaurus
+  bundles installed on Windows or macOS appear in the same list.
+- **Alternatives** shows numbered meaning groups, for example `1. - asistencia`.
+- **Replace with** is editable and is filled from the selected synonym. The
+  user may type another replacement before pressing **Replace**.
+- **Replace** emits `replacement_requested(source, replacement)`; the host
+  owns the editor replacement. **Cancel** closes the dialog.
+
+When no thesaurus dictionary is installed the language combo is disabled and
+shows a clear message. The current word field remains usable so the user can
+see that no entry is available.
+
 The **Copy** action places several formats on the clipboard in one step:
 HTML and RTF with bold meaning headings and synonym bullets (for LibreOffice or
 a word processor), plus Markdown with `**bold**` groups and `-` bullets (for

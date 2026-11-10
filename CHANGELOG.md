@@ -42,6 +42,12 @@ This project follows Semantic Versioning.
   so providers no longer have to be assembled in each program. Add
   `pyqt6_linguistic_tools_bootstrap.py` for applications that vendor the
   toolkit as a `libs/` git submodule without pip.
+- Give the thesaurus window a LibreOffice-style layout: editable **Current
+  word**, a **Language** selector populated from the installed thesaurus
+  dictionaries (native names such as *Español (Ecuador)*), numbered
+  **Alternatives**, an editable **Replace with** field, and **Replace**/
+  **Cancel** actions. The selector also lists managed thesaurus bundles on
+  Windows and macOS.
 - Split the thesaurus browser into an embeddable `ThesaurusWidget` and a thin
   `ThesaurusDialog` wrapper. ChordFlow and ChordPages now share both.
 - Add a README banner, badges, a Mermaid architecture diagram, a key-module

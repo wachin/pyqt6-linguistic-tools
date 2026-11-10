@@ -87,6 +87,22 @@ def test_spanish_translation_is_installed_and_removed(application) -> None:
             QCoreApplication.translate("PyQt6LinguisticTools.ThesaurusDialog", "Copy")
             == "Copiar"
         )
+        assert (
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Current word:"
+            )
+            == "Palabra actual:"
+        )
+        assert (
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Replace with:"
+            )
+            == "Reemplazar por:"
+        )
+        assert (
+            QCoreApplication.translate("PyQt6LinguisticTools.ThesaurusDialog", "Cancel")
+            == "Cancelar"
+        )
     finally:
         assert uninstall_toolkit_translations(application)
         assert installed_toolkit_translator(application) is None

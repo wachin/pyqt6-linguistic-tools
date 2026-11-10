@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 308" src="https://img.shields.io/badge/tests-308%20fast-brightgreen">
+  <img alt="Fast tests: 311" src="https://img.shields.io/badge/tests-311%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -238,6 +238,13 @@ ChordPages dependency. It has two forms:
 Both accept a `LinguisticService` and emit `replacement_requested` with
 `(source_word, replacement)`. The toolkit never edits the host document; the
 application decides how to apply the replacement.
+
+The dialog provides a **Current word** field, a **Language** selector populated
+from the installed thesaurus dictionaries (for example *Español (Ecuador)*), a
+grouped and numbered **Alternatives** tree, and an editable **Replace with**
+field. The selected synonym fills that field; the user can type another value
+before pressing **Replace**. On Windows and macOS the same selector lists any
+managed thesaurus bundles installed through the Dictionary Download Manager.
 
 ```python
 from pyqt6_linguistic_tools import create_service

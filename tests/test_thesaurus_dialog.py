@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 
 import pytest
 
@@ -100,7 +101,7 @@ def test_displays_query_meanings_parts_of_speech_and_synonyms(
     assert not dialog.results.isColumnHidden(0)
     first = dialog.results.topLevelItem(0)
     assert first.text(0) == "adjective"
-    assert first.text(1) == "shining"
+    assert first.text(1) == "1. shining"
     assert [first.child(index).text(1) for index in range(first.childCount())] == [
         "radiant",
         "luminous",
@@ -252,10 +253,10 @@ def test_hides_part_of_speech_when_dictionary_has_no_categories(
     assert dialog.results.topLevelItemCount() == 2
     first = dialog.results.topLevelItem(0)
     second = dialog.results.topLevelItem(1)
-    assert first.text(0) == "asistencia"
+    assert first.text(0) == "1. - asistencia"
     assert first.childCount() == 2
     assert first.child(0).text(0) == "concurrencia"
-    assert second.text(0) == "fachada"
+    assert second.text(0) == "2. - fachada"
     assert second.child(0).text(0) == "porte"
     assert "grammatical" in dialog.status_label.text().lower()
 
@@ -271,12 +272,12 @@ def test_clipboard_formats_preserve_bold_groups_and_bullets():
     formats = thesaurus_clipboard_formats(entry, "presencia")
 
     assert "<b>presencia</b>" in formats.html
-    assert "<b>asistencia</b>" in formats.html
+    assert "<b>1. - asistencia</b>" in formats.html
     assert "<li>concurrencia</li>" in formats.html
     assert formats.html.index("asistencia") < formats.html.index("fachada")
-    assert "**asistencia**" in formats.markdown
+    assert "**1. - asistencia**" in formats.markdown
     assert "- concurrencia" in formats.markdown
-    assert r"\b asistencia\b0" in formats.rtf
+    assert r"\b 1. - asistencia\b0" in formats.rtf
     assert r"\bullet\tab concurrencia" in formats.rtf
 
 
@@ -300,8 +301,8 @@ def test_copy_button_writes_html_rtf_and_markdown(application, service, monkeypa
     assert mime is not None
     assert mime.hasHtml()
     assert "**presencia**" in mime.text()
-    assert b"**asistencia**" in bytes(mime.data("text/markdown"))
-    assert b"\\b asistencia" in bytes(mime.data("text/rtf"))
+    assert b"**1. - asistencia**" in bytes(mime.data("text/markdown"))
+    assert b"\\b 1. - asistencia" in bytes(mime.data("text/rtf"))
 
 
 def test_thesaurus_widget_can_be_embedded(application, service, monkeypatch):
@@ -318,3 +319,65 @@ def test_thesaurus_widget_can_be_embedded(application, service, monkeypatch):
     widget.results.setCurrentItem(widget.results.topLevelItem(0).child(0))
     assert widget.replace_selected()
     assert replacements == [("bright", "radiant")]
+
+
+def test_selection_populates_replace_field_and_allows_custom_text(
+    application, service, monkeypatch
+):
+    monkeypatch.setattr(service, "thesaurus_entry", _entry)
+    dialog = ThesaurusDialog(service, "bright")
+    child = dialog.results.topLevelItem(0).child(0)
+    dialog.results.setCurrentItem(child)
+
+    assert dialog.replace_edit.text() == "radiant"
+    assert dialog.replace_button.isEnabled()
+
+    dialog.replace_edit.setText("luminous")
+    replacements: list[tuple[str, str]] = []
+    dialog.replacement_requested.connect(
+        lambda source, replacement: replacements.append((source, replacement))
+    )
+
+    assert dialog.replace_selected()
+    assert replacements == [("bright", "luminous")]
+
+
+def test_language_selector_uses_installed_thesaurus_dictionaries(
+    application, service, monkeypatch
+):
+    requested: list[str | None] = []
+    monkeypatch.setattr(
+        service,
+        "available_languages",
+        lambda: ("en_US", "es_EC"),
+    )
+    monkeypatch.setattr(
+        service,
+        "capabilities",
+        lambda _locale=None: SimpleNamespace(thesaurus=True),
+    )
+
+    def lookup(word: str, *, locale: str | None = None):
+        requested.append(locale)
+        return _entry(word)
+
+    monkeypatch.setattr(service, "thesaurus_entry", lookup)
+    dialog = ThesaurusDialog(service, "bright")
+    spanish_index = dialog.locale_combo.findData("es_EC")
+
+    assert spanish_index >= 0
+    assert dialog.locale_combo.count() == 2
+    dialog.locale_combo.setCurrentIndex(spanish_index)
+
+    assert dialog.language == "es_EC"
+    assert requested[-1] == "es_EC"
+
+
+def test_language_selector_is_disabled_without_thesaurus_dictionaries(
+    application, service, monkeypatch
+):
+    monkeypatch.setattr(service, "available_languages", lambda: ())
+    dialog = ThesaurusDialog(service, "bright")
+
+    assert not dialog.locale_combo.isEnabled()
+    assert "no thesaurus" in dialog.locale_combo.currentText().lower()

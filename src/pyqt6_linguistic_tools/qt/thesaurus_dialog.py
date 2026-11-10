@@ -7,7 +7,7 @@ import html
 import unicodedata
 
 from pyqt6_linguistic_tools.models import ThesaurusEntry, ThesaurusMeaning
-from pyqt6_linguistic_tools.locales import normalize_locale
+from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.service import LinguisticService
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 
@@ -25,6 +25,7 @@ from PyQt6.QtCore import (  # noqa: E402
 from PyQt6.QtGui import QFont  # noqa: E402
 from PyQt6.QtWidgets import (  # noqa: E402
     QApplication,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
@@ -48,11 +49,23 @@ def _meaning_part_of_speech(value: str) -> str:
     return "" if category in {"", "-", "?", "—", "–"} else category
 
 
-def _meaning_heading(meaning: ThesaurusMeaning) -> str:
+def _numbered_meaning(index: int, meaning: ThesaurusMeaning) -> str:
+    """Format a meaning for the one-column tree without duplicating the POS."""
+    category = _meaning_part_of_speech(meaning.part_of_speech)
+    text = meaning.meaning or category
+    if not text:
+        return f"{index}."
+    if category and meaning.meaning:
+        return f"{index}. {text}"
+    return f"{index}. - {text}"
+
+
+def _numbered_heading(index: int, meaning: ThesaurusMeaning) -> str:
+    """Format a clipboard heading, including the POS when one exists."""
     category = _meaning_part_of_speech(meaning.part_of_speech)
     if category and meaning.meaning:
-        return f"{category} — {meaning.meaning}"
-    return category or meaning.meaning
+        return f"{index}. {category} — {meaning.meaning}"
+    return _numbered_meaning(index, meaning)
 
 
 def _escape_html(value: str) -> str:
@@ -105,8 +118,8 @@ def thesaurus_clipboard_formats(
         html_parts.append(f"<p><b>{_escape_html(title)}</b></p>")
         markdown_parts.extend([f"**{_escape_markdown(title)}**", ""])
         rtf_parts.append(f"\\pard\\b {_escape_rtf(title)}\\b0\\par")
-    for meaning in entry.meanings:
-        heading = _meaning_heading(meaning)
+    for number, meaning in enumerate(entry.meanings, start=1):
+        heading = _numbered_heading(number, meaning)
         if heading:
             html_parts.append(f"<p><b>{_escape_html(heading)}</b></p>")
             markdown_parts.extend([f"**{_escape_markdown(heading)}**", ""])
@@ -259,19 +272,102 @@ class ThesaurusWidget(QWidget):
         return False if synonym is None else self.search(synonym)
 
     def replace_selected(self) -> bool:
-        synonym = self.selected_synonym
-        if synonym is None:
+        replacement_text = self.replace_edit.text().strip()
+        if not replacement_text:
             return False
         replacement = preserve_simple_capitalization(
             self._replacement_source,
-            synonym,
+            replacement_text,
         )
         self.replacement_requested.emit(self._replacement_source, replacement)
         return True
 
+    def set_locale(self, locale: str) -> bool:
+        """Select an installed thesaurus dictionary by locale."""
+        normalized = normalize_locale(locale)
+        index = self.locale_combo.findData(normalized)
+        if index < 0:
+            return False
+        self.locale_combo.setCurrentIndex(index)
+        return self._locale == normalized
+
+    def _populate_locales(self) -> None:
+        self.locale_combo.blockSignals(True)
+        self.locale_combo.clear()
+        locales: list[str] = []
+        try:
+            available = self._service.available_languages()
+        except Exception:
+            available = ()
+        for locale in available:
+            try:
+                if self._service.capabilities(locale).thesaurus:
+                    locales.append(normalize_locale(locale))
+            except Exception:
+                continue
+        locales = sorted(
+            set(locales),
+            key=lambda value: locale_display_name(value).casefold(),
+        )
+        if not locales:
+            self.locale_combo.addItem(
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog",
+                    "No thesaurus dictionaries are installed.",
+                ),
+                None,
+            )
+            self.locale_combo.setEnabled(False)
+            self.locale_combo.blockSignals(False)
+            return
+        current = self._locale
+        if current not in locales:
+            current = locales[0]
+            self._locale = current
+        for locale in locales:
+            self.locale_combo.addItem(locale_display_name(locale), locale)
+            index = self.locale_combo.count() - 1
+            self.locale_combo.setItemData(
+                index,
+                locale,
+                Qt.ItemDataRole.ToolTipRole,
+            )
+        self.locale_combo.setCurrentIndex(locales.index(current))
+        self.locale_combo.setEnabled(True)
+        self.locale_combo.blockSignals(False)
+
+    def _on_locale_changed(self, index: int) -> None:
+        locale = self.locale_combo.itemData(index)
+        if not isinstance(locale, str):
+            return
+        normalized = normalize_locale(locale)
+        if normalized == self._locale:
+            return
+        self._locale = normalized
+        self.search(self.query, add_history=False)
+
     def _create_widgets(self) -> None:
         layout = QVBoxLayout(self)
-        search_row = QHBoxLayout()
+
+        word_row = QHBoxLayout()
+        self.word_label = QLabel(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Current word:"
+            ),
+            self,
+        )
+        self.search_edit = QLineEdit(self)
+        self.search_edit.setPlaceholderText(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Type a word…"
+            )
+        )
+        self.search_button = QPushButton(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Search"
+            ),
+            self,
+        )
         self.back_button = QPushButton(
             QCoreApplication.translate("PyQt6LinguisticTools.ThesaurusDialog", "Back"),
             self,
@@ -282,21 +378,37 @@ class ThesaurusWidget(QWidget):
             ),
             self,
         )
-        self.search_edit = QLineEdit(self)
-        self.search_button = QPushButton(
+        word_row.addWidget(self.word_label)
+        word_row.addWidget(self.search_edit, 1)
+        word_row.addWidget(self.search_button)
+        word_row.addWidget(self.back_button)
+        word_row.addWidget(self.forward_button)
+        layout.addLayout(word_row)
+
+        language_row = QHBoxLayout()
+        self.language_label = QLabel(
             QCoreApplication.translate(
-                "PyQt6LinguisticTools.ThesaurusDialog", "Search"
+                "PyQt6LinguisticTools.ThesaurusDialog", "Language:"
             ),
             self,
         )
-        search_row.addWidget(self.back_button)
-        search_row.addWidget(self.forward_button)
-        search_row.addWidget(self.search_edit, 1)
-        search_row.addWidget(self.search_button)
-        layout.addLayout(search_row)
+        self.locale_combo = QComboBox(self)
+        language_row.addWidget(self.language_label)
+        language_row.addWidget(self.locale_combo, 1)
+        layout.addLayout(language_row)
+        self._populate_locales()
+        self.locale_combo.currentIndexChanged.connect(self._on_locale_changed)
 
         self.query_label = QLabel(self)
+        self.query_label.setVisible(False)
         layout.addWidget(self.query_label)
+        self.alternatives_label = QLabel(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Alternatives:"
+            ),
+            self,
+        )
+        layout.addWidget(self.alternatives_label)
         self.results = QTreeWidget(self)
         self.results.setHeaderLabels(
             (
@@ -310,6 +422,26 @@ class ThesaurusWidget(QWidget):
         )
         self.results.setRootIsDecorated(True)
         layout.addWidget(self.results, 1)
+
+        replace_row = QHBoxLayout()
+        self.replace_label = QLabel(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Replace with:"
+            ),
+            self,
+        )
+        self.replace_edit = QLineEdit(self)
+        self.replace_edit.setPlaceholderText(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog",
+                "Select a synonym or type a replacement.",
+            )
+        )
+        self.replace_edit.textChanged.connect(self._update_replace_action)
+        replace_row.addWidget(self.replace_label)
+        replace_row.addWidget(self.replace_edit, 1)
+        layout.addLayout(replace_row)
+
         self.status_label = QLabel(self)
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
@@ -412,9 +544,11 @@ class ThesaurusWidget(QWidget):
 
     def _populate_results(self) -> None:
         self.results.clear()
+        self.replace_edit.clear()
         if self._entry is None or not self._entry.meanings:
             self.copy_button.setEnabled(False)
             self.results.setColumnHidden(0, False)
+            self._update_replace_action()
             word = self.search_edit.text()
             self.status_label.setText(
                 QCoreApplication.translate(
@@ -469,18 +603,19 @@ class ThesaurusWidget(QWidget):
                 header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.status_label.clear()
         self.status_label.hide()
-        for meaning in meanings:
+        for number, meaning in enumerate(meanings, start=1):
+            heading = _numbered_meaning(number, meaning)
             if has_categories:
                 parent = QTreeWidgetItem(
                     (
                         self._meaning_part_of_speech(meaning.part_of_speech),
-                        meaning.meaning,
+                        heading,
                     )
                 )
                 for column in (0, 1):
                     self._bold_item(parent, column)
             else:
-                parent = QTreeWidgetItem((meaning.meaning, ""))
+                parent = QTreeWidgetItem((heading, ""))
                 self._bold_item(parent, 0)
             if meaning.meaning:
                 parent.setData(0, _SYNONYM_ROLE, meaning.meaning)
@@ -506,9 +641,16 @@ class ThesaurusWidget(QWidget):
         self._update_selection()
 
     def _update_selection(self) -> None:
-        enabled = self.selected_synonym is not None
-        self.search_selected_button.setEnabled(enabled)
-        self.replace_button.setEnabled(enabled)
+        synonym = self.selected_synonym
+        self.search_selected_button.setEnabled(synonym is not None)
+        if synonym is not None:
+            self.replace_edit.setText(synonym)
+        self._update_replace_action()
+
+    def _update_replace_action(self) -> None:
+        self.replace_button.setEnabled(
+            self._entry is not None and bool(self.replace_edit.text().strip())
+        )
 
     def _update_navigation(self) -> None:
         self.back_button.setEnabled(self._history_index > 0)
@@ -548,7 +690,14 @@ class ThesaurusDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._widget)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel, self)
+        cancel_button = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if cancel_button is not None:
+            cancel_button.setText(
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog", "Cancel"
+                )
+            )
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
@@ -557,7 +706,7 @@ class ThesaurusDialog(QDialog):
                 "PyQt6LinguisticTools.ThesaurusDialog", "Thesaurus"
             )
         )
-        self.resize(620, 440)
+        self.resize(760, 540)
         self._widget.query_changed.connect(self.query_changed.emit)
         self._widget.no_results.connect(self.no_results.emit)
         self._widget.replacement_requested.connect(self.replacement_requested.emit)
@@ -613,6 +762,33 @@ class ThesaurusDialog(QDialog):
     @property
     def query_label(self) -> QLabel:
         return self._widget.query_label
+
+    @property
+    def word_label(self) -> QLabel:
+        return self._widget.word_label
+
+    @property
+    def language_label(self) -> QLabel:
+        return self._widget.language_label
+
+    @property
+    def alternatives_label(self) -> QLabel:
+        return self._widget.alternatives_label
+
+    @property
+    def replace_label(self) -> QLabel:
+        return self._widget.replace_label
+
+    @property
+    def locale_combo(self) -> QComboBox:
+        return self._widget.locale_combo
+
+    @property
+    def replace_edit(self) -> QLineEdit:
+        return self._widget.replace_edit
+
+    def set_locale(self, locale: str) -> bool:
+        return self._widget.set_locale(locale)
 
     @property
     def back_button(self) -> QPushButton:
