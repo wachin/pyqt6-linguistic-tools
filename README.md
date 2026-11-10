@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 311" src="https://img.shields.io/badge/tests-311%20fast-brightgreen">
+  <img alt="Fast tests: 312" src="https://img.shields.io/badge/tests-312%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -272,6 +272,11 @@ dialog.exec()
 
 `ThesaurusWidget` is the extension point for future thesaurus controls, so new
 features added to the toolkit are inherited by every host application.
+
+`ThesaurusDialog` opens with a compact 540×480 default, has minimize/maximize
+controls and a resize grip, and remembers its last position and size through
+`QSettings`. Pass a host-owned `QSettings` object as `settings=` when an
+application wants a separate geometry namespace.
 
 ### Wiring the Replace button
 

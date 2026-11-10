@@ -9,7 +9,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PyQt6", reason="PyQt6 is an optional dependency")
 
-from PyQt6.QtCore import QLocale
+from PyQt6.QtCore import QLocale, QSettings
 from PyQt6.QtWidgets import QApplication, QTextEdit, QVBoxLayout
 
 from pyqt6_linguistic_tools import (
@@ -381,3 +381,30 @@ def test_language_selector_is_disabled_without_thesaurus_dictionaries(
 
     assert not dialog.locale_combo.isEnabled()
     assert "no thesaurus" in dialog.locale_combo.currentText().lower()
+
+
+def test_dialog_geometry_is_compact_and_persistent(
+    application, service, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(service, "thesaurus_entry", _entry)
+    settings = QSettings(
+        str(tmp_path / "thesaurus.ini"),
+        QSettings.Format.IniFormat,
+    )
+    first = ThesaurusDialog(service, "bright", settings=settings)
+    assert first.width() <= 540
+    assert first.isSizeGripEnabled()
+
+    first.resize(540, 460)
+    first.move(40, 50)
+    first.show()
+    application.processEvents()
+    first.close()
+    settings.sync()
+
+    second = ThesaurusDialog(service, "bright", settings=settings)
+    assert second.size().width() == 540
+    assert second.size().height() == 460
+    assert abs(second.x() - 40) <= 5
+    assert abs(second.y() - 50) <= 5
+    second.close()

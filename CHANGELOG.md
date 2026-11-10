@@ -42,6 +42,9 @@ This project follows Semantic Versioning.
   so providers no longer have to be assembled in each program. Add
   `pyqt6_linguistic_tools_bootstrap.py` for applications that vendor the
   toolkit as a `libs/` git submodule without pip.
+- Make the thesaurus dialog narrower (540×480 default), resizable with
+  minimize/maximize controls, and persist its position and size in `QSettings`
+  so it reopens where the user left it. Hosts can inject a `QSettings` object.
 - Give the thesaurus window a LibreOffice-style layout: editable **Current
   word**, a **Language** selector populated from the installed thesaurus
   dictionaries (native names such as *Español (Ecuador)*), numbered

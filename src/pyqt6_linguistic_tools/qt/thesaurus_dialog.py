@@ -18,11 +18,12 @@ from PyQt6.QtCore import (  # noqa: E402
     QByteArray,
     QCoreApplication,
     QMimeData,
+    QSettings,
     QTimer,
     Qt,
     pyqtSignal,
 )
-from PyQt6.QtGui import QFont  # noqa: E402
+from PyQt6.QtGui import QCloseEvent, QFont, QGuiApplication, QHideEvent  # noqa: E402
 from PyQt6.QtWidgets import (  # noqa: E402
     QApplication,
     QComboBox,
@@ -677,9 +678,20 @@ class ThesaurusDialog(QDialog):
         *,
         replacement_source: str | None = None,
         locale: str | None = None,
+        settings: QSettings | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        self._window_settings = settings or QSettings(
+            "pyqt6-linguistic-tools", "ThesaurusDialog"
+        )
+        self.setWindowFlags(
+            self.windowFlags()
+            | Qt.WindowType.WindowMinMaxButtonsHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setSizeGripEnabled(True)
+        self.setMinimumSize(500, 420)
         self._widget = ThesaurusWidget(
             service,
             word,
@@ -706,10 +718,76 @@ class ThesaurusDialog(QDialog):
                 "PyQt6LinguisticTools.ThesaurusDialog", "Thesaurus"
             )
         )
-        self.resize(760, 540)
+        self._restore_window_geometry()
         self._widget.query_changed.connect(self.query_changed.emit)
         self._widget.no_results.connect(self.no_results.emit)
         self._widget.replacement_requested.connect(self.replacement_requested.emit)
+
+    def _default_window_geometry(self) -> None:
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            self.resize(540, 480)
+            return
+        available = screen.availableGeometry()
+        width = min(540, max(500, int(available.width() * 0.40)))
+        height = min(480, max(420, int(available.height() * 0.65)))
+        self.resize(width, height)
+        self.move(
+            available.center().x() - width // 2,
+            available.center().y() - height // 2,
+        )
+
+    def _restore_window_geometry(self) -> None:
+        saved = self._window_settings.value("window/geometry")
+        if isinstance(saved, QByteArray):
+            geometry = saved
+        elif isinstance(saved, bytes):
+            geometry = QByteArray(saved)
+        else:
+            geometry = None
+        if geometry is not None and not geometry.isEmpty():
+            if self.restoreGeometry(geometry):
+                self._keep_window_on_screen()
+                return
+        self._default_window_geometry()
+
+    def _keep_window_on_screen(self) -> None:
+        screens = QGuiApplication.screens()
+        if not screens:
+            return
+        frame = self.frameGeometry()
+
+        def intersection_area(screen) -> int:
+            overlap = screen.availableGeometry().intersected(frame)
+            return max(0, overlap.width()) * max(0, overlap.height())
+
+        best = max(screens, key=intersection_area)
+        if intersection_area(best) == 0:
+            self._default_window_geometry()
+            return
+        available = best.availableGeometry()
+        max_x = max(available.left(), available.right() - self.width() + 1)
+        max_y = max(available.top(), available.bottom() - self.height() + 1)
+        self.move(
+            min(max(self.x(), available.left()), max_x),
+            min(max(self.y(), available.top()), max_y),
+        )
+
+    def _save_window_geometry(self) -> None:
+        self._window_settings.setValue("window/geometry", self.saveGeometry())
+        self._window_settings.sync()
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:
+        self._save_window_geometry()
+        super().closeEvent(event)
+
+    def hideEvent(self, event: QHideEvent | None) -> None:
+        self._save_window_geometry()
+        super().hideEvent(event)
+
+    def done(self, result: int) -> None:
+        self._save_window_geometry()
+        super().done(result)
 
     @property
     def widget(self) -> ThesaurusWidget:

@@ -409,6 +409,13 @@ The window follows the LibreOffice layout closely:
 - **Replace** emits `replacement_requested(source, replacement)`; the host
   owns the editor replacement. **Cancel** closes the dialog.
 
+The dialog starts at a compact 540×480 size with minimize/maximize controls and
+a resize grip. It persists its geometry in the toolkit's
+`ThesaurusDialog` `QSettings` namespace and restores the last position and size
+on the next opening; a host can pass its own `QSettings` instance with
+`settings=`. The saved position is kept on an available screen when monitors
+change.
+
 When no thesaurus dictionary is installed the language combo is disabled and
 shows a clear message. The current word field remains usable so the user can
 see that no entry is available.
