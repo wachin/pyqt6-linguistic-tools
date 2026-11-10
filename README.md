@@ -226,9 +226,121 @@ decorator on every editor can use the new spelling and thesaurus files without
 a restart. This is the supported path for Windows and macOS, where no
 Linux-style system Hunspell/MyThes packages exist.
 
+## Reusing the thesaurus widget
+
+The thesaurus browser is part of the optional Qt layer and has no ChordFlow or
+ChordPages dependency. It has two forms:
+
+- **`ThesaurusWidget`** — an embeddable panel for a tab, dock, splitter or
+  settings page.
+- **`ThesaurusDialog`** — a thin window wrapper around the same widget.
+
+Both accept a `LinguisticService` and emit `replacement_requested` with
+`(source_word, replacement)`. The toolkit never edits the host document; the
+application decides how to apply the replacement.
+
+```python
+from pyqt6_linguistic_tools import create_service
+from pyqt6_linguistic_tools.qt import ThesaurusDialog, ThesaurusWidget
+
+service = create_service(namespace="my-app")
+
+
+def replace_word(source: str, replacement: str) -> None:
+    cursor = editor.textCursor()
+    if cursor.hasSelection():
+        cursor.insertText(replacement)
+        editor.setTextCursor(cursor)
+
+
+# Embedded in a panel, tab or splitter.
+thesaurus = ThesaurusWidget(service, "feliz")
+layout.addWidget(thesaurus)
+
+# Or as a window.
+dialog = ThesaurusDialog(service, "feliz", parent=window)
+dialog.replacement_requested.connect(replace_word)
+dialog.exec()
+```
+
+`ThesaurusWidget` is the extension point for future thesaurus controls, so new
+features added to the toolkit are inherited by every host application.
+
+### Example and documentation
+
+- [`examples/thesaurus_demo.py`](examples/thesaurus_demo.py) is a complete
+  runnable demo with the widget embedded next to an editor and a button that
+  opens the same browser as a dialog.
+- [`docs/public-api.md`](docs/public-api.md) lists the public
+  `ThesaurusWidget`, `ThesaurusDialog` and `create_service()` API.
+- [`docs/qt-architecture.md`](docs/qt-architecture.md) describes the widget
+  layout, replacement signals and the formatted clipboard copy (HTML/RTF for
+  LibreOffice, Markdown for Markdown editors).
+- [`docs/translations.md`](docs/translations.md) explains the bundled Spanish
+  and English UI catalogs.
+
+### Using the toolkit as a `libs/` git submodule (no pip)
+
+Applications can vendor the toolkit without installing it with pip:
+
+```text
+my-app/
+├── libs/
+│   └── pyqt6-linguistic-tools/   ← git submodule
+├── my_app/
+│   └── bootstrap.py
+└── main.py
+```
+
+```bash
+git submodule add https://github.com/wachin/pyqt6-linguistic-tools.git \
+  libs/pyqt6-linguistic-tools
+git submodule update --init --recursive
+```
+
+Create a bootstrap module that adds the toolkit checkout before importing it:
+
+```python
+# my_app/bootstrap.py
+from pathlib import Path
+import sys
+
+toolkit = (
+    Path(__file__).resolve().parent.parent
+    / "libs"
+    / "pyqt6-linguistic-tools"
+)
+sys.path.insert(0, str(toolkit))
+import pyqt6_linguistic_tools_bootstrap  # noqa: F401
+```
+
+Then import the toolkit normally:
+
+```python
+from pyqt6_linguistic_tools import create_service
+from pyqt6_linguistic_tools.qt import ThesaurusDialog, ThesaurusWidget
+
+service = create_service(namespace="my-app")
+```
+
+`pyqt6_linguistic_tools_bootstrap.py` adds the toolkit `src` directory and the
+two vendored engine directories (`libs/spylls` and `libs/pythes`) to
+`sys.path`. It does not use pip and does not install PyQt6. PyQt6 must already
+be available to the interpreter, and the engine submodules must be initialized:
+
+```bash
+git submodule update --init --recursive
+```
+
+Pass `corpus_path=` to `create_service()` only when the application has its own
+local dictionary corpus. Otherwise the factory uses Linux system dictionaries
+when present, plus the managed and user dictionary providers.
+
 ## Documentation map
 
 - [Architecture overview](docs/linguistics-architecture.md): layers, module map,
+- [Reusable thesaurus widget](#reusing-the-thesaurus-widget): embeddable
+  widget, dialog, service factory and no-pip submodule bootstrap.
   and data-flow diagrams.
 - [Backend API](docs/backend-api.md): contracts, lifecycle, errors, and
   thread-boundary guidance.
@@ -449,64 +561,9 @@ still be available from the interpreter chosen to run the application.
 
 ### Git submodule bootstrap (no pip)
 
-If your application vendors the toolkit under `libs/`, use the bootstrap module
-once before any toolkit import:
-
-```text
-my-app/
-├── libs/
-│   └── pyqt6-linguistic-tools/   ← git submodule
-├── my_app/
-│   └── bootstrap.py
-└── main.py
-```
-
-```bash
-git submodule add https://github.com/wachin/pyqt6-linguistic-tools.git \
-  libs/pyqt6-linguistic-tools
-git submodule update --init --recursive
-```
-
-```python
-# my_app/bootstrap.py
-from pathlib import Path
-import sys
-
-toolkit = (
-    Path(__file__).resolve().parent.parent
-    / "libs"
-    / "pyqt6-linguistic-tools"
-)
-sys.path.insert(0, str(toolkit))
-import pyqt6_linguistic_tools_bootstrap  # noqa: F401
-```
-
-Then import the toolkit normally:
-
-```python
-from pyqt6_linguistic_tools import create_service
-from pyqt6_linguistic_tools.qt import ThesaurusDialog, ThesaurusWidget
-
-service = create_service(namespace="my-app")
-```
-
-`create_service()` adds Linux system discovery plus the application-managed
-and user-imported providers. Pass `corpus_path=` only when the application has
-its own local dictionary corpus. The dialog and widget are reusable in any
-PyQt6 application:
-
-```python
-thesaurus = ThesaurusWidget(service, "feliz")
-layout.addWidget(thesaurus)
-
-dialog = ThesaurusDialog(service, "feliz", parent=window)
-dialog.replacement_requested.connect(replace_word)
-dialog.exec()
-```
-
-`pyqt6_linguistic_tools_bootstrap.py` only adds the toolkit `src` directory and
-the two vendored engine directories to `sys.path`. PyQt6 must already be
-available to the interpreter; the toolkit does not install it for you.
+See [Reusing the thesaurus widget](#reusing-the-thesaurus-widget) for the
+complete no-pip `libs/` bootstrap, the reusable `ThesaurusWidget` and
+`ThesaurusDialog`, and the `create_service()` example.
 
 For released `.deb` packages or AppImages, the packager should install or
 bundle the toolkit, PyQt6, Spylls, PyThes, and the selected dictionaries in
