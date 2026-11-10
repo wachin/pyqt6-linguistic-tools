@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
+<?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1">
   <context>
     <name>DictionaryManagerDialog</name>
@@ -200,8 +199,8 @@
     </message>
     <message>
       <location filename="../qt/dictionary_manager.py" line="312" />
-      <source>Download catalog</source>
-      <translation>Catálogo de descargas</translation>
+      <source>Catalog</source>
+      <translation>Catálogo</translation>
     </message>
     <message>
       <location filename="../qt/dictionary_manager.py" line="313" />

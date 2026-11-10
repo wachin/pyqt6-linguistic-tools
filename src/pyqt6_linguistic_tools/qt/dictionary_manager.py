@@ -309,7 +309,7 @@ class DictionaryManagerWidget(QWidget):
             "unverified": self.tr("Unverified"),
             "no_components": self.tr("No components"),
             "verified": self.tr("SHA-256 verified"),
-            "catalog": self.tr("Download catalog"),
+            "catalog": self.tr("Catalog"),
             "ready": self.tr("Select a dictionary to see its details."),
         }
 

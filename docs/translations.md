@@ -4,6 +4,8 @@ The toolkit ships its own Qt translations for the optional widget layer. Host
 applications do not need to extract or translate dependency strings, and they
 keep full control of their own translator.
 
+![Dictionary Manager in Spanish](assets/dictionary-manager-es.png)
+
 ## Bundled files
 
 `src/pyqt6_linguistic_tools/translations/` contains editable `.ts` sources and
