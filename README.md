@@ -49,61 +49,46 @@ may be added later as optional backends without changing the public API.
 ## How it fits together
 
 ```mermaid
-flowchart LR
-    subgraph Host["Your PyQt6 application"]
-        Editor["QTextEdit / QPlainTextEdit"]
-        Menus["Menus, settings,<br/>language selection"]
-    end
+flowchart TB
+    App["Your PyQt6 application<br/>QTextEdit / QPlainTextEdit<br/>menus · settings · language selection"]
 
-    subgraph QtLayer["Optional Qt layer"]
-        Decorator["LinguisticTextEditDecorator"]
-        Highlight["SpellCheckHighlighter"]
-        Context["LinguisticContextMenu"]
-        Thesaurus["ThesaurusDialog"]
-        Manager["DictionaryManagerDialog"]
-    end
-
-    subgraph Core["Core: no PyQt6 import"]
-        Service["LinguisticService"]
-        Registry["DictionaryRegistry"]
-        Resolver["Spell + thesaurus resolvers"]
-        Validator["DictionaryValidator"]
-        Personal["PersonalDictionary<br/>IgnoredWords"]
-        Tokenizer["UnicodeTokenizer"]
+    subgraph Toolkit["pyqt6-linguistic-tools (one package)"]
+        direction TB
+        Qt["<b>Optional Qt layer</b><br/>part of the same package<br/>install with the [qt] extra<br/>omit for core-only use<br/><br/>LinguisticTextEditDecorator<br/>SpellCheckHighlighter<br/>LinguisticContextMenu<br/>ThesaurusDialog<br/>DictionaryManagerDialog"]
+        Core["<b>Core API</b><br/>always installed<br/>never imports PyQt6<br/><br/>LinguisticService<br/>DictionaryRegistry<br/>Backend resolvers<br/>DictionaryValidator<br/>PersonalDictionary · IgnoredWords<br/>UnicodeTokenizer"]
+        Qt --> Core
     end
 
     subgraph Engines["Portable engines"]
+        direction LR
         Spylls["Spylls<br/>spelling"]
         PyThes["PyThes<br/>thesaurus"]
     end
 
     subgraph Sources["Dictionary sources"]
-        System["Linux system<br/>/usr/share/hunspell<br/>/usr/share/mythes"]
-        Managed["Managed bundles<br/>shared app data"]
+        direction LR
+        System["Linux system packages<br/>/usr/share/hunspell<br/>/usr/share/mythes"]
+        Managed["Managed bundles<br/>Windows + macOS fallback<br/>shared app data"]
         User["Validated user imports"]
-        Corpus["LibreOffice corpus<br/>tests + downloads"]
+        Corpus["LibreOffice corpus<br/>downloads for<br/>Windows + macOS"]
     end
 
-    Editor --> Decorator
-    Menus --> Service
-    Decorator --> Service
-    Highlight --> Service
-    Context --> Service
-    Thesaurus --> Service
-    Manager --> Service
-    Service --> Tokenizer
-    Service --> Personal
-    Service --> Registry
-    Service --> Resolver
-    Registry --> System
-    Registry --> Managed
-    Registry --> User
-    Validator --> Managed
-    Validator --> User
-    Managed -.-> Corpus
-    Resolver --> Spylls
-    Resolver --> PyThes
+    App --> Toolkit
+    Core --> Engines
+    Core --> Sources
+    Corpus -.->|downloads| Managed
 ```
+
+The outer box is the **toolkit package**. The **Qt layer is an optional part of
+that same package**: install the `[qt]` extra when you want widgets, or omit it
+and use only the core. The **core is always installed and never imports
+PyQt6**; applications can use `LinguisticService`, the registry, validation,
+and the engines without any Qt dependency.
+
+On Linux, system Hunspell/MyThes packages are discovered automatically. On
+Windows and macOS, the same experience comes from managed bundles downloaded
+from the LibreOffice corpus (or from validated user imports); macOS does not
+rely on Linux-style system packages.
 
 ## What you can build with it
 
@@ -165,6 +150,12 @@ dictionary manager:
   bundles, and exposes `download_requested` for verified catalog entries.
 - **Validation.** Every manual import and every host-provided bundle should
   pass `DictionaryValidator` before publication.
+
+Windows and macOS use the same managed bundles when system dictionaries are not
+installed or not discoverable; the LibreOffice corpus is the source of the
+downloadable bundles for those platforms. Linux can additionally discover
+system packages and can still use managed bundles to supplement or override
+them.
 
 Downloads are intentionally **host-delegated and checksum-gated**: an entry
 without a SHA-256 checksum is shown as *Unverified* and its Download button
