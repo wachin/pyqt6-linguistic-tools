@@ -21,13 +21,6 @@ from PyQt6.QtGui import QAction, QContextMenuEvent, QTextCursor  # noqa: E402
 from PyQt6.QtWidgets import QMenu  # noqa: E402
 
 
-_TRANSLATION_CONTEXT = "PyQt6LinguisticTools"
-
-
-def _tr(text: str) -> str:
-    return QCoreApplication.translate(_TRANSLATION_CONTEXT, text)
-
-
 def _require_action(action: QAction | None) -> QAction:
     if action is None:
         raise RuntimeError("Qt did not create the requested menu action")
@@ -73,9 +66,7 @@ class LinguisticContextMenu(QObject):
     def action_enabled(self, action: LinguisticAction | str) -> bool:
         return self._action_enabled[self._coerce_action(action)]
 
-    def set_action_enabled(
-        self, action: LinguisticAction | str, enabled: bool
-    ) -> bool:
+    def set_action_enabled(self, action: LinguisticAction | str, enabled: bool) -> bool:
         action = self._coerce_action(action)
         if not isinstance(enabled, bool):
             raise TypeError("enabled must be a boolean")
@@ -180,25 +171,36 @@ class LinguisticContextMenu(QObject):
             else:
                 menu.addSeparator()
                 action = _require_action(
-                    menu.addAction(_tr("No spelling suggestions"))
+                    menu.addAction(
+                        QCoreApplication.translate(
+                            "PyQt6LinguisticTools", "No spelling suggestions"
+                        )
+                    )
                 )
                 action.setEnabled(False)
                 count += 1
         scope_actions = []
         if self.action_enabled(LinguisticAction.IGNORE):
-            action = QAction(_tr("Ignore"), menu)
+            action = QAction(
+                QCoreApplication.translate("PyQt6LinguisticTools", "Ignore"), menu
+            )
             action.triggered.connect(
                 lambda: self._ignore_word(word, occurrence_id, all_occurrences=False)
             )
             scope_actions.append(action)
         if self.action_enabled(LinguisticAction.IGNORE_ALL):
-            action = QAction(_tr("Ignore All"), menu)
+            action = QAction(
+                QCoreApplication.translate("PyQt6LinguisticTools", "Ignore All"), menu
+            )
             action.triggered.connect(
                 lambda: self._ignore_word(word, occurrence_id, all_occurrences=True)
             )
             scope_actions.append(action)
         if self.action_enabled(LinguisticAction.ADD_TO_DICTIONARY):
-            action = QAction(_tr("Add to Dictionary"), menu)
+            action = QAction(
+                QCoreApplication.translate("PyQt6LinguisticTools", "Add to Dictionary"),
+                menu,
+            )
             action.triggered.connect(lambda: self._add_to_dictionary(word))
             scope_actions.append(action)
         if scope_actions:
@@ -213,11 +215,13 @@ class LinguisticContextMenu(QObject):
         integration = self._integration
         count = 0
         if self.action_enabled(LinguisticAction.SYNONYMS):
-            synonyms = integration.service.synonyms(
-                word, locale=integration.language
-            )
+            synonyms = integration.service.synonyms(word, locale=integration.language)
             if synonyms:
-                submenu = _require_menu(menu.addMenu(_tr("Synonyms")))
+                submenu = _require_menu(
+                    menu.addMenu(
+                        QCoreApplication.translate("PyQt6LinguisticTools", "Synonyms")
+                    )
+                )
                 limit = integration.settings.synonym_limit
                 for synonym in synonyms[:limit]:
                     action = _require_action(submenu.addAction(synonym))
@@ -233,14 +237,24 @@ class LinguisticContextMenu(QObject):
                 if len(synonyms) > limit:
                     submenu.addSeparator()
                     action = _require_action(
-                        submenu.addAction(_tr("More synonyms…"))
+                        submenu.addAction(
+                            QCoreApplication.translate(
+                                "PyQt6LinguisticTools", "More synonyms…"
+                            )
+                        )
                     )
                     action.triggered.connect(
                         lambda: self._request_thesaurus(word, cursor, more=True)
                     )
                 count += 1
         if self.action_enabled(LinguisticAction.OPEN_THESAURUS):
-            action = _require_action(menu.addAction(_tr("Open Thesaurus…")))
+            action = _require_action(
+                menu.addAction(
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools", "Open Thesaurus…"
+                    )
+                )
+            )
             action.triggered.connect(
                 lambda: self._request_thesaurus(word, cursor, more=False)
             )
@@ -253,7 +267,9 @@ class LinguisticContextMenu(QObject):
         locales = self._integration.service.available_languages()
         if not locales:
             return 0
-        submenu = _require_menu(menu.addMenu(_tr("Language")))
+        submenu = _require_menu(
+            menu.addMenu(QCoreApplication.translate("PyQt6LinguisticTools", "Language"))
+        )
         active = self._integration.language
         for locale in locales:
             info = self._integration.service.dictionary_info(locale)
@@ -265,14 +281,28 @@ class LinguisticContextMenu(QObject):
                 locale, "thesaurus"
             )
             if spelling_failure is not None:
-                availability.append(_tr("Spelling failed"))
+                availability.append(
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools", "Spelling failed"
+                    )
+                )
             elif info is not None and info.has_spelling:
-                availability.append(_tr("Spelling"))
+                availability.append(
+                    QCoreApplication.translate("PyQt6LinguisticTools", "Spelling")
+                )
             if thesaurus_failure is not None:
-                availability.append(_tr("Thesaurus failed"))
+                availability.append(
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools", "Thesaurus failed"
+                    )
+                )
             elif info is not None and info.has_thesaurus:
-                availability.append(_tr("Thesaurus"))
-            capability_text = ", ".join(availability) or _tr("No dictionaries")
+                availability.append(
+                    QCoreApplication.translate("PyQt6LinguisticTools", "Thesaurus")
+                )
+            capability_text = ", ".join(availability) or QCoreApplication.translate(
+                "PyQt6LinguisticTools", "No dictionaries"
+            )
             action = _require_action(
                 submenu.addAction(
                     f"{locale_display_name(locale)} [{locale}] — {capability_text}"
@@ -287,7 +317,11 @@ class LinguisticContextMenu(QObject):
         if self._integration.language_settings is not None:
             submenu.addSeparator()
             action = _require_action(
-                submenu.addAction(_tr("Set Current Language as Default"))
+                submenu.addAction(
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools", "Set Current Language as Default"
+                    )
+                )
             )
             action.triggered.connect(
                 lambda _checked=False: self._integration.set_default_language()

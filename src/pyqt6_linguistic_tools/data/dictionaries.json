@@ -5,343 +5,514 @@
       "code": "af",
       "name": "Afrikaans",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-af.tar.gz",
-      "size": 445688
+      "size": 445688,
+      "sha256": "bffe1b4b1aa759eef603d3cdc312bcc807d4be239f615760218da70a551ee5a7",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "an",
       "name": "Aragonese",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-an.tar.gz",
-      "size": 92847
+      "size": 92847,
+      "sha256": "88f51d3229e397f1b327e7cbd7afce14b7a7682264d16040e8b1c05800710e37",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "ar",
       "name": "Arabic",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ar.tar.gz",
-      "size": 1764665
+      "size": 1764665,
+      "sha256": "912a021bb8dc9b58e9414b6006fceaac4433162fa9511698929b5348b3e8e3b4",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "be",
       "name": "Belarusian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-be.tar.gz",
-      "size": 2015575
+      "size": 2015575,
+      "sha256": "188cf53929e49dfa0f1a528ee378b06936ae48b5a63354a80c17f5570282bf3c",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "bg",
       "name": "Bulgarian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-bg.tar.gz",
-      "size": 1592744
+      "size": 1592744,
+      "sha256": "dfeb1e817a4aa02765c814e54d2387b35a03e8c7395478061e6009cc0ddab21e",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "bn",
       "name": "Bengali",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-bn.tar.gz",
-      "size": 374387
+      "size": 374387,
+      "sha256": "c1faf2fda35ada8497ad2c8f0bd7fec1d952849ba066edadc63e75ac473901b3",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "bo",
       "name": "Classical Tibetan",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-bo.tar.gz",
-      "size": 7782
+      "size": 7782,
+      "sha256": "18bf00ec542ff667a8ecc5a970eca276b48392374108e95b262c8b67e0c719bb",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "br",
       "name": "Breton",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-br.tar.gz",
-      "size": 881477
+      "size": 881477,
+      "sha256": "c79c55610f6f0dc180ebee09d8af4982ca9e6b7b638c6d97f3965e843fe69243",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "bs",
       "name": "Bosnian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-bs.tar.gz",
-      "size": 116965
+      "size": 116965,
+      "sha256": "d9c3de2eca0b43a80cb70b72ca3df99b4f953a0bc1ea2d0f15d2f86b1820ad8d",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "ca",
       "name": "Catalan",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ca.tar.gz",
-      "size": 5226349
+      "size": 5226349,
+      "sha256": "aaf90b4786111eeed0c084d00a76583d3988c955142c2656f89b5a8fefe112e6",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "ckb",
       "name": "Central Kurdish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ckb.tar.gz",
-      "size": 129476
+      "size": 129476,
+      "sha256": "fef0e5fa0bc24aec70fcaca1638c96e3304c32db722ab05d7fe5a5eba1e0f5ed",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "cs",
       "name": "Czech",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-cs.tar.gz",
-      "size": 2702384
+      "size": 2702384,
+      "sha256": "76e6d03810d0047747e224ed83a2357d25ec1d5a2f619242acffd1b43a362025",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "da",
       "name": "Danish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-da.tar.gz",
-      "size": 2292639
+      "size": 2292639,
+      "sha256": "9c464f18bcbef3b739b90f59ec5a813038ed7aa40060544255f0cfbfa33d29e5",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "de",
       "name": "German",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-de.tar.gz",
-      "size": 20983812
+      "size": 20983812,
+      "sha256": "5a6d6381603cb6a7ddb36a1fb4704403c0bced51bde94adc2904e7c2c74ce178",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "el",
       "name": "Modern Greek",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-el.tar.gz",
-      "size": 2128995
+      "size": 2128995,
+      "sha256": "4996e740c47b4df30dfc8b78e0d4b6bc8010d38c46be3d641d3274278bc2520a",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "en",
       "name": "English",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-en.tar.gz",
-      "size": 6841341
+      "size": 6841341,
+      "sha256": "d83452a70199058cf7df9cda7f3eab723b35bb0126ebce992cd4f6ea550dbefd",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "eo",
       "name": "Esperanto",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-eo.tar.gz",
-      "size": 284739
+      "size": 284739,
+      "sha256": "5192a307f90f0bcf0582e4bcf10beb33c9fd8707777412d863ee929fbdde57fd",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "es",
       "name": "Spanish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-es.tar.gz",
-      "size": 6646323
+      "size": 6646323,
+      "sha256": "9fa95c7aa5473606d84198504dab8860b4743a3c26dd350ea4be0db07ca3c26f",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "et",
       "name": "Estonian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-et.tar.gz",
-      "size": 936363
+      "size": 936363,
+      "sha256": "1bccb0aed924db46b7a2236bff42e2de695fe7eecfb47753ab783bd3b44b191e",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "fa",
       "name": "Persian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-fa.tar.gz",
-      "size": 379016
+      "size": 379016,
+      "sha256": "a2a2977ef2fbd1d3860413157320a4345319367da91d416fca76ca729bbcbde2",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "fr",
       "name": "French",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-fr.tar.gz",
-      "size": 2227273
+      "size": 2227273,
+      "sha256": "1c6824f6ca6e84a2b8872fdf03d35ec9543f8620526978dbf9ba8a60c59023bb",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "gd",
       "name": "Scottish Gaelic",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-gd.tar.gz",
-      "size": 1033519
+      "size": 1033519,
+      "sha256": "59cfb17d4614fd1e59aaf673bf05751868dd714c8481df0a776423f91ab29d30",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "gl",
       "name": "Galician",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-gl.tar.gz",
-      "size": 1877971
+      "size": 1877971,
+      "sha256": "03838323cc8fdd0c42f59aecdc192fc4bb9673a2f34cb7ed87f7992e1f940c44",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "gu",
       "name": "Gujarati",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-gu.tar.gz",
-      "size": 640783
+      "size": 640783,
+      "sha256": "ca381753d2a6a4130ad80573b18578e57ad2b3fa19459e7cc0b5dd6c791d6a57",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "he",
       "name": "Hebrew",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-he.tar.gz",
-      "size": 1183277
+      "size": 1183277,
+      "sha256": "1f28d7935d4d4b94464712272aeb00af67500aee08f29ae412361cb192abd8cd",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "hi",
       "name": "Hindi",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-hi.tar.gz",
-      "size": 75253
+      "size": 75253,
+      "sha256": "19efdadfedde1188ec16b7deff37363a6458f4ba5d4e8d7f0d18e35af151b4c9",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "hr",
       "name": "Croatian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-hr.tar.gz",
-      "size": 236602
+      "size": 236602,
+      "sha256": "072af7bb2a947aac4cfa49d34829682af12309c14c3a0046f2901c785667b186",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "hu",
       "name": "Hungarian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-hu.tar.gz",
-      "size": 2267191
+      "size": 2267191,
+      "sha256": "93b93f4193376e3ffa4b4ab1fc47759422b4cbab453e4e2e8600858fff17bbd8",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "id",
       "name": "Indonesian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-id.tar.gz",
-      "size": 967847
+      "size": 967847,
+      "sha256": "d4cc46b84153f12883786dde66e209305e4477c63c97c00af32ad39c82c55c37",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "is",
       "name": "Icelandic",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-is.tar.gz",
-      "size": 790778
+      "size": 790778,
+      "sha256": "bb8ffa7a3455c694eeeb7af253cbd6489fb7efcdc4dd5f085a4d5ce4969972ac",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "it",
       "name": "Italian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-it.tar.gz",
-      "size": 1260905
+      "size": 1260905,
+      "sha256": "468590944fb4fd7ef2171cc27340e19567525ef22d4d3a047b871543e0c3272a",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "ko",
       "name": "Korean",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ko.tar.gz",
-      "size": 889548
+      "size": 889548,
+      "sha256": "439148301eb210ca75a15070fd1880eedc00f00b23369fbd4917eb7e5dbdd6ea",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "lo",
       "name": "Lao",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-lo.tar.gz",
-      "size": 139756
+      "size": 139756,
+      "sha256": "4a83bc0cb6f57f71d946cfa1f03be0e9edc20feee3980132afd16045943b61f1",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "lt",
       "name": "Lithuanian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-lt.tar.gz",
-      "size": 333374
+      "size": 333374,
+      "sha256": "35770b0482fd83a42070fea375376fd4fe95238daba2c028f5a653f6376bedb2",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "lv",
       "name": "Latvian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-lv.tar.gz",
-      "size": 411803
+      "size": 411803,
+      "sha256": "dfa151abb714a8cd069355cdf8efc3cdd6065fc46d537898d37dbf64cce86c04",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "mn",
       "name": "Mongolian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-mn.tar.gz",
-      "size": 1784800
+      "size": 1784800,
+      "sha256": "64858aebd6a0a555920d81345f3edef2b0522eae017f4cd9441f32a455840113",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "ne",
       "name": "Nepali",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ne.tar.gz",
-      "size": 408716
+      "size": 408716,
+      "sha256": "cc3938a38de4f6181ca97256cd3bf5afb23216ffb67ab905b8237dbaaa96ccdc",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "nl",
       "name": "Dutch",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-nl.tar.gz",
-      "size": 697286
+      "size": 697286,
+      "sha256": "dc664e16a35f77e235efcf84be27d79981d472298d7d40d0b93a160ad39b1cf1",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "no",
       "name": "Norwegian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-no.tar.gz",
-      "size": 3342704
+      "size": 3342704,
+      "sha256": "7da05b819f59e84e1ecfa4f8bfd413c1c93430dd0ba649079c14f3d3eeb7b3bc",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "oc",
       "name": "Occitan",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-oc.tar.gz",
-      "size": 629086
+      "size": 629086,
+      "sha256": "8421adf37a3c476a2203f9dbade200326119af40a69ce0c9e633b7c433ca8693",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "pl",
       "name": "Polish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-pl.tar.gz",
-      "size": 2311059
+      "size": 2311059,
+      "sha256": "b942826ea715ffb6d716f682ce533fbdaf872459f03a63a51c7cea5c492993da",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "pt_BR",
       "name": "Portuguese (Brazil)",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-pt-BR.tar.gz",
-      "size": 6552432
+      "size": 6552432,
+      "sha256": "f2f105f2e54c4c7b962fb67580d9618c882ca08826a37f7ac925b8da61a17327",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "pt_PT",
       "name": "Portuguese (Portugal)",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-pt-PT.tar.gz",
-      "size": 1586819
+      "size": 1586819,
+      "sha256": "2e1aec248a1976800e3ea00260489d302d9ede652387f3d98105fa88484df0f6",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "ro",
       "name": "Romanian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ro.tar.gz",
-      "size": 1868176
+      "size": 1868176,
+      "sha256": "5ec1893529956ab370a897714ecfb27564c0bc4ec6e375aff4b82d830c3c6a5e",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "ru",
       "name": "Russian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-ru.tar.gz",
-      "size": 1327536
+      "size": 1327536,
+      "sha256": "4b9a31cec8c6c947d90b3425e7c37f6e05731aedfeee4f405f6e2abc2c39d003",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "si",
       "name": "Sinhalese",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-si.tar.gz",
-      "size": 293980
+      "size": 293980,
+      "sha256": "b48e7a82c655a503921f754bc42a408183a875700d9c58d4fa64fca6521423c3",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "sk",
       "name": "Slovak",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-sk.tar.gz",
-      "size": 1020564
+      "size": 1020564,
+      "sha256": "952081594f272aad96978e7603108e6abd47db29aa2c53bef5c2a5da03aad8f2",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "sl",
       "name": "Slovenian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-sl.tar.gz",
-      "size": 1702436
+      "size": 1702436,
+      "sha256": "d27c34bf150bd22b0301bd211fa1485ab9363f866cff1d046da9514154ea2c6f",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "sq",
       "name": "Albanian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-sq.tar.gz",
-      "size": 724509
+      "size": 724509,
+      "sha256": "8222f9bfd13f0ac7bb7b5e35b6f01afe7e2e49191c843db9b160287bc06f51f9",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "sr",
       "name": "Serbian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-sr.tar.gz",
-      "size": 2185261
+      "size": 2185261,
+      "sha256": "90687af956f448ceeb49fcfed58416528d2c75c42f725fc667e1953de2337ca2",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "sv",
       "name": "Swedish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-sv.tar.gz",
-      "size": 1800628
+      "size": 1800628,
+      "sha256": "13df8892b62502aea30918f197a9b407bb0aa00d7ae17040c455ccfe65408601",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "te",
       "name": "Telugu",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-te.tar.gz",
-      "size": 555453
+      "size": 555453,
+      "sha256": "cac3ff21eb18ff9961fce304ba4344177a4c1a97571287185076428ff1683dff",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "th",
       "name": "Thai",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-th.tar.gz",
-      "size": 278969
+      "size": 278969,
+      "sha256": "f3aed548f299681d87ec6fe6fd6aeb3b6d1cf0fe01acc0e538a1fc97b0cdd833",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "tr",
       "name": "Turkish",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-tr.tar.gz",
-      "size": 14542316
+      "size": 14542316,
+      "sha256": "71487d63999030be411e723d8afd3a0e2e457708e69633b0ed58d3e4dd9c0e22",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "uk",
       "name": "Ukrainian",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-uk.tar.gz",
-      "size": 1846375
+      "size": 1846375,
+      "sha256": "fb5260d7699683c01d831c775efee25beb2ddd460b0f2bfbd25b434b23a5e48d",
+      "spelling": true,
+      "thesaurus": true
     },
     {
       "code": "vi",
       "name": "Vietnamese",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-vi.tar.gz",
-      "size": 22357
+      "size": 22357,
+      "sha256": "333a89be290d785e8e4779228cf817224dcd65d87505d977a78f9f164c8f8d09",
+      "spelling": true,
+      "thesaurus": false
     },
     {
       "code": "zu",
       "name": "Zulu",
       "url": "https://github.com/wachin/libreoffice-dictionaries-collection/releases/download/v1.0-dictionaries-thesaurus/dict-zu.tar.gz",
-      "size": 5059
+      "size": 5059,
+      "sha256": "222c9a8b1ec72bc995a84dcdf4f2b14d48115d77446bea9f8ec1d0526cf8359e",
+      "spelling": false,
+      "thesaurus": false
     }
   ]
 }

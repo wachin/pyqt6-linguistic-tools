@@ -48,7 +48,35 @@ def fetch_release(tag: str | None = None) -> dict:
         return json.loads(resp.read().decode())
 
 
-def build_dict_list(release: dict) -> list[dict]:
+def bundle_capabilities(
+    dicts_dir: Path | None,
+    code: str,
+) -> tuple[bool | None, bool | None]:
+    """Return ``(spelling, thesaurus)`` for a local ``dict-*`` bundle.
+
+    The release assets are archives, so the generator cannot inspect them
+    without downloading them. Point ``--dicts-dir`` at a local LibreOffice
+    collection to record which components each bundle contains. Missing
+    bundles return ``(None, None)`` and the UI shows the capabilities as
+    unknown.
+    """
+    if dicts_dir is None:
+        return None, None
+    for candidate in (code, code.replace("_", "-")):
+        bundle = dicts_dir / f"dict-{candidate}"
+        if not bundle.is_dir():
+            continue
+        spelling = any(bundle.glob("*.aff")) and any(bundle.glob("*.dic"))
+        thesaurus = any(bundle.glob("*.dat")) and any(bundle.glob("*.idx"))
+        return spelling, thesaurus
+    return None, None
+
+
+def build_dict_list(
+    release: dict,
+    *,
+    dicts_dir: Path | None = None,
+) -> list[dict]:
     """Build a sorted list of dictionaries from release assets.
 
     Each entry has the shape::
@@ -57,7 +85,9 @@ def build_dict_list(release: dict) -> list[dict]:
             "code": "en_US",
             "name": "English (US)",
             "url": "https://github.com/.../dict-en.tar.gz",
-            "size": 6930000
+            "size": 6930000,
+            "spelling": true,
+            "thesaurus": false
         }
     """
     lang_labels = {
@@ -145,6 +175,11 @@ def build_dict_list(release: dict) -> list[dict]:
         }
         if digest_match is not None:
             entry["sha256"] = digest_match.group(1).lower()
+        spelling, thesaurus = bundle_capabilities(dicts_dir, code)
+        if spelling is not None:
+            entry["spelling"] = spelling
+        if thesaurus is not None:
+            entry["thesaurus"] = thesaurus
         entries.append(entry)
 
     entries.sort(key=lambda e: e["code"])
@@ -165,10 +200,18 @@ def main() -> None:
         default=DEFAULT_OUTPUT,
         help=f"output catalog path (default: {DEFAULT_OUTPUT})",
     )
+    parser.add_argument(
+        "--dicts-dir",
+        type=Path,
+        help=(
+            "local LibreOffice collection dicts/ directory used to record "
+            "spelling/thesaurus capabilities"
+        ),
+    )
     args = parser.parse_args()
 
     release = fetch_release(args.tag)
-    entries = build_dict_list(release)
+    entries = build_dict_list(release, dicts_dir=args.dicts_dir)
 
     payload = {
         "source": f"{REPO}/releases/tag/{args.tag or release['tag_name']}",

@@ -24,7 +24,16 @@ if TYPE_CHECKING:
         ContextActionProvider,
         LinguisticTextEditDecorator,
     )
-    from pyqt6_linguistic_tools.qt.dictionary_manager import DictionaryManagerDialog
+    from pyqt6_linguistic_tools.qt.dictionary_manager import (
+        DictionaryManagerDialog,
+        DictionaryManagerWidget,
+    )
+    from pyqt6_linguistic_tools.qt.i18n import (
+        install_toolkit_translations,
+        installed_toolkit_translator,
+        translation_candidates,
+        uninstall_toolkit_translations,
+    )
     from pyqt6_linguistic_tools.qt.spell_highlighter import (
         SpellCheckHighlighter,
         default_misspelling_format,
@@ -39,6 +48,7 @@ __all__ = [
     "AsyncSpellCheckController",
     "ContextActionProvider",
     "DictionaryManagerDialog",
+    "DictionaryManagerWidget",
     "LinguisticTextEditDecorator",
     "LinguisticAction",
     "LinguisticContextMenu",
@@ -48,11 +58,15 @@ __all__ = [
     "QtLanguageSettingsStore",
     "QtLinguisticSettings",
     "QtRuntimeInfo",
-    "pyqt6_available",
     "default_misspelling_format",
+    "install_toolkit_translations",
+    "installed_toolkit_translator",
     "preserve_simple_capitalization",
+    "pyqt6_available",
     "qt_runtime_info",
     "require_pyqt6",
+    "translation_candidates",
+    "uninstall_toolkit_translations",
 ]
 
 
@@ -62,10 +76,19 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import decorator
 
         return getattr(decorator, name)
-    if name == "DictionaryManagerDialog":
+    if name in {"DictionaryManagerDialog", "DictionaryManagerWidget"}:
         from pyqt6_linguistic_tools.qt import dictionary_manager
 
-        return dictionary_manager.DictionaryManagerDialog
+        return getattr(dictionary_manager, name)
+    if name in {
+        "install_toolkit_translations",
+        "installed_toolkit_translator",
+        "translation_candidates",
+        "uninstall_toolkit_translations",
+    }:
+        from pyqt6_linguistic_tools.qt import i18n
+
+        return getattr(i18n, name)
     if name in {"SpellCheckHighlighter", "default_misspelling_format"}:
         from pyqt6_linguistic_tools.qt import spell_highlighter
 

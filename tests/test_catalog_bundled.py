@@ -12,8 +12,8 @@ from pyqt6_linguistic_tools import (
 
 
 def test_bundled_catalog_is_packaged() -> None:
-    resource = files("pyqt6_linguistic_tools").joinpath("data").joinpath(
-        "dictionaries.json"
+    resource = (
+        files("pyqt6_linguistic_tools").joinpath("data").joinpath("dictionaries.json")
     )
 
     assert resource.is_file()
@@ -38,5 +38,28 @@ def test_bundled_catalog_contains_the_spanish_bundle() -> None:
     assert spanish.name == "Spanish"
     assert spanish.url.endswith("/dict-es.tar.gz")
     assert spanish.size == 6646323
-    assert spanish.sha256 is None
-    assert not catalog.supports_verified_downloads
+    assert spanish.sha256 is not None
+    assert len(spanish.sha256) == 64
+    assert spanish.spelling is True
+    assert spanish.thesaurus is True
+    assert catalog.supports_verified_downloads
+
+
+def test_bundled_catalog_records_spelling_and_thesaurus_capabilities() -> None:
+    catalog = load_bundled_dictionary_catalog()
+
+    both = [
+        entry for entry in catalog.dictionaries if entry.spelling and entry.thesaurus
+    ]
+    spelling_only = [
+        entry
+        for entry in catalog.dictionaries
+        if entry.spelling and entry.thesaurus is False
+    ]
+
+    assert both
+    assert spelling_only
+    assert all(
+        entry.spelling is not None and entry.thesaurus is not None
+        for entry in catalog.dictionaries
+    )

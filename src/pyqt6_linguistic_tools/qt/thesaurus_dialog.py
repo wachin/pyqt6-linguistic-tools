@@ -27,12 +27,7 @@ from PyQt6.QtWidgets import (  # noqa: E402
 )
 
 
-_TRANSLATION_CONTEXT = "PyQt6LinguisticTools.ThesaurusDialog"
 _SYNONYM_ROLE = int(Qt.ItemDataRole.UserRole)
-
-
-def _tr(text: str) -> str:
-    return QCoreApplication.translate(_TRANSLATION_CONTEXT, text)
 
 
 def preserve_simple_capitalization(source: str, replacement: str) -> str:
@@ -78,7 +73,11 @@ class ThesaurusDialog(QDialog):
         self._history_index = -1
         self._entry: ThesaurusEntry | None = None
 
-        self.setWindowTitle(_tr("Thesaurus"))
+        self.setWindowTitle(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Thesaurus"
+            )
+        )
         self.resize(620, 440)
         self._create_widgets()
         self.search(word)
@@ -134,7 +133,11 @@ class ThesaurusDialog(QDialog):
                 self._history.append(word)
             self._history_index = len(self._history) - 1
         self.search_edit.setText(word)
-        self.query_label.setText(_tr("Results for: %1").replace("%1", word))
+        self.query_label.setText(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Results for: %1"
+            ).replace("%1", word)
+        )
         self._entry = self._service.thesaurus_entry(word, locale=self._locale)
         self._populate_results()
         self._update_navigation()
@@ -173,10 +176,23 @@ class ThesaurusDialog(QDialog):
     def _create_widgets(self) -> None:
         layout = QVBoxLayout(self)
         search_row = QHBoxLayout()
-        self.back_button = QPushButton(_tr("Back"), self)
-        self.forward_button = QPushButton(_tr("Forward"), self)
+        self.back_button = QPushButton(
+            QCoreApplication.translate("PyQt6LinguisticTools.ThesaurusDialog", "Back"),
+            self,
+        )
+        self.forward_button = QPushButton(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Forward"
+            ),
+            self,
+        )
         self.search_edit = QLineEdit(self)
-        self.search_button = QPushButton(_tr("Search"), self)
+        self.search_button = QPushButton(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Search"
+            ),
+            self,
+        )
         search_row.addWidget(self.back_button)
         search_row.addWidget(self.forward_button)
         search_row.addWidget(self.search_edit, 1)
@@ -186,7 +202,16 @@ class ThesaurusDialog(QDialog):
         self.query_label = QLabel(self)
         layout.addWidget(self.query_label)
         self.results = QTreeWidget(self)
-        self.results.setHeaderLabels((_tr("Part of speech"), _tr("Meaning / synonym")))
+        self.results.setHeaderLabels(
+            (
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog", "Part of speech"
+                ),
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog", "Meaning / synonym"
+                ),
+            )
+        )
         self.results.setRootIsDecorated(True)
         layout.addWidget(self.results, 1)
         self.status_label = QLabel(self)
@@ -194,8 +219,18 @@ class ThesaurusDialog(QDialog):
         layout.addWidget(self.status_label)
 
         action_row = QHBoxLayout()
-        self.search_selected_button = QPushButton(_tr("Search Selected"), self)
-        self.replace_button = QPushButton(_tr("Replace"), self)
+        self.search_selected_button = QPushButton(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Search Selected"
+            ),
+            self,
+        )
+        self.replace_button = QPushButton(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Replace"
+            ),
+            self,
+        )
         action_row.addWidget(self.search_selected_button)
         action_row.addStretch(1)
         action_row.addWidget(self.replace_button)
@@ -222,7 +257,10 @@ class ThesaurusDialog(QDialog):
         if self._entry is None or not self._entry.meanings:
             word = self.search_edit.text()
             self.status_label.setText(
-                _tr("No thesaurus entry found for “%1”.").replace("%1", word)
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog",
+                    "No thesaurus entry found for “%1”.",
+                ).replace("%1", word)
             )
             self.status_label.show()
             self.no_results.emit(word)

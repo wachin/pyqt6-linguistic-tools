@@ -6,8 +6,20 @@ This project follows Semantic Versioning.
 
 - Ship the 57-entry `dictionaries.json` catalog as package data and add
   `load_bundled_dictionary_catalog()`. Move the catalog generator to
-  `tools/fetch-dict-list.py`; it can now record the SHA-256 digest that GitHub
-  exposes for release assets.
+  `tools/fetch-dict-list.py`; it records the SHA-256 digest that GitHub exposes
+  for release assets and accepts `--dicts-dir` to record spelling/thesaurus
+  capabilities. Regenerate the bundled catalog with both checksums and flags.
+- Add an embeddable `DictionaryManagerWidget` and a large 1180×720
+  `DictionaryManagerDialog` wrapper. The manager now has search, state and
+  component filters, spelling/thesaurus badges, installed and available
+  groups, a details panel, and verified install/remove actions. Add the
+  screenshot at `docs/assets/dictionary-manager.png`.
+- Ship toolkit-owned Spanish and English translations (`.ts` sources and
+  compiled `.qm` catalogs) plus `install_toolkit_translations()`,
+  `uninstall_toolkit_translations()` and `translation_candidates()`. Convert
+  the thesaurus dialog and context menu to extractable literal translation
+  contexts. Hosts keep their own translator and can override messages; see
+  [`docs/translations.md`](docs/translations.md).
 - Add a README banner, badges, a Mermaid architecture diagram, a key-module
   overview, and explicit managed-download guidance for developers. The banner
   SVG, its PNG render, and the conversion script live in `docs/assets/`.

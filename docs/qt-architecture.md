@@ -141,9 +141,14 @@ this avoids needless reloads when a user returns to a recent language.
 
 ## Translation and host ownership rules
 
-Future library-owned action and widget strings use English source text through
-Qt translation contexts. The host continues to own its editor, document,
-signals, context-menu actions, application settings, and event loop.
+Toolkit-owned action and widget strings use English source text through Qt
+translation contexts. The toolkit ships editable `.ts` sources and compiled
+`.qm` catalogs for Spanish and English; the optional Qt layer exposes
+`install_toolkit_translations(app, language)` to install one. The host continues
+to own its editor, document, signals, context-menu actions, application
+settings, event loop, and its own translator. Toolkit contexts are distinct, so
+host and toolkit translators coexist; installing the host translator later lets
+it override selected messages. See [translations.md](translations.md).
 
 Attaching the toolkit must be reversible. No component may require applications
 to subclass `QTextEdit` or `QPlainTextEdit`, replace their documents, or discard
@@ -380,17 +385,24 @@ does not guess inflection, conjugation, number, gender or other morphological
 transformations.
 
 All labels and status messages use English source text in the
-`PyQt6LinguisticTools.ThesaurusDialog` Qt translation context. Words, meanings,
-parts of speech and synonyms originate in the selected dictionary and are not
-translated by the widget.
+`PyQt6LinguisticTools.ThesaurusDialog` Qt translation context, covered by the
+toolkit's bundled translations. Words, meanings, parts of speech and synonyms
+originate in the selected dictionary and are not translated by the widget.
 
 ## Dictionary Manager
 
-`DictionaryManagerDialog` lists effective and shadowed application-owned
-dictionaries with their exact locales, component availability, sources, and
-optional file-path details. Manual imports are deeply validated in a worker
-thread. Refreshing after import or removal invalidates obsolete service
-backends and result caches.
+`DictionaryManagerWidget` is the embeddable manager: search, state and component
+filters, spelling/thesaurus badges, installed and available groups, and a
+details panel with install/remove actions. `DictionaryManagerDialog` wraps the
+same widget in a 1180×720 dialog. It lists effective and shadowed
+application-owned dictionaries with their exact locales, component
+availability, sources, and optional file-path details. Manual imports are
+deeply validated in a worker thread. Refreshing after import or removal
+invalidates obsolete service backends and result caches. Verified catalog
+downloads are requested through `download_requested`; the widget never performs
+network access, and the host publishes the bundle before calling `refresh()`.
+
+![Dictionary Manager](assets/dictionary-manager.png)
 
 Removal is offered only when the selected paths belong to a direct bundle
 under `ManagedDictionaryProvider` or `UserDictionaryProvider`. System

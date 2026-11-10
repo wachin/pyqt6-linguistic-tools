@@ -1,6 +1,9 @@
-"""Dictionary Manager dialog demo.
+"""Embeddable Dictionary Manager demo.
 
-Shows the DictionaryManagerDialog for inspecting and importing dictionaries.
+Shows the large :class:`DictionaryManagerWidget` embedded in a window and a
+button that opens the same manager as a dialog. The widget uses the catalog
+shipped with the toolkit and delegates verified downloads through
+``download_requested``.
 
 Usage:
     python examples/dictionary_manager_demo.py
@@ -22,13 +25,12 @@ from PyQt6.QtWidgets import (  # noqa: E402
     QLabel,
     QMainWindow,
     QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from pyqt6_linguistic_tools import (  # noqa: E402
-    DEFAULT_LINUX_DICTIONARY_PATHS,
+    DictionaryCatalog,
     DictionaryRegistry,
     DictionarySourcePriority,
     DirectoryDictionaryProvider,
@@ -36,11 +38,13 @@ from pyqt6_linguistic_tools import (  # noqa: E402
     LinuxSystemDictionaryProvider,
     ManagedDictionaryProvider,
     UserDictionaryProvider,
+    load_bundled_dictionary_catalog,
     normalize_locale,
 )
 from pyqt6_linguistic_tools.qt import (  # noqa: E402
     DictionaryManagerDialog,
-    LinguisticTextEditDecorator,
+    DictionaryManagerWidget,
+    install_toolkit_translations,
     require_pyqt6,
 )
 
@@ -83,58 +87,76 @@ def _pick_language(registry: DictionaryRegistry) -> str:
 
 
 class DictionaryManagerDemo(QMainWindow):
-    """Demo showing the DictionaryManagerDialog."""
+    """Demo showing the embeddable Dictionary Manager widget."""
 
-    def __init__(self, service: LinguisticService) -> None:
+    def __init__(
+        self,
+        service: LinguisticService,
+        catalog: DictionaryCatalog,
+    ) -> None:
         super().__init__()
         self._service = service
+        self._catalog = catalog
         self._setup_ui()
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("Dictionary Manager Demo")
-        self.resize(600, 400)
+        self.resize(1200, 760)
 
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
 
-        label = QLabel(
-            "Click the button below to open the Dictionary Manager.\n"
-            "It shows installed dictionaries and allows importing new ones."
+        header = QHBoxLayout()
+        header.addWidget(
+            QLabel(
+                "Embedded DictionaryManagerWidget — search, filter and inspect "
+                "spelling and thesaurus bundles."
+            ),
+            1,
         )
-        layout.addWidget(label)
+        open_button = QPushButton("Open as dialog")
+        open_button.clicked.connect(self._open_manager)
+        header.addWidget(open_button)
+        layout.addLayout(header)
 
-        open_btn = QPushButton("Open Dictionary Manager")
-        open_btn.clicked.connect(self._open_manager)
-        layout.addWidget(open_btn)
-
-        self._editor = QTextEdit()
-        self._editor.setPlainText(
-            "Editor with spell checking — open the Dictionary Manager\n"
-            "to see available dictionaries and manage imports."
+        self.manager = DictionaryManagerWidget(
+            self._service,
+            catalog=self._catalog,
+            parent=self,
         )
-        layout.addWidget(self._editor)
+        layout.addWidget(self.manager, 1)
+        self.manager.download_requested.connect(self._download_requested)
 
-        self._decorator = LinguisticTextEditDecorator(self._editor, self._service)
+        self.statusBar().showMessage(
+            "Downloads are delegated to the host; this demo only reports them."
+        )
 
-        self._status_label = QLabel("Ready")
-        layout.addWidget(self._status_label)
+    def _download_requested(self, entry: object) -> None:
+        self.statusBar().showMessage(
+            f"Download requested for {entry!r}; the host would verify and install it."
+        )
 
     def _open_manager(self) -> None:
-        dialog = DictionaryManagerDialog(self._service, parent=self)
+        dialog = DictionaryManagerDialog(
+            self._service,
+            catalog=self._catalog,
+            parent=self,
+        )
         dialog.exec()
-        self._status_label.setText("Dictionary Manager closed")
 
 
 def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("Dictionary Manager Demo")
+    install_toolkit_translations(app, None)
 
     registry = _discover_registry()
     language = _pick_language(registry)
     service = LinguisticService(language, registry=registry)
+    catalog = load_bundled_dictionary_catalog()
 
-    window = DictionaryManagerDemo(service)
+    window = DictionaryManagerDemo(service, catalog)
     window.show()
     return app.exec()
 

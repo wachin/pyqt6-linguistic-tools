@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 279" src="https://img.shields.io/badge/tests-279%20fast-brightgreen">
+  <img alt="Fast tests: 287" src="https://img.shields.io/badge/tests-287%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -109,8 +109,8 @@ workflow:
 
 | Module | What it gives you |
 |---|---|
-| [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), plus strict network-free validation of any host-provided catalog: safe unique codes, HTTPS URLs, sizes, and optional SHA-256 checksums. |
-| [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | A reusable `DictionaryManagerDialog`: effective languages, sources, spelling/thesaurus status, manual import with deep validation, removal of application-owned bundles, and a `download_requested` signal for checksum-verified entries. |
+| [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), with SHA-256 checksums and spelling/thesaurus flags, plus strict network-free validation of any host-provided catalog. |
+| [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | An embeddable `DictionaryManagerWidget` and a `DictionaryManagerDialog` wrapper: search, filters, spelling/thesaurus badges, effective languages, sources, manual import with deep validation, removal of application-owned bundles, and a `download_requested` signal for checksum-verified entries. |
 | [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
 | [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |
 
@@ -141,14 +141,17 @@ The repository already contains the reusable, network-free half of a
 dictionary manager:
 
 - **Bundled catalog.** `load_bundled_dictionary_catalog()` loads the 57-entry
-  catalog shipped in `pyqt6_linguistic_tools/data/dictionaries.json`;
+  catalog shipped in `pyqt6_linguistic_tools/data/dictionaries.json`, with
+  SHA-256 checksums and spelling/thesaurus flags;
   `load_dictionary_catalog(path)` validates a host-provided catalog instead.
 - **Shared storage.** `ManagedDictionaryProvider` owns the cross-platform
   managed bundle directory; `UserDictionaryProvider` owns validated manual
   imports.
-- **Manager UI.** `DictionaryManagerDialog` lists effective languages and
-  sources, imports files in a worker thread, removes only application-owned
-  bundles, and exposes `download_requested` for verified catalog entries.
+- **Manager UI.** `DictionaryManagerWidget` (embeddable) and
+  `DictionaryManagerDialog` provide search, filters, spelling/thesaurus badges,
+  effective languages and sources; imports run in a worker thread, only
+  application-owned bundles can be removed, and `download_requested` is
+  emitted for verified catalog entries.
 - **Validation.** Every manual import and every host-provided bundle should
   pass `DictionaryValidator` before publication.
 
@@ -160,13 +163,39 @@ them.
 
 Downloads are intentionally **host-delegated and checksum-gated**: an entry
 without a SHA-256 checksum is shown as *Unverified* and its Download button
-stays disabled. The bundled LibreOffice catalog does not include checksums
-yet, so the toolkit does not perform automatic downloads or archive
-extraction. A host that implements downloads must verify the archive size and
-SHA-256, reject path traversal and links, validate the extracted bundle, and
-publish it atomically before calling `DictionaryManagerDialog.refresh()`. See
+stays disabled. The bundled catalog now includes checksums, so a host can
+implement verified downloads; the toolkit still delegates network access and
+archive extraction to the host. A host that implements downloads must verify
+the archive size and SHA-256, reject path traversal and links, validate the
+extracted bundle, and publish it atomically before calling
+`DictionaryManagerDialog.refresh()`. See
 [`docs/managed-dictionaries.md`](docs/managed-dictionaries.md) and
 [`docs/dictionary-validation.md`](docs/dictionary-validation.md).
+
+## Dictionary Manager
+
+![Dictionary Manager screenshot](docs/assets/dictionary-manager.png)
+
+`DictionaryManagerWidget` is the embeddable, large-format manager: search and
+state/component filters, spelling and thesaurus badges, installed and available
+groups, a details panel, and verified install/remove actions.
+`DictionaryManagerDialog` wraps the same widget in a 1180×720 dialog. Downloads
+are still delegated to the host through `download_requested`; the widget
+performs no network access or archive extraction.
+
+```python
+from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
+from pyqt6_linguistic_tools.qt import DictionaryManagerWidget
+
+catalog = load_bundled_dictionary_catalog()
+manager = DictionaryManagerWidget(service, catalog=catalog)
+layout.addWidget(manager)
+```
+
+The toolkit ships its own Spanish and English Qt catalogs. Install one with
+`install_toolkit_translations(app, "es")`; the host keeps its own translator and
+can override individual messages. See
+[`docs/translations.md`](docs/translations.md).
 
 ## Documentation map
 
@@ -182,6 +211,8 @@ publish it atomically before calling `DictionaryManagerDialog.refresh()`. See
   checks and import boundaries.
 - [Qt architecture](docs/qt-architecture.md): decorator, highlighter, context
   menu, dialogs, and settings.
+- [Translations](docs/translations.md): bundled `.ts`/`.qm` catalogs, the
+  installer helper, and host override rules.
 - [Testing](docs/testing.md) and
   [continuous integration](docs/continuous-integration.md): suites, corpus
   runs, and manual workflows.

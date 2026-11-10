@@ -98,35 +98,53 @@ HTTPS URLs, sizes, and optional SHA-256 fields. It treats hyphen and underscore
 code forms as equivalent for lookup while preserving the published value.
 
 The bundled catalog is generated from the release assets with
-`tools/fetch-dict-list.py --tag <TAG>`. It currently does not include SHA-256
-hashes, so `catalog.supports_verified_downloads` is false. For that reason this
-stage does not implement automatic downloading or extraction. A future
-downloader should require checksums in the release catalog, verify archive size
-and SHA-256, and protect extraction against path traversal before publishing
-into the managed directory.
+`tools/fetch-dict-list.py --tag <TAG>`. Pass `--dicts-dir` pointing at the local
+LibreOffice collection to record the `spelling` and `thesaurus` flags by
+checking each bundle's `.aff`/`.dic` and `.dat`/`.idx` files. The generator also
+records the SHA-256 digest that GitHub exposes for each asset, so
+`catalog.supports_verified_downloads` is true for the bundled catalog.
+
+The toolkit still does not download or extract archives itself. A host
+downloader must verify the advertised size and SHA-256, protect extraction
+against path traversal, validate the extracted bundle, and publish it through a
+managed provider.
 
 ## Qt Dictionary Manager
 
-`DictionaryManagerDialog` displays effective languages and any application
-bundle hidden by a higher-priority source. It shows locale, spelling and
-thesaurus availability, source ownership, and an optional advanced view of the
-exact files. Manual imports run through `import_validated_files()` in a Qt
-thread pool so loading a large Spylls or PyThes dictionary does not block the
+`DictionaryManagerWidget` is the embeddable, large-format manager: search, state
+and component filters, spelling/thesaurus badges, installed and available
+groups, and a details panel with install/remove actions.
+`DictionaryManagerDialog` wraps the same widget in a 1180×720 dialog. Both
+display effective languages and any application bundle hidden by a
+higher-priority source, with locale, component availability, source ownership,
+and the exact files. Manual imports run through `import_validated_files()` in a
+Qt thread pool so loading a large Spylls or PyThes dictionary does not block the
 GUI.
+
+![Dictionary Manager](assets/dictionary-manager.png)
 
 ```python
 from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
-from pyqt6_linguistic_tools.qt import DictionaryManagerDialog
+from pyqt6_linguistic_tools.qt import (
+    DictionaryManagerDialog,
+    DictionaryManagerWidget,
+)
 
 catalog = load_bundled_dictionary_catalog()
+
+# Embed in a settings page or tab.
+widget = DictionaryManagerWidget(service, catalog=catalog)
+layout.addWidget(widget)
+
+# Or open the large dialog.
 manager = DictionaryManagerDialog(service, catalog=catalog, parent=window)
 manager.dictionaries_changed.connect(refresh_language_selectors)
 manager.show()
 ```
 
-The Available Downloads tab integrates the validated catalog metadata but
+The Available Downloads group integrates the validated catalog metadata but
 performs no network access. Entries without SHA-256 remain visibly unverified
-and disabled. A future host downloader may handle `download_requested`, verify
-the advertised size and checksum, extract safely, and publish through a
-managed provider. The bundled LibreOffice collection catalog therefore remains
-inspection-only until checksums are added.
+and disabled; the bundled catalog includes checksums, so a host can enable
+verified downloads. A host downloader handles `download_requested`, verifies
+the advertised size and checksum, extracts safely, and publishes through a
+managed provider.

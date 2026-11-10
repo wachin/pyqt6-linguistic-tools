@@ -34,6 +34,8 @@ class DictionaryCatalogEntry:
     url: str
     size: int
     sha256: str | None = None
+    spelling: bool | None = None
+    thesaurus: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,8 +92,12 @@ def load_dictionary_catalog(path: str | Path) -> DictionaryCatalog:
         url = item.get("url")
         size = item.get("size")
         sha256 = item.get("sha256")
+        spelling = item.get("spelling")
+        thesaurus = item.get("thesaurus")
         if not isinstance(code, str) or not _SAFE_CODE.fullmatch(code):
-            raise DictionaryCatalogError(f"catalog entry {position} has an invalid code")
+            raise DictionaryCatalogError(
+                f"catalog entry {position} has an invalid code"
+            )
         key = _code_key(code)
         if key in seen:
             raise DictionaryCatalogError(f"duplicate dictionary code: {code}")
@@ -109,6 +115,14 @@ def load_dictionary_catalog(path: str | Path) -> DictionaryCatalog:
             not isinstance(sha256, str) or not _SHA256.fullmatch(sha256)
         ):
             raise DictionaryCatalogError(f"catalog entry {code} has an invalid SHA-256")
+        for field_name, value in (
+            ("spelling", spelling),
+            ("thesaurus", thesaurus),
+        ):
+            if value is not None and not isinstance(value, bool):
+                raise DictionaryCatalogError(
+                    f"catalog entry {code} has an invalid {field_name} flag"
+                )
         parsed.append(
             DictionaryCatalogEntry(
                 code=code,
@@ -116,6 +130,8 @@ def load_dictionary_catalog(path: str | Path) -> DictionaryCatalog:
                 url=url,
                 size=size,
                 sha256=sha256.lower() if sha256 else None,
+                spelling=spelling,
+                thesaurus=thesaurus,
             )
         )
     return DictionaryCatalog(source=source.strip(), dictionaries=tuple(parsed))
@@ -129,8 +145,8 @@ def load_bundled_dictionary_catalog() -> DictionaryCatalog:
     own catalog can call :func:`load_dictionary_catalog` with an explicit path
     instead.
     """
-    resource = files("pyqt6_linguistic_tools").joinpath("data").joinpath(
-        "dictionaries.json"
+    resource = (
+        files("pyqt6_linguistic_tools").joinpath("data").joinpath("dictionaries.json")
     )
     with as_file(resource) as path:
         return load_dictionary_catalog(path)
