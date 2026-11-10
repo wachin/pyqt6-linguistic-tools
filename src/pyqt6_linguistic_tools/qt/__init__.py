@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     )
     from pyqt6_linguistic_tools.qt.thesaurus_dialog import (
         ThesaurusDialog,
+        ThesaurusWidget,
         preserve_simple_capitalization,
     )
 
@@ -58,6 +59,7 @@ __all__ = [
     "LinguisticContextMenu",
     "SpellCheckHighlighter",
     "ThesaurusDialog",
+    "ThesaurusWidget",
     "QtIntegrationUnavailableError",
     "QtLanguageSettingsStore",
     "QtLinguisticSettings",
@@ -114,7 +116,11 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import context_menu
 
         return getattr(context_menu, name)
-    if name in {"ThesaurusDialog", "preserve_simple_capitalization"}:
+    if name in {
+        "ThesaurusDialog",
+        "ThesaurusWidget",
+        "preserve_simple_capitalization",
+    }:
         from pyqt6_linguistic_tools.qt import thesaurus_dialog
 
         return getattr(thesaurus_dialog, name)

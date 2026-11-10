@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PyQt6", reason="PyQt6 is an optional dependency")
 
 from PyQt6.QtCore import QLocale
-from PyQt6.QtWidgets import QApplication, QTextEdit
+from PyQt6.QtWidgets import QApplication, QTextEdit, QVBoxLayout
 
 from pyqt6_linguistic_tools import (
     DictionaryRegistry,
@@ -24,6 +24,7 @@ from pyqt6_linguistic_tools.qt import (
     LinguisticTextEditDecorator,
     QtLinguisticSettings,
     ThesaurusDialog,
+    ThesaurusWidget,
     preserve_simple_capitalization,
 )
 from pyqt6_linguistic_tools.qt.thesaurus_dialog import (
@@ -301,3 +302,19 @@ def test_copy_button_writes_html_rtf_and_markdown(application, service, monkeypa
     assert "**presencia**" in mime.text()
     assert b"**asistencia**" in bytes(mime.data("text/markdown"))
     assert b"\\b asistencia" in bytes(mime.data("text/rtf"))
+
+
+def test_thesaurus_widget_can_be_embedded(application, service, monkeypatch):
+    monkeypatch.setattr(service, "thesaurus_entry", _entry)
+    widget = ThesaurusWidget(service, "bright")
+    layout = QVBoxLayout()
+    layout.addWidget(widget)
+    replacements: list[tuple[str, str]] = []
+    widget.replacement_requested.connect(
+        lambda source, replacement: replacements.append((source, replacement))
+    )
+
+    assert widget.results.topLevelItemCount() == 2
+    widget.results.setCurrentItem(widget.results.topLevelItem(0).child(0))
+    assert widget.replace_selected()
+    assert replacements == [("bright", "radiant")]

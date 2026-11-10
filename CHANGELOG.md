@@ -38,6 +38,12 @@ This project follows Semantic Versioning.
   the thesaurus dialog and context menu to extractable literal translation
   contexts. Hosts keep their own translator and can override messages; see
   [`docs/translations.md`](docs/translations.md).
+- Add `create_service()` as the reusable service factory for host applications,
+  so providers no longer have to be assembled in each program. Add
+  `pyqt6_linguistic_tools_bootstrap.py` for applications that vendor the
+  toolkit as a `libs/` git submodule without pip.
+- Split the thesaurus browser into an embeddable `ThesaurusWidget` and a thin
+  `ThesaurusDialog` wrapper. ChordFlow and ChordPages now share both.
 - Add a README banner, badges, a Mermaid architecture diagram, a key-module
   overview, and explicit managed-download guidance for developers. The banner
   SVG, its PNG render, and the conversion script live in `docs/assets/`.

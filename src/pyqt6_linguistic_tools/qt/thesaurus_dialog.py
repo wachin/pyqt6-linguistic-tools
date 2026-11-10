@@ -145,8 +145,8 @@ def preserve_simple_capitalization(source: str, replacement: str) -> str:
     return replacement
 
 
-class ThesaurusDialog(QDialog):
-    """Display engine-neutral thesaurus entries without exposing PyThes."""
+class ThesaurusWidget(QWidget):
+    """Embeddable thesaurus browser without exposing PyThes."""
 
     query_changed = pyqtSignal(str)
     no_results = pyqtSignal(str)
@@ -175,12 +175,6 @@ class ThesaurusDialog(QDialog):
         self._history_index = -1
         self._entry: ThesaurusEntry | None = None
 
-        self.setWindowTitle(
-            QCoreApplication.translate(
-                "PyQt6LinguisticTools.ThesaurusDialog", "Thesaurus"
-            )
-        )
-        self.resize(620, 440)
         self._create_widgets()
         self.search(word)
 
@@ -349,9 +343,6 @@ class ThesaurusDialog(QDialog):
         action_row.addStretch(1)
         action_row.addWidget(self.replace_button)
         layout.addLayout(action_row)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
 
         self.back_button.clicked.connect(self.go_back)
         self.forward_button.clicked.connect(self.go_forward)
@@ -526,4 +517,148 @@ class ThesaurusDialog(QDialog):
         )
 
 
-__all__ = ["ThesaurusDialog", "preserve_simple_capitalization"]
+class ThesaurusDialog(QDialog):
+    """Dialog wrapper around :class:`ThesaurusWidget`.
+
+    Applications that want a panel instead of a window can embed
+    :class:`ThesaurusWidget` directly and connect the same signals.
+    """
+
+    query_changed = pyqtSignal(str)
+    no_results = pyqtSignal(str)
+    replacement_requested = pyqtSignal(str, str)
+
+    def __init__(
+        self,
+        service: LinguisticService,
+        word: str,
+        *,
+        replacement_source: str | None = None,
+        locale: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self._widget = ThesaurusWidget(
+            service,
+            word,
+            replacement_source=replacement_source,
+            locale=locale,
+            parent=self,
+        )
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._widget)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self.setWindowTitle(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog", "Thesaurus"
+            )
+        )
+        self.resize(620, 440)
+        self._widget.query_changed.connect(self.query_changed.emit)
+        self._widget.no_results.connect(self.no_results.emit)
+        self._widget.replacement_requested.connect(self.replacement_requested.emit)
+
+    @property
+    def widget(self) -> ThesaurusWidget:
+        return self._widget
+
+    @property
+    def service(self) -> LinguisticService:
+        return self._widget.service
+
+    @property
+    def query(self) -> str:
+        return self._widget.query
+
+    @property
+    def replacement_source(self) -> str:
+        return self._widget.replacement_source
+
+    @property
+    def language(self) -> str:
+        return self._widget.language
+
+    @property
+    def entry(self) -> ThesaurusEntry | None:
+        return self._widget.entry
+
+    @property
+    def history(self) -> tuple[str, ...]:
+        return self._widget.history
+
+    @property
+    def history_index(self) -> int:
+        return self._widget.history_index
+
+    @property
+    def selected_synonym(self) -> str | None:
+        return self._widget.selected_synonym
+
+    @property
+    def results(self) -> QTreeWidget:
+        return self._widget.results
+
+    @property
+    def search_edit(self) -> QLineEdit:
+        return self._widget.search_edit
+
+    @property
+    def status_label(self) -> QLabel:
+        return self._widget.status_label
+
+    @property
+    def query_label(self) -> QLabel:
+        return self._widget.query_label
+
+    @property
+    def back_button(self) -> QPushButton:
+        return self._widget.back_button
+
+    @property
+    def forward_button(self) -> QPushButton:
+        return self._widget.forward_button
+
+    @property
+    def search_button(self) -> QPushButton:
+        return self._widget.search_button
+
+    @property
+    def search_selected_button(self) -> QPushButton:
+        return self._widget.search_selected_button
+
+    @property
+    def replace_button(self) -> QPushButton:
+        return self._widget.replace_button
+
+    @property
+    def copy_button(self) -> QPushButton:
+        return self._widget.copy_button
+
+    def search(self, word: str, *, add_history: bool = True) -> bool:
+        return self._widget.search(word, add_history=add_history)
+
+    def go_back(self) -> bool:
+        return self._widget.go_back()
+
+    def go_forward(self) -> bool:
+        return self._widget.go_forward()
+
+    def search_selected(self) -> bool:
+        return self._widget.search_selected()
+
+    def replace_selected(self) -> bool:
+        return self._widget.replace_selected()
+
+    def copy_results(self) -> None:
+        self._widget.copy_results()
+
+
+__all__ = [
+    "ThesaurusDialog",
+    "ThesaurusWidget",
+    "preserve_simple_capitalization",
+]

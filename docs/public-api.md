@@ -34,6 +34,7 @@ import time.
 | `LinguisticTextEditDecorator` | `qt/decorator.py` | Per-editor linguistic state for `QTextEdit`/`QPlainTextEdit` |
 | `SpellCheckHighlighter` | `qt/spell_highlighter.py` | Underline misspelled words |
 | `LinguisticContextMenu` | `qt/context_menu.py` | Right-click suggestions, add/ignore |
+| `ThesaurusWidget` | `qt/thesaurus_dialog.py` | Embeddable synonym browser |
 | `ThesaurusDialog` | `qt/thesaurus_dialog.py` | Synonym browser dialog |
 | `DictionaryDownloadManagerWidget` | `qt/dictionary_manager.py` | Embeddable manager with automatic verified downloads |
 | `DictionaryDownloadManagerDialog` | `qt/dictionary_manager.py` | Large dialog with automatic verified downloads |
@@ -124,6 +125,7 @@ All error types are subclasses of `LinguisticError`:
 | `serialize_report` | Serialize report to deterministic JSON |
 | `write_report` | Write report to file |
 | `regenerate_thesaurus_index` | Regenerate a MyThes `.idx` from `.dat` |
+| `create_service` | Build the standard platform, managed and user providers |
 | `DictionaryValidator` | Validate source dictionary files |
 | `download_dictionary` | Download, verify, validate and install a catalog entry |
 | `install_dictionary_archive` | Verify and install an already downloaded archive |

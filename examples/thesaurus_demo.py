@@ -1,8 +1,16 @@
-"""Thesaurus browser demo using ThesaurusDialog.
+"""Reusable thesaurus widget and dialog demo.
+
+Shows how another PyQt6 application can use the toolkit as a package or as a
+``libs/pyqt6-linguistic-tools`` git submodule:
+
+- ``ThesaurusWidget`` embedded in a splitter next to an editor;
+- ``ThesaurusDialog`` opened for the selected word;
+- one shared ``LinguisticService`` for both.
 
 Usage:
-    python examples/thesaurus_demo.py
-    LIBREOFFICE_DICTIONARIES_PATH=/path/to/dicts python examples/thesaurus_demo.py
+    PYTHONPATH=src python examples/thesaurus_demo.py
+    LIBREOFFICE_DICTIONARIES_PATH=/path/to/dicts PYTHONPATH=src \
+        python examples/thesaurus_demo.py
 """
 
 from __future__ import annotations
@@ -21,25 +29,19 @@ from PyQt6.QtWidgets import (  # noqa: E402
     QLineEdit,
     QMainWindow,
     QPushButton,
+    QSplitter,
     QTextEdit,
     QVBoxLayout,
     QWidget,
 )
+from PyQt6.QtCore import Qt  # noqa: E402
 
-from pyqt6_linguistic_tools import (  # noqa: E402
-    DEFAULT_LINUX_DICTIONARY_PATHS,
-    DictionaryRegistry,
-    DictionarySourcePriority,
-    DirectoryDictionaryProvider,
-    LinguisticService,
-    LinuxSystemDictionaryProvider,
-    ManagedDictionaryProvider,
-    UserDictionaryProvider,
-    normalize_locale,
-)
+from pyqt6_linguistic_tools import create_service  # noqa: E402
 from pyqt6_linguistic_tools.qt import (  # noqa: E402
     LinguisticTextEditDecorator,
     ThesaurusDialog,
+    ThesaurusWidget,
+    install_toolkit_translations,
     require_pyqt6,
 )
 
@@ -47,100 +49,83 @@ from pyqt6_linguistic_tools.qt import (  # noqa: E402
 require_pyqt6()
 
 
-def _discover_registry() -> DictionaryRegistry:
-    providers: list = [LinuxSystemDictionaryProvider()]
-    corpus = os.environ.get("LIBREOFFICE_DICTIONARIES_PATH")
-    if corpus:
-        corpus_path = Path(corpus).expanduser().resolve()
-        if corpus_path.is_dir():
-            providers.append(
-                DirectoryDictionaryProvider(
-                    corpus_path,
-                    source="corpus",
-                    priority=DictionarySourcePriority.MANAGED,
-                )
-            )
-    providers.extend(
-        [
-            ManagedDictionaryProvider(),
-            UserDictionaryProvider(),
-        ]
-    )
-    return DictionaryRegistry(tuple(providers))
-
-
-def _pick_language(registry: DictionaryRegistry) -> str:
-    # Find a language with a thesaurus
-    entries = registry.discover()
-    for entry in entries:
-        if entry.has_thesaurus:
-            return entry.locale
-    if entries:
-        return entries[0].locale
-    import locale as _locale
-
-    lang, _encoding = _locale.getdefaultlocale()
-    if lang:
-        return normalize_locale(lang)
-    return "en_US"
-
-
 class ThesaurusDemo(QMainWindow):
-    """Interactive demo showing thesaurus lookup."""
+    """Embed the thesaurus widget and open the dialog for selected text."""
 
-    def __init__(self, service: LinguisticService) -> None:
+    def __init__(self, service) -> None:
         super().__init__()
         self._service = service
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        self.setWindowTitle("Thesaurus Demo")
-        self.resize(600, 400)
+        self.setWindowTitle("Reusable Thesaurus Demo")
+        self.resize(1000, 600)
 
-        central = QWidget()
+        central = QWidget(self)
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
 
-        # Search bar
-        search_layout = QHBoxLayout()
-        layout.addLayout(search_layout)
+        search_row = QHBoxLayout()
+        search_row.addWidget(QLabel("Word:", central))
+        self._word_input = QLineEdit(central)
+        self._word_input.setPlaceholderText("feliz, presencia, bright…")
+        self._word_input.returnPressed.connect(self._look_up)
+        search_row.addWidget(self._word_input, 1)
+        lookup_button = QPushButton("Look up", central)
+        lookup_button.clicked.connect(self._look_up)
+        search_row.addWidget(lookup_button)
+        dialog_button = QPushButton("Open dialog", central)
+        dialog_button.clicked.connect(self._open_dialog)
+        search_row.addWidget(dialog_button)
+        layout.addLayout(search_row)
 
-        search_layout.addWidget(QLabel("Word:"))
-        self._search_input = QLineEdit()
-        self._search_input.setPlaceholderText("Type a word and press Enter")
-        search_layout.addWidget(self._search_input)
-
-        lookup_btn = QPushButton("Look Up")
-        lookup_btn.clicked.connect(self._open_thesaurus)
-        search_layout.addWidget(lookup_btn)
-
-        # Editor for context
-        editor_label = QLabel("Editor (select a word and click Look Up):")
-        layout.addWidget(editor_label)
-
-        self._editor = QTextEdit()
+        splitter = QSplitter(Qt.Orientation.Horizontal, central)
+        self._editor = QTextEdit(splitter)
         self._editor.setPlainText(
-            "Select a word in this text and click 'Look Up' to find synonyms.\n\n"
-            "Example words: bright, happy, large, fast, begin, end, good, bad."
+            "Select a word such as presencia or feliz, then press Look up.\n\n"
+            "The right side is the same ThesaurusWidget that an application "
+            "can embed in a panel, tab or settings page."
         )
-        layout.addWidget(self._editor)
+        splitter.addWidget(self._editor)
 
-        self._decorator = LinguisticTextEditDecorator(self._editor, self._service)
-        self._decorator.thesaurus_enabled = True
+        self._thesaurus_widget = ThesaurusWidget(
+            self._service,
+            "feliz",
+            parent=splitter,
+        )
+        splitter.addWidget(self._thesaurus_widget)
+        splitter.setSizes([420, 580])
+        layout.addWidget(splitter, 1)
 
-        # Status
-        self._status_label = QLabel("Ready")
+        self._status_label = QLabel("Ready", central)
         layout.addWidget(self._status_label)
 
-    def _open_thesaurus(self) -> None:
-        word = self._search_input.text().strip()
-        if not word:
-            cursor = self._editor.textCursor()
-            word = cursor.selectedText().strip()
-        if not word:
-            self._status_label.setText("Enter a word or select one in the editor")
-            return
+        self._decorator = LinguisticTextEditDecorator(
+            self._editor,
+            self._service,
+        )
 
+    def _current_word(self) -> str:
+        word = self._word_input.text().strip()
+        if word:
+            return word
+        cursor = self._editor.textCursor()
+        return cursor.selectedText().strip()
+
+    def _look_up(self) -> None:
+        word = self._current_word()
+        if not word:
+            self._status_label.setText("Type a word or select one in the editor")
+            return
+        self._word_input.setText(word)
+        self._thesaurus_widget.search(word)
+        self._status_label.setText(f"Showing results for '{word}'")
+
+    def _open_dialog(self) -> None:
+        word = self._current_word()
+        if not word:
+            self._status_label.setText("Type a word or select one in the editor")
+            return
         dialog = ThesaurusDialog(self._service, word, parent=self)
         dialog.replacement_requested.connect(self._replace_word)
         dialog.exec()
@@ -150,16 +135,22 @@ class ThesaurusDemo(QMainWindow):
         if cursor.hasSelection():
             cursor.insertText(replacement)
             self._editor.setTextCursor(cursor)
-        self._status_label.setText(f"Replaced with '{replacement}'")
+            self._status_label.setText(f"Replaced with '{replacement}'")
+        else:
+            self._status_label.setText("No editor selection to replace")
 
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("Thesaurus Demo")
+    app.setApplicationName("Reusable Thesaurus Demo")
+    install_toolkit_translations(app, None)
 
-    registry = _discover_registry()
-    language = _pick_language(registry)
-    service = LinguisticService(language, registry=registry)
+    corpus = os.environ.get("LIBREOFFICE_DICTIONARIES_PATH")
+    corpus_path = Path(corpus).expanduser() if corpus else None
+    service = create_service(
+        namespace="thesaurus-demo",
+        corpus_path=corpus_path if corpus_path and corpus_path.is_dir() else None,
+    )
 
     window = ThesaurusDemo(service)
     window.show()

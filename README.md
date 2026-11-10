@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 303" src="https://img.shields.io/badge/tests-303%20fast-brightgreen">
+  <img alt="Fast tests: 308" src="https://img.shields.io/badge/tests-308%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -118,6 +118,8 @@ workflow:
 |---|---|
 | [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), with SHA-256 checksums and spelling/thesaurus flags, plus strict network-free validation of any host-provided catalog. |
 | [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | Embeddable `DictionaryDownloadManagerWidget` and `DictionaryDownloadManagerDialog` with search, filters, spelling/thesaurus badges, a details panel, automatic verified downloads, manual import, and removal of application-owned bundles. The base classes retain the host-delegated `download_requested` mode. |
+| [`src/pyqt6_linguistic_tools/factory.py`](src/pyqt6_linguistic_tools/factory.py) | `create_service()` builds the standard Linux, managed, user and optional corpus providers for any host application using the toolkit as a package or a `libs/` submodule. |
+| [`src/pyqt6_linguistic_tools/qt/thesaurus_dialog.py`](src/pyqt6_linguistic_tools/qt/thesaurus_dialog.py) | Reusable `ThesaurusWidget` for embedding and `ThesaurusDialog` for a window, with grouped meanings, language-aware service data, replacement signals and formatted clipboard copy. |
 | [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
 | [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |
 
@@ -445,6 +447,67 @@ run the program directly without modifying the system Python installation.
 Whichever mechanism is used, PyQt6 and any other non-vendored dependencies must
 still be available from the interpreter chosen to run the application.
 
+### Git submodule bootstrap (no pip)
+
+If your application vendors the toolkit under `libs/`, use the bootstrap module
+once before any toolkit import:
+
+```text
+my-app/
+├── libs/
+│   └── pyqt6-linguistic-tools/   ← git submodule
+├── my_app/
+│   └── bootstrap.py
+└── main.py
+```
+
+```bash
+git submodule add https://github.com/wachin/pyqt6-linguistic-tools.git \
+  libs/pyqt6-linguistic-tools
+git submodule update --init --recursive
+```
+
+```python
+# my_app/bootstrap.py
+from pathlib import Path
+import sys
+
+toolkit = (
+    Path(__file__).resolve().parent.parent
+    / "libs"
+    / "pyqt6-linguistic-tools"
+)
+sys.path.insert(0, str(toolkit))
+import pyqt6_linguistic_tools_bootstrap  # noqa: F401
+```
+
+Then import the toolkit normally:
+
+```python
+from pyqt6_linguistic_tools import create_service
+from pyqt6_linguistic_tools.qt import ThesaurusDialog, ThesaurusWidget
+
+service = create_service(namespace="my-app")
+```
+
+`create_service()` adds Linux system discovery plus the application-managed
+and user-imported providers. Pass `corpus_path=` only when the application has
+its own local dictionary corpus. The dialog and widget are reusable in any
+PyQt6 application:
+
+```python
+thesaurus = ThesaurusWidget(service, "feliz")
+layout.addWidget(thesaurus)
+
+dialog = ThesaurusDialog(service, "feliz", parent=window)
+dialog.replacement_requested.connect(replace_word)
+dialog.exec()
+```
+
+`pyqt6_linguistic_tools_bootstrap.py` only adds the toolkit `src` directory and
+the two vendored engine directories to `sys.path`. PyQt6 must already be
+available to the interpreter; the toolkit does not install it for you.
+
 For released `.deb` packages or AppImages, the packager should install or
 bundle the toolkit, PyQt6, Spylls, PyThes, and the selected dictionaries in
 locations already known to the packaged interpreter. End users should not need
@@ -531,7 +594,7 @@ python examples/basic_qplaintextedit.py
 # Spell checking, suggestions, and personal dictionary
 python examples/spellcheck_demo.py
 
-# Thesaurus browser
+# Reusable ThesaurusWidget and ThesaurusDialog
 python examples/thesaurus_demo.py
 
 # Dictionary Download Manager dialog

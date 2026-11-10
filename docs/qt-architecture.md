@@ -400,6 +400,11 @@ HTML and RTF with bold meaning headings and synonym bullets (for LibreOffice or
 a word processor), plus Markdown with `**bold**` groups and `-` bullets (for
 Markdown editors). Plain-text consumers receive the Markdown fallback.
 
+`ThesaurusWidget` contains the reusable browser and signals;
+`ThesaurusDialog` is a thin window wrapper around it. Applications can embed
+the widget in a settings page or dock and connect `replacement_requested`
+without opening a dialog.
+
 ## Dictionary Download Manager
 
 `DictionaryDownloadManagerWidget` is the embeddable manager: search, state and

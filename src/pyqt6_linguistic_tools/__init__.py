@@ -81,6 +81,7 @@ from pyqt6_linguistic_tools.models import (
     CompatibilityReportMetadata,
     DictionaryCompatibilityReport,
 )
+from pyqt6_linguistic_tools.factory import create_service
 from pyqt6_linguistic_tools.locales import locale_display_name, normalize_locale
 from pyqt6_linguistic_tools.ignored import IgnoredWords, IgnoredWordsStore
 from pyqt6_linguistic_tools.providers import (
@@ -147,6 +148,8 @@ __all__ = [
     "DiagnosticHandler",
     "LinguisticService",
     "logging_diagnostic_handler",
+    # Service factory
+    "create_service",
     # Registry and providers
     "DEFAULT_LINUX_DICTIONARY_PATHS",
     "DictionaryCandidate",
