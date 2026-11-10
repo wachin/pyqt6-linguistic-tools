@@ -13,10 +13,12 @@ from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 require_pyqt6()
 
 from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal  # noqa: E402
+from PyQt6.QtGui import QFont  # noqa: E402
 from PyQt6.QtWidgets import (  # noqa: E402
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -258,6 +260,12 @@ class ThesaurusDialog(QDialog):
         category = (value or "").strip()
         return "" if category in {"", "-", "?", "—", "–"} else category
 
+    @staticmethod
+    def _bold_item(item: QTreeWidgetItem, column: int) -> None:
+        font = item.font(column)
+        font.setBold(True)
+        item.setFont(column, font)
+
     def _populate_results(self) -> None:
         self.results.clear()
         if self._entry is None or not self._entry.meanings:
@@ -277,21 +285,67 @@ class ThesaurusDialog(QDialog):
         has_categories = any(
             self._meaning_part_of_speech(meaning.part_of_speech) for meaning in meanings
         )
-        self.results.setColumnHidden(0, not has_categories)
+        header = self.results.header()
+        if has_categories:
+            self.results.setHeaderLabels(
+                (
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools.ThesaurusDialog", "Part of speech"
+                    ),
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools.ThesaurusDialog",
+                        "Meaning / synonym",
+                    ),
+                )
+            )
+            self.results.setColumnHidden(0, False)
+            self.results.setColumnHidden(1, False)
+            if header is not None:
+                header.setStretchLastSection(True)
+                header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+                header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        else:
+            # With no POS metadata, use one visible column so the tree branch
+            # and indentation remain visible. The meaning is the bold group
+            # heading and its synonyms are the indented children.
+            self.results.setHeaderLabels(
+                (
+                    QCoreApplication.translate(
+                        "PyQt6LinguisticTools.ThesaurusDialog",
+                        "Meaning / synonym",
+                    ),
+                    "",
+                )
+            )
+            self.results.setColumnHidden(0, False)
+            self.results.setColumnHidden(1, True)
+            if header is not None:
+                header.setStretchLastSection(False)
+                header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.status_label.clear()
         self.status_label.hide()
         for meaning in meanings:
-            parent = QTreeWidgetItem(
-                (
-                    self._meaning_part_of_speech(meaning.part_of_speech),
-                    meaning.meaning,
+            if has_categories:
+                parent = QTreeWidgetItem(
+                    (
+                        self._meaning_part_of_speech(meaning.part_of_speech),
+                        meaning.meaning,
+                    )
                 )
-            )
+                for column in (0, 1):
+                    self._bold_item(parent, column)
+            else:
+                parent = QTreeWidgetItem((meaning.meaning, ""))
+                self._bold_item(parent, 0)
             if meaning.meaning:
                 parent.setData(0, _SYNONYM_ROLE, meaning.meaning)
             self.results.addTopLevelItem(parent)
             for synonym in meaning.synonyms:
-                child = QTreeWidgetItem(("", synonym))
+                child = (
+                    QTreeWidgetItem(("", synonym))
+                    if has_categories
+                    else QTreeWidgetItem((synonym, ""))
+                )
                 child.setData(0, _SYNONYM_ROLE, synonym)
                 parent.addChild(child)
             parent.setExpanded(True)
@@ -303,7 +357,6 @@ class ThesaurusDialog(QDialog):
                 )
             )
             self.status_label.show()
-        self.results.resizeColumnToContents(0)
         self._update_selection()
 
     def _update_selection(self) -> None:

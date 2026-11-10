@@ -24,9 +24,10 @@ This project follows Semantic Versioning.
 - Wire the download manager into ChordFlow and ChordPages: both open the shared
   dialog, install into the `guitarchordstudio` managed namespace, refresh the
   service, and attach the toolkit decorator to every editor.
-- Hide an empty "Part of speech" column and show a short note when a MyThes
-  data set provides no grammatical categories (the Spanish LibreOffice
-  thesaurus uses `-` for every entry).
+- When a MyThes data set provides no grammatical categories (the Spanish
+  LibreOffice thesaurus uses `-` for every entry), hide the empty "Part of
+  speech" column, keep each meaning as a bold group with its indented synonyms,
+  and show a short explanatory note.
 - Ship toolkit-owned Spanish and English translations (`.ts` sources and
   compiled `.qm` catalogs) plus `install_toolkit_translations()`,
   `uninstall_toolkit_translations()` and `translation_candidates()`. Convert

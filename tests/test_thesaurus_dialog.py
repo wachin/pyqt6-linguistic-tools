@@ -229,17 +229,27 @@ def test_hides_part_of_speech_when_dictionary_has_no_categories(
     application, service, monkeypatch
 ):
     entry = ThesaurusEntry(
-        word="feliz",
-        meanings=(ThesaurusMeaning("-", "bendito", ("dichoso", "contento")),),
+        word="presencia",
+        meanings=(
+            ThesaurusMeaning("-", "asistencia", ("concurrencia", "público")),
+            ThesaurusMeaning("-", "fachada", ("porte", "figura")),
+        ),
     )
     monkeypatch.setattr(
         service,
         "thesaurus_entry",
         lambda _word, **_kwargs: entry,
     )
-    dialog = ThesaurusDialog(service, "feliz")
+    dialog = ThesaurusDialog(service, "presencia")
 
-    assert dialog.results.isColumnHidden(0)
-    assert dialog.results.topLevelItem(0).text(0) == ""
+    assert not dialog.results.isColumnHidden(0)
+    assert dialog.results.isColumnHidden(1)
+    assert dialog.results.topLevelItemCount() == 2
+    first = dialog.results.topLevelItem(0)
+    second = dialog.results.topLevelItem(1)
+    assert first.text(0) == "asistencia"
+    assert first.childCount() == 2
+    assert first.child(0).text(0) == "concurrencia"
+    assert second.text(0) == "fachada"
+    assert second.child(0).text(0) == "porte"
     assert "grammatical" in dialog.status_label.text().lower()
-    assert dialog.results.topLevelItem(0).child(0).text(1) == "dichoso"
