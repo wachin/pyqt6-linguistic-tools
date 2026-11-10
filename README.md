@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 312" src="https://img.shields.io/badge/tests-312%20fast-brightgreen">
+  <img alt="Fast tests: 313" src="https://img.shields.io/badge/tests-313%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -490,6 +490,12 @@ On Linux, `LinuxSystemDictionaryProvider` automatically discovers supported
 Hunspell and MyThes files installed in the standard `/usr/share` locations.
 They remain read-only and are consumed by the portable Spylls/PyThes engines;
 loading `libhunspell` or `libmythes` is not required.
+
+`create_service()` includes this provider by default, so ChordFlow,
+ChordPages and third-party hosts do not need their own Linux dictionary
+discovery. Qt language menus can show the origin of each capability, for
+example `es_EC — Spelling (system) + Thesaurus (system)`, using
+`capabilities.spelling_source` and `capabilities.thesaurus_source`.
 
 `ManagedDictionaryProvider` and `UserDictionaryProvider` use shared
 cross-platform application-data locations and support safe manual imports.

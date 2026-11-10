@@ -42,6 +42,9 @@ This project follows Semantic Versioning.
   so providers no longer have to be assembled in each program. Add
   `pyqt6_linguistic_tools_bootstrap.py` for applications that vendor the
   toolkit as a `libs/` git submodule without pip.
+- Add a system-only factory test that verifies Linux Hunspell/MyThes discovery
+  without a corpus, and document how hosts expose `spelling_source` and
+  `thesaurus_source` in their language menus.
 - Make the thesaurus dialog narrower (540×480 default), resizable with
   minimize/maximize controls, and persist its position and size in `QSettings`
   so it reopens where the user left it. Hosts can inject a `QSettings` object.

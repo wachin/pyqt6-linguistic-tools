@@ -131,7 +131,9 @@ An explicit constructor `language` takes precedence, followed by the stored
 document language, stored default language, and finally `service.language`.
 The context menu shows native friendly names, exact locale identifiers, and
 whether spelling and thesaurus resources are available. Regional variants
-remain separate.
+remain separate. Host language menus can also label each capability with its
+dictionary source (`system`, `corpus`, `managed`, or `user`) from
+`LinguisticCapabilities.spelling_source` and `thesaurus_source`.
 
 Changing a document language cancels obsolete asynchronous work, clears the
 editor highlighter's locale-bound status cache, and opens the matching

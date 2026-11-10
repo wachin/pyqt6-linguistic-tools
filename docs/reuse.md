@@ -36,12 +36,15 @@ for path in [
 Then import and use the toolkit:
 
 ```python
-from pyqt6_linguistic_tools import LinguisticService
+from pyqt6_linguistic_tools import create_service
 from pyqt6_linguistic_tools.qt import LinguisticTextEditDecorator
 
-service = LinguisticService(language="en_US")
+service = create_service(language="en_US", namespace="your-app")
 decorator = LinguisticTextEditDecorator(editor, service)
 ```
+
+`create_service()` includes Linux system discovery, managed bundles and user
+imports. Do not copy the host application's dictionary discovery code.
 
 ## Option B: pip install
 
@@ -95,6 +98,22 @@ registry = DictionaryRegistry((
 
 service = LinguisticService("en_US", registry=registry)
 ```
+
+### Dictionary source diagnostics
+
+`LinguisticService.capabilities(locale)` reports where spelling and thesaurus
+data came from:
+
+```python
+capabilities = service.capabilities("es_EC")
+print(capabilities.spelling_source)   # system, corpus, managed or user
+print(capabilities.thesaurus_source)
+```
+
+Show these values in the host's language menu. A menu label such as
+`es_EC — Spelling (system) + Thesaurus (system)` makes Linux discovery and
+packaging problems visible instead of silently falling back to another
+spell-checking implementation.
 
 ### Token filter
 

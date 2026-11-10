@@ -76,3 +76,25 @@ def test_create_service_can_disable_linux_system_provider():
         isinstance(provider, LinuxSystemDictionaryProvider)
         for provider in service.registry.providers()
     )
+
+
+def test_system_dictionaries_work_without_a_corpus():
+    roots = (
+        Path("/usr/share/hunspell"),
+        Path("/usr/share/myspell"),
+        Path("/usr/share/myspell/dicts"),
+    )
+    if not any((root / "es_EC.aff").is_file() for root in roots):
+        pytest.skip("no system es_EC Hunspell dictionary available")
+
+    service = create_service(
+        language="es_EC",
+        namespace="factory-system-test",
+        corpus_path=None,
+    )
+    capabilities = service.capabilities("es_EC")
+
+    assert capabilities.spell_check
+    assert capabilities.spelling_source == "system"
+    assert service.check_word("mundo")
+    assert not service.check_word("mundoerror")
