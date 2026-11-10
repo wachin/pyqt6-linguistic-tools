@@ -93,6 +93,7 @@ def test_displays_query_meanings_parts_of_speech_and_synonyms(
     assert isinstance(dialog.locale(), QLocale)
     assert dialog.entry.word == "bright"
     assert dialog.results.topLevelItemCount() == 2
+    assert not dialog.results.isColumnHidden(0)
     first = dialog.results.topLevelItem(0)
     assert first.text(0) == "adjective"
     assert first.text(1) == "shining"
@@ -222,3 +223,23 @@ def test_context_dialog_refuses_stale_editor_replacement(
 
     assert editor.toPlainText() == "Changed remains"
     dialog.close()
+
+
+def test_hides_part_of_speech_when_dictionary_has_no_categories(
+    application, service, monkeypatch
+):
+    entry = ThesaurusEntry(
+        word="feliz",
+        meanings=(ThesaurusMeaning("-", "bendito", ("dichoso", "contento")),),
+    )
+    monkeypatch.setattr(
+        service,
+        "thesaurus_entry",
+        lambda _word, **_kwargs: entry,
+    )
+    dialog = ThesaurusDialog(service, "feliz")
+
+    assert dialog.results.isColumnHidden(0)
+    assert dialog.results.topLevelItem(0).text(0) == ""
+    assert "grammatical" in dialog.status_label.text().lower()
+    assert dialog.results.topLevelItem(0).child(0).text(1) == "dichoso"

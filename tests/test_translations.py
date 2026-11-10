@@ -76,6 +76,13 @@ def test_spanish_translation_is_installed_and_removed(application) -> None:
             == "Tesauro"
         )
         assert QCoreApplication.translate("PyQt6LinguisticTools", "Ignore") == "Ignorar"
+        assert (
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog",
+                "This dictionary does not provide grammatical categories.",
+            )
+            == "Este diccionario no incluye categorías gramaticales."
+        )
     finally:
         assert uninstall_toolkit_translations(application)
         assert installed_toolkit_translator(application) is None

@@ -389,6 +389,11 @@ All labels and status messages use English source text in the
 toolkit's bundled translations. Words, meanings, parts of speech and synonyms
 originate in the selected dictionary and are not translated by the widget.
 
+Some MyThes data sets, including the Spanish LibreOffice thesaurus, use `-` for
+the part-of-speech field. The dialog hides the empty category column and shows a
+short note instead of presenting a blank "Part of speech" column; dictionaries
+that provide real categories keep the column visible.
+
 ## Dictionary Download Manager
 
 `DictionaryDownloadManagerWidget` is the embeddable manager: search, state and

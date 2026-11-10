@@ -252,9 +252,16 @@ class ThesaurusDialog(QDialog):
             lambda _item, _column: self.search_selected()
         )
 
+    @staticmethod
+    def _meaning_part_of_speech(value: str) -> str:
+        """Normalize MyThes placeholders such as ``-`` to an empty category."""
+        category = (value or "").strip()
+        return "" if category in {"", "-", "?", "—", "–"} else category
+
     def _populate_results(self) -> None:
         self.results.clear()
         if self._entry is None or not self._entry.meanings:
+            self.results.setColumnHidden(0, False)
             word = self.search_edit.text()
             self.status_label.setText(
                 QCoreApplication.translate(
@@ -266,10 +273,20 @@ class ThesaurusDialog(QDialog):
             self.no_results.emit(word)
             self._update_selection()
             return
+        meanings = self._entry.meanings
+        has_categories = any(
+            self._meaning_part_of_speech(meaning.part_of_speech) for meaning in meanings
+        )
+        self.results.setColumnHidden(0, not has_categories)
         self.status_label.clear()
         self.status_label.hide()
-        for meaning in self._entry.meanings:
-            parent = QTreeWidgetItem((meaning.part_of_speech, meaning.meaning))
+        for meaning in meanings:
+            parent = QTreeWidgetItem(
+                (
+                    self._meaning_part_of_speech(meaning.part_of_speech),
+                    meaning.meaning,
+                )
+            )
             if meaning.meaning:
                 parent.setData(0, _SYNONYM_ROLE, meaning.meaning)
             self.results.addTopLevelItem(parent)
@@ -278,6 +295,14 @@ class ThesaurusDialog(QDialog):
                 child.setData(0, _SYNONYM_ROLE, synonym)
                 parent.addChild(child)
             parent.setExpanded(True)
+        if not has_categories:
+            self.status_label.setText(
+                QCoreApplication.translate(
+                    "PyQt6LinguisticTools.ThesaurusDialog",
+                    "This dictionary does not provide grammatical categories.",
+                )
+            )
+            self.status_label.show()
         self.results.resizeColumnToContents(0)
         self._update_selection()
 

@@ -3,7 +3,7 @@
   <context>
     <name>DictionaryManagerDialog</name>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="1139" />
+      <location filename="../qt/dictionary_manager.py" line="1153" />
       <source>Dictionary Download Manager</source>
       <translation>Dictionary Download Manager</translation>
     </message>
@@ -11,311 +11,311 @@
   <context>
     <name>DictionaryManagerWidget</name>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="261" />
+      <location filename="../qt/dictionary_manager.py" line="270" />
       <source>Remove Dictionary</source>
       <translation>Remove Dictionary</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="262" />
+      <location filename="../qt/dictionary_manager.py" line="271" />
       <source>Remove the selected application-owned bundle(s): %1?</source>
       <translation>Remove the selected application-owned bundle(s): %1?</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="276" />
+      <location filename="../qt/dictionary_manager.py" line="285" />
       <source>Dictionary removal failed</source>
       <translation>Dictionary removal failed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="285" />
+      <location filename="../qt/dictionary_manager.py" line="294" />
       <source>Dictionary Download Manager</source>
       <translation>Dictionary Download Manager</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="286" />
+      <location filename="../qt/dictionary_manager.py" line="295" />
       <source>Download, import and remove spelling and thesaurus bundles.</source>
       <translation>Download, import and remove spelling and thesaurus bundles.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="289" />
+      <location filename="../qt/dictionary_manager.py" line="298" />
       <source>Refresh</source>
       <translation>Refresh</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="290" />
+      <location filename="../qt/dictionary_manager.py" line="299" />
       <source>Import Files…</source>
       <translation>Import Files…</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="291" />
+      <location filename="../qt/dictionary_manager.py" line="300" />
       <source>Search language, code or locale…</source>
       <translation>Search language, code or locale…</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="292" />
+      <location filename="../qt/dictionary_manager.py" line="301" />
       <source>Show:</source>
       <translation>Show:</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="293" />
+      <location filename="../qt/dictionary_manager.py" line="302" />
       <source>All dictionaries</source>
       <translation>All dictionaries</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="318" />
-      <location filename="../qt/dictionary_manager.py" line="294" />
+      <location filename="../qt/dictionary_manager.py" line="327" />
+      <location filename="../qt/dictionary_manager.py" line="303" />
       <source>Installed</source>
       <translation>Installed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="295" />
+      <location filename="../qt/dictionary_manager.py" line="304" />
       <source>Not installed</source>
       <translation>Not installed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="296" />
+      <location filename="../qt/dictionary_manager.py" line="305" />
       <source>All components</source>
       <translation>All components</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="297" />
+      <location filename="../qt/dictionary_manager.py" line="306" />
       <source>Spelling + thesaurus</source>
       <translation>Spelling + thesaurus</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="298" />
+      <location filename="../qt/dictionary_manager.py" line="307" />
       <source>Spelling only</source>
       <translation>Spelling only</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="299" />
+      <location filename="../qt/dictionary_manager.py" line="308" />
       <source>Thesaurus only</source>
       <translation>Thesaurus only</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="321" />
-      <location filename="../qt/dictionary_manager.py" line="300" />
+      <location filename="../qt/dictionary_manager.py" line="330" />
+      <location filename="../qt/dictionary_manager.py" line="309" />
       <source>No components</source>
       <translation>No components</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="301" />
+      <location filename="../qt/dictionary_manager.py" line="310" />
       <source>Installed dictionaries</source>
       <translation>Installed dictionaries</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="302" />
+      <location filename="../qt/dictionary_manager.py" line="311" />
       <source>Available downloads</source>
       <translation>Available downloads</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="303" />
+      <location filename="../qt/dictionary_manager.py" line="312" />
       <source>Language</source>
       <translation>Language</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="304" />
+      <location filename="../qt/dictionary_manager.py" line="313" />
       <source>Code</source>
       <translation>Code</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="305" />
+      <location filename="../qt/dictionary_manager.py" line="314" />
       <source>Spelling</source>
       <translation>Spelling</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="306" />
+      <location filename="../qt/dictionary_manager.py" line="315" />
       <source>Thesaurus</source>
       <translation>Thesaurus</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="307" />
+      <location filename="../qt/dictionary_manager.py" line="316" />
       <source>Size</source>
       <translation>Size</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="308" />
+      <location filename="../qt/dictionary_manager.py" line="317" />
       <source>Status</source>
       <translation>Status</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="309" />
+      <location filename="../qt/dictionary_manager.py" line="318" />
       <source>Source</source>
       <translation>Source</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="310" />
+      <location filename="../qt/dictionary_manager.py" line="319" />
       <source>Download</source>
       <translation>Download</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="311" />
+      <location filename="../qt/dictionary_manager.py" line="320" />
       <source>Remove</source>
       <translation>Remove</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="312" />
+      <location filename="../qt/dictionary_manager.py" line="321" />
       <source>Close</source>
       <translation>Close</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="313" />
+      <location filename="../qt/dictionary_manager.py" line="322" />
       <source>Details</source>
       <translation>Details</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="314" />
+      <location filename="../qt/dictionary_manager.py" line="323" />
       <source>Yes</source>
       <translation>Yes</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="315" />
+      <location filename="../qt/dictionary_manager.py" line="324" />
       <source>No</source>
       <translation>No</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="316" />
+      <location filename="../qt/dictionary_manager.py" line="325" />
       <source>Unknown</source>
       <translation>Unknown</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="317" />
+      <location filename="../qt/dictionary_manager.py" line="326" />
       <source>Available</source>
       <translation>Available</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="319" />
+      <location filename="../qt/dictionary_manager.py" line="328" />
       <source>Inactive</source>
       <translation>Inactive</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="320" />
+      <location filename="../qt/dictionary_manager.py" line="329" />
       <source>Unverified</source>
       <translation>Unverified</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="322" />
+      <location filename="../qt/dictionary_manager.py" line="331" />
       <source>SHA-256 verified</source>
       <translation>SHA-256 verified</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="323" />
+      <location filename="../qt/dictionary_manager.py" line="332" />
       <source>Catalog</source>
       <translation>Catalog</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="324" />
+      <location filename="../qt/dictionary_manager.py" line="333" />
       <source>Select a dictionary to see its details.</source>
       <translation>Select a dictionary to see its details.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="713" />
+      <location filename="../qt/dictionary_manager.py" line="722" />
       <source>Installed dictionary.</source>
       <translation>Installed dictionary.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="751" />
+      <location filename="../qt/dictionary_manager.py" line="760" />
       <source>Installed locales (%1): %2</source>
       <translation>Installed locales (%1): %2</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="760" />
+      <location filename="../qt/dictionary_manager.py" line="769" />
       <source>This bundle is already installed.</source>
       <translation>This bundle is already installed.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="765" />
+      <location filename="../qt/dictionary_manager.py" line="774" />
       <source>This bundle has no spelling or thesaurus files.</source>
       <translation>This bundle has no spelling or thesaurus files.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="768" />
+      <location filename="../qt/dictionary_manager.py" line="777" />
       <source>No spelling or thesaurus files in this bundle.</source>
       <translation>No spelling or thesaurus files in this bundle.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="774" />
+      <location filename="../qt/dictionary_manager.py" line="783" />
       <source>Downloads require a SHA-256 checksum in the catalog.</source>
       <translation>Downloads require a SHA-256 checksum in the catalog.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="777" />
+      <location filename="../qt/dictionary_manager.py" line="786" />
       <source>Download disabled: the catalog has no SHA-256 checksum.</source>
       <translation>Download disabled: the catalog has no SHA-256 checksum.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="783" />
+      <location filename="../qt/dictionary_manager.py" line="792" />
       <source>Ready to download.</source>
       <translation>Ready to download.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="882" />
+      <location filename="../qt/dictionary_manager.py" line="891" />
       <source>Download requested. The host application installs the bundle and then refreshes this view.</source>
       <translation>Download requested. The host application installs the bundle and then refreshes this view.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="893" />
+      <location filename="../qt/dictionary_manager.py" line="902" />
       <source>Cancelling download…</source>
       <translation>Cancelling download…</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="966" />
-      <location filename="../qt/dictionary_manager.py" line="898" />
+      <location filename="../qt/dictionary_manager.py" line="969" />
+      <location filename="../qt/dictionary_manager.py" line="907" />
       <source>Dictionary download failed</source>
       <translation>Dictionary download failed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="900" />
+      <location filename="../qt/dictionary_manager.py" line="908" />
       <source>No managed dictionary provider is configured.</source>
       <translation>No managed dictionary provider is configured.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="923" />
+      <location filename="../qt/dictionary_manager.py" line="929" />
       <source>Downloading %1…</source>
       <translation>Downloading %1…</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="934" />
+      <location filename="../qt/dictionary_manager.py" line="939" />
       <source>Downloading… %1%</source>
       <translation>Downloading… %1%</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="939" />
+      <location filename="../qt/dictionary_manager.py" line="944" />
       <source>Downloading… %1</source>
       <translation>Downloading… %1</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="951" />
+      <location filename="../qt/dictionary_manager.py" line="955" />
       <source>Dictionary installed. Select it to use it.</source>
       <translation>Dictionary installed. Select it to use it.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="975" />
+      <location filename="../qt/dictionary_manager.py" line="978" />
       <source>Download cancelled.</source>
       <translation>Download cancelled.</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="982" />
+      <location filename="../qt/dictionary_manager.py" line="985" />
       <source>Dictionary refresh failed</source>
       <translation>Dictionary refresh failed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="987" />
+      <location filename="../qt/dictionary_manager.py" line="990" />
       <source>Import Dictionary Files</source>
       <translation>Import Dictionary Files</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="989" />
+      <location filename="../qt/dictionary_manager.py" line="992" />
       <source>Dictionary files (*.aff *.dic *.dat *.idx)</source>
       <translation>Dictionary files (*.aff *.dic *.dat *.idx)</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="1007" />
-      <location filename="../qt/dictionary_manager.py" line="1003" />
+      <location filename="../qt/dictionary_manager.py" line="1010" />
+      <location filename="../qt/dictionary_manager.py" line="1006" />
       <source>Dictionary import failed</source>
       <translation>Dictionary import failed</translation>
     </message>
     <message>
-      <location filename="../qt/dictionary_manager.py" line="1048" />
+      <location filename="../qt/dictionary_manager.py" line="1051" />
       <source>%1 available · %2 installed · %3 with thesaurus</source>
       <translation>%1 available · %2 installed · %3 with thesaurus</translation>
     </message>
@@ -441,9 +441,14 @@
       <translation>Replace</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="260" />
+      <location filename="../qt/thesaurus_dialog.py" line="267" />
       <source>No thesaurus entry found for “%1”.</source>
       <translation>No thesaurus entry found for “%1”.</translation>
+    </message>
+    <message>
+      <location filename="../qt/thesaurus_dialog.py" line="300" />
+      <source>This dictionary does not provide grammatical categories.</source>
+      <translation>This dictionary does not provide grammatical categories.</translation>
     </message>
   </context>
 </TS>
