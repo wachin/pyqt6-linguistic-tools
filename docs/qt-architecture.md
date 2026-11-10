@@ -395,6 +395,11 @@ empty category column, switches to a single "Meaning / synonym" column, renders
 each meaning as a bold group and indents its synonyms, and shows a short note.
 Dictionaries that provide real categories keep the two-column layout.
 
+The **Copy** action places several formats on the clipboard in one step:
+HTML and RTF with bold meaning headings and synonym bullets (for LibreOffice or
+a word processor), plus Markdown with `**bold**` groups and `-` bullets (for
+Markdown editors). Plain-text consumers receive the Markdown fallback.
+
 ## Dictionary Download Manager
 
 `DictionaryDownloadManagerWidget` is the embeddable manager: search, state and

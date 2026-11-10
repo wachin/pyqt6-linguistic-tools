@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+import html
 import unicodedata
 
-from pyqt6_linguistic_tools.models import ThesaurusEntry
+from pyqt6_linguistic_tools.models import ThesaurusEntry, ThesaurusMeaning
 from pyqt6_linguistic_tools.locales import normalize_locale
 from pyqt6_linguistic_tools.service import LinguisticService
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
@@ -12,9 +14,17 @@ from pyqt6_linguistic_tools.qt._compat import require_pyqt6
 
 require_pyqt6()
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal  # noqa: E402
+from PyQt6.QtCore import (  # noqa: E402
+    QByteArray,
+    QCoreApplication,
+    QMimeData,
+    QTimer,
+    Qt,
+    pyqtSignal,
+)
 from PyQt6.QtGui import QFont  # noqa: E402
 from PyQt6.QtWidgets import (  # noqa: E402
+    QApplication,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
@@ -30,6 +40,96 @@ from PyQt6.QtWidgets import (  # noqa: E402
 
 
 _SYNONYM_ROLE = int(Qt.ItemDataRole.UserRole)
+
+
+def _meaning_part_of_speech(value: str) -> str:
+    """Normalize MyThes placeholders such as ``-`` to an empty category."""
+    category = (value or "").strip()
+    return "" if category in {"", "-", "?", "—", "–"} else category
+
+
+def _meaning_heading(meaning: ThesaurusMeaning) -> str:
+    category = _meaning_part_of_speech(meaning.part_of_speech)
+    if category and meaning.meaning:
+        return f"{category} — {meaning.meaning}"
+    return category or meaning.meaning
+
+
+def _escape_html(value: str) -> str:
+    return html.escape(value, quote=False)
+
+
+def _escape_markdown(value: str) -> str:
+    for character in ("\\", "*", "_", "`", "[", "]"):
+        value = value.replace(character, "\\" + character)
+    return value
+
+
+def _escape_rtf(value: str) -> str:
+    result: list[str] = []
+    for character in value:
+        code = ord(character)
+        if character in "\\{}":
+            result.append("\\" + character)
+        elif character == "\n":
+            result.append("\\par ")
+        elif code < 128:
+            result.append(character)
+        elif code <= 0xFFFF:
+            signed = code if code < 0x8000 else code - 0x10000
+            result.append(f"\\u{signed}?")
+        else:
+            result.append("?")
+    return "".join(result)
+
+
+@dataclass(frozen=True, slots=True)
+class ThesaurusClipboardFormats:
+    """Rich and Markdown representations of one thesaurus result."""
+
+    html: str
+    rtf: str
+    markdown: str
+
+
+def thesaurus_clipboard_formats(
+    entry: ThesaurusEntry,
+    word: str,
+) -> ThesaurusClipboardFormats:
+    """Build clipboard formats with bold meaning groups and synonym bullets."""
+    title = word.strip() or entry.word
+    html_parts = ["<html><body>"]
+    markdown_parts: list[str] = []
+    rtf_parts = ["{\\rtf1\\ansi\\deff0"]
+    if title:
+        html_parts.append(f"<p><b>{_escape_html(title)}</b></p>")
+        markdown_parts.extend([f"**{_escape_markdown(title)}**", ""])
+        rtf_parts.append(f"\\pard\\b {_escape_rtf(title)}\\b0\\par")
+    for meaning in entry.meanings:
+        heading = _meaning_heading(meaning)
+        if heading:
+            html_parts.append(f"<p><b>{_escape_html(heading)}</b></p>")
+            markdown_parts.extend([f"**{_escape_markdown(heading)}**", ""])
+            rtf_parts.append(f"\\pard\\b {_escape_rtf(heading)}\\b0\\par")
+        if meaning.synonyms:
+            html_parts.append("<ul>")
+            for synonym in meaning.synonyms:
+                html_parts.append(f"<li>{_escape_html(synonym)}</li>")
+                markdown_parts.append(f"- {_escape_markdown(synonym)}")
+                rtf_parts.append(f"\\pard\\bullet\\tab {_escape_rtf(synonym)}\\par")
+            html_parts.append("</ul>")
+            markdown_parts.append("")
+            rtf_parts.append("\\par")
+    html_parts.append("</body></html>")
+    rtf_parts.append("}")
+    markdown = "\n".join(markdown_parts).strip()
+    if markdown:
+        markdown += "\n"
+    return ThesaurusClipboardFormats(
+        html="\n".join(html_parts),
+        rtf="\n".join(rtf_parts),
+        markdown=markdown,
+    )
 
 
 def preserve_simple_capitalization(source: str, replacement: str) -> str:
@@ -234,6 +334,18 @@ class ThesaurusDialog(QDialog):
             self,
         )
         action_row.addWidget(self.search_selected_button)
+        self.copy_button = QPushButton(
+            QCoreApplication.translate("PyQt6LinguisticTools.ThesaurusDialog", "Copy"),
+            self,
+        )
+        self.copy_button.setToolTip(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog",
+                "Copy the results as rich text and Markdown.",
+            )
+        )
+        self.copy_button.setEnabled(False)
+        action_row.addWidget(self.copy_button)
         action_row.addStretch(1)
         action_row.addWidget(self.replace_button)
         layout.addLayout(action_row)
@@ -249,6 +361,7 @@ class ThesaurusDialog(QDialog):
         )
         self.search_selected_button.clicked.connect(self.search_selected)
         self.replace_button.clicked.connect(self.replace_selected)
+        self.copy_button.clicked.connect(self.copy_results)
         self.results.itemSelectionChanged.connect(self._update_selection)
         self.results.itemDoubleClicked.connect(
             lambda _item, _column: self.search_selected()
@@ -256,9 +369,7 @@ class ThesaurusDialog(QDialog):
 
     @staticmethod
     def _meaning_part_of_speech(value: str) -> str:
-        """Normalize MyThes placeholders such as ``-`` to an empty category."""
-        category = (value or "").strip()
-        return "" if category in {"", "-", "?", "—", "–"} else category
+        return _meaning_part_of_speech(value)
 
     @staticmethod
     def _bold_item(item: QTreeWidgetItem, column: int) -> None:
@@ -266,9 +377,52 @@ class ThesaurusDialog(QDialog):
         font.setBold(True)
         item.setFont(column, font)
 
+    def copy_results(self) -> None:
+        """Copy the result as rich text and Markdown in one clipboard action."""
+        entry = self._entry
+        if entry is None or not entry.meanings:
+            return
+        formats = thesaurus_clipboard_formats(entry, self.query)
+        mime = QMimeData()
+        mime.setHtml(formats.html)
+        mime.setData(
+            "text/rtf",
+            QByteArray(formats.rtf.encode("ascii", "replace")),
+        )
+        mime.setText(formats.markdown)
+        mime.setData(
+            "text/markdown",
+            QByteArray(formats.markdown.encode("utf-8")),
+        )
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+        clipboard.setMimeData(mime)
+        self._show_copy_feedback(entry)
+
+    def _show_copy_feedback(self, entry: ThesaurusEntry) -> None:
+        previous_text = self.status_label.text()
+        previous_visible = self.status_label.isVisible()
+        query = self.query
+        self.status_label.setText(
+            QCoreApplication.translate(
+                "PyQt6LinguisticTools.ThesaurusDialog",
+                "Copied to clipboard.",
+            )
+        )
+        self.status_label.show()
+
+        def restore() -> None:
+            if self._entry is entry and self.query == query:
+                self.status_label.setText(previous_text)
+                self.status_label.setVisible(previous_visible)
+
+        QTimer.singleShot(2000, restore)
+
     def _populate_results(self) -> None:
         self.results.clear()
         if self._entry is None or not self._entry.meanings:
+            self.copy_button.setEnabled(False)
             self.results.setColumnHidden(0, False)
             word = self.search_edit.text()
             self.status_label.setText(
@@ -349,6 +503,7 @@ class ThesaurusDialog(QDialog):
                 child.setData(0, _SYNONYM_ROLE, synonym)
                 parent.addChild(child)
             parent.setExpanded(True)
+        self.copy_button.setEnabled(bool(meanings))
         if not has_categories:
             self.status_label.setText(
                 QCoreApplication.translate(

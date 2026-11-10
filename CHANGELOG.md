@@ -28,6 +28,10 @@ This project follows Semantic Versioning.
   LibreOffice thesaurus uses `-` for every entry), hide the empty "Part of
   speech" column, keep each meaning as a bold group with its indented synonyms,
   and show a short explanatory note.
+- Add a **Copy** action to the thesaurus dialog. It puts HTML and RTF with
+  bold meaning groups and synonym bullets on the clipboard for LibreOffice and
+  word processors, alongside Markdown with `**bold**` headings and `-` bullets
+  for Markdown editors.
 - Ship toolkit-owned Spanish and English translations (`.ts` sources and
   compiled `.qm` catalogs) plus `install_toolkit_translations()`,
   `uninstall_toolkit_translations()` and `translation_candidates()`. Convert

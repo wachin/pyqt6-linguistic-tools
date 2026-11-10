@@ -396,57 +396,75 @@
   <context>
     <name>PyQt6LinguisticTools.ThesaurusDialog</name>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="77" />
+      <location filename="../qt/thesaurus_dialog.py" line="179" />
       <source>Thesaurus</source>
       <translation>Thesaurus</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="137" />
+      <location filename="../qt/thesaurus_dialog.py" line="239" />
       <source>Results for: %1</source>
       <translation>Results for: %1</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="180" />
+      <location filename="../qt/thesaurus_dialog.py" line="282" />
       <source>Back</source>
       <translation>Back</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="184" />
+      <location filename="../qt/thesaurus_dialog.py" line="286" />
       <source>Forward</source>
       <translation>Forward</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="191" />
+      <location filename="../qt/thesaurus_dialog.py" line="293" />
       <source>Search</source>
       <translation>Search</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="207" />
+      <location filename="../qt/thesaurus_dialog.py" line="446" />
+      <location filename="../qt/thesaurus_dialog.py" line="309" />
       <source>Part of speech</source>
       <translation>Part of speech</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="210" />
+      <location filename="../qt/thesaurus_dialog.py" line="467" />
+      <location filename="../qt/thesaurus_dialog.py" line="449" />
+      <location filename="../qt/thesaurus_dialog.py" line="312" />
       <source>Meaning / synonym</source>
       <translation>Meaning / synonym</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="223" />
+      <location filename="../qt/thesaurus_dialog.py" line="325" />
       <source>Search Selected</source>
       <translation>Search Selected</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="229" />
+      <location filename="../qt/thesaurus_dialog.py" line="331" />
       <source>Replace</source>
       <translation>Replace</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="267" />
+      <location filename="../qt/thesaurus_dialog.py" line="338" />
+      <source>Copy</source>
+      <translation>Copy</translation>
+    </message>
+    <message>
+      <location filename="../qt/thesaurus_dialog.py" line="342" />
+      <source>Copy the results as rich text and Markdown.</source>
+      <translation>Copy the results as rich text and Markdown.</translation>
+    </message>
+    <message>
+      <location filename="../qt/thesaurus_dialog.py" line="408" />
+      <source>Copied to clipboard.</source>
+      <translation>Copied to clipboard.</translation>
+    </message>
+    <message>
+      <location filename="../qt/thesaurus_dialog.py" line="429" />
       <source>No thesaurus entry found for “%1”.</source>
       <translation>No thesaurus entry found for “%1”.</translation>
     </message>
     <message>
-      <location filename="../qt/thesaurus_dialog.py" line="300" />
+      <location filename="../qt/thesaurus_dialog.py" line="509" />
       <source>This dictionary does not provide grammatical categories.</source>
       <translation>This dictionary does not provide grammatical categories.</translation>
     </message>

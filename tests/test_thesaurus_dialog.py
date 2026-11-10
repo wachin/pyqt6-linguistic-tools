@@ -26,6 +26,9 @@ from pyqt6_linguistic_tools.qt import (
     ThesaurusDialog,
     preserve_simple_capitalization,
 )
+from pyqt6_linguistic_tools.qt.thesaurus_dialog import (
+    thesaurus_clipboard_formats,
+)
 
 
 @pytest.fixture(scope="module")
@@ -148,6 +151,7 @@ def test_no_result_state_is_explicit(application, service, monkeypatch):
     assert "unknown" in dialog.status_label.text()
     assert not dialog.replace_button.isEnabled()
     assert not dialog.search_selected_button.isEnabled()
+    assert not dialog.copy_button.isEnabled()
     assert not dialog.replace_selected()
 
 
@@ -253,3 +257,47 @@ def test_hides_part_of_speech_when_dictionary_has_no_categories(
     assert second.text(0) == "fachada"
     assert second.child(0).text(0) == "porte"
     assert "grammatical" in dialog.status_label.text().lower()
+
+
+def test_clipboard_formats_preserve_bold_groups_and_bullets():
+    entry = ThesaurusEntry(
+        word="presencia",
+        meanings=(
+            ThesaurusMeaning("-", "asistencia", ("concurrencia", "público")),
+            ThesaurusMeaning("-", "fachada", ("porte", "figura")),
+        ),
+    )
+    formats = thesaurus_clipboard_formats(entry, "presencia")
+
+    assert "<b>presencia</b>" in formats.html
+    assert "<b>asistencia</b>" in formats.html
+    assert "<li>concurrencia</li>" in formats.html
+    assert formats.html.index("asistencia") < formats.html.index("fachada")
+    assert "**asistencia**" in formats.markdown
+    assert "- concurrencia" in formats.markdown
+    assert r"\b asistencia\b0" in formats.rtf
+    assert r"\bullet\tab concurrencia" in formats.rtf
+
+
+def test_copy_button_writes_html_rtf_and_markdown(application, service, monkeypatch):
+    entry = ThesaurusEntry(
+        word="presencia",
+        meanings=(ThesaurusMeaning("-", "asistencia", ("concurrencia", "público")),),
+    )
+    monkeypatch.setattr(
+        service,
+        "thesaurus_entry",
+        lambda _word, **_kwargs: entry,
+    )
+    dialog = ThesaurusDialog(service, "presencia")
+    QApplication.clipboard().clear()
+
+    assert dialog.copy_button.isEnabled()
+    dialog.copy_button.click()
+
+    mime = QApplication.clipboard().mimeData()
+    assert mime is not None
+    assert mime.hasHtml()
+    assert "**presencia**" in mime.text()
+    assert b"**asistencia**" in bytes(mime.data("text/markdown"))
+    assert b"\\b asistencia" in bytes(mime.data("text/rtf"))
