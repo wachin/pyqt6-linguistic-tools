@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="PyQt6 Linguistic Tools: spell checking, suggestions and thesaurus for PyQt6">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="0.55" stop-color="#0f2f3d"/>
+      <stop offset="1" stop-color="#134e4a"/>
+    </linearGradient>
+    <linearGradient id="card" x1="780" y1="60" x2="1210" y2="292" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" opacity="0.10"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="360" rx="28" fill="url(#bg)"/>
+  <rect x="760" y="40" width="500" height="280" fill="url(#dots)"/>
+  <circle cx="1110" cy="40" r="190" fill="#2dd4bf" opacity="0.07"/>
+  <circle cx="1230" cy="80" r="130" fill="#38bdf8" opacity="0.07"/>
+
+  <text x="72" y="96" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6" fill="#99f6e4">PYTHON 3.10+  ·  PURE PYTHON  ·  CROSS-PLATFORM</text>
+  <text x="72" y="162" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="700" fill="#f8fafc">PyQt6 Linguistic Tools</text>
+  <text x="72" y="208" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="21" fill="#cbd5e1">Spell checking, suggestions and thesaurus for PyQt6</text>
+  <text x="72" y="238" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="21" fill="#cbd5e1">applications. No native libraries, no KDE frameworks.</text>
+
+  <g font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" fill="#e2e8f0">
+    <rect x="72" y="276" width="116" height="32" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="130" y="297" text-anchor="middle">Spell check</text>
+    <rect x="198" y="276" width="120" height="32" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="258" y="297" text-anchor="middle">Suggestions</text>
+    <rect x="328" y="276" width="108" height="32" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="382" y="297" text-anchor="middle">Thesaurus</text>
+    <rect x="446" y="276" width="112" height="32" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="502" y="297" text-anchor="middle">Qt optional</text>
+  </g>
+
+  <g>
+    <rect x="780" y="60" width="430" height="232" rx="18" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.16"/>
+    <circle cx="806" cy="88" r="5" fill="#fb7185"/>
+    <circle cx="824" cy="88" r="5" fill="#fbbf24"/>
+    <circle cx="842" cy="88" r="5" fill="#34d399"/>
+    <rect x="804" y="112" width="292" height="10" rx="5" fill="#e2e8f0" fill-opacity="0.28"/>
+    <rect x="804" y="132" width="238" height="10" rx="5" fill="#e2e8f0" fill-opacity="0.22"/>
+    <rect x="804" y="152" width="318" height="10" rx="5" fill="#e2e8f0" fill-opacity="0.28"/>
+    <rect x="804" y="172" width="196" height="10" rx="5" fill="#e2e8f0" fill-opacity="0.22"/>
+    <text x="804" y="212" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="19" fill="#f8fafc">I recieve your grace</text>
+    <path d="M820 220 q6 -7 12 0 t12 0 t12 0 t12 0 t12 0 t12 0" fill="none" stroke="#fb7185" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <rect x="884" y="232" width="296" height="80" rx="12" fill="#0b1220" stroke="#2dd4bf" stroke-opacity="0.55"/>
+    <text x="900" y="254" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.6" fill="#99f6e4">SUGGESTIONS</text>
+    <rect x="900" y="264" width="78" height="28" rx="8" fill="#2dd4bf"/>
+    <text x="939" y="283" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#042f2e">receive</text>
+    <rect x="986" y="264" width="78" height="28" rx="8" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="1025" y="283" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" fill="#e2e8f0">relieve</text>
+    <rect x="1072" y="264" width="78" height="28" rx="8" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="1111" y="283" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" fill="#e2e8f0">believe</text>
+  </g>
+
+  <text x="1208" y="336" text-anchor="end" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" fill="#94a3b8">github.com/wachin/pyqt6-linguistic-tools</text>
+</svg>

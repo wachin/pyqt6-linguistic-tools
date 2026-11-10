@@ -1,24 +1,208 @@
-# PyQt6 Linguistic Tools
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wachin/pyqt6-linguistic-tools/main/docs/assets/banner.png" alt="PyQt6 Linguistic Tools: spell checking, suggestions and thesaurus for PyQt6" width="100%">
+</p>
 
-Reusable linguistic infrastructure for Python and PyQt6 applications. The
-project will provide a single cross-platform API for spell checking, spelling
-suggestions, and synonyms.
+<h1 align="center">PyQt6 Linguistic Tools</h1>
 
-See [`docs/linguistics-architecture.md`](docs/linguistics-architecture.md) for
-a complete architecture overview, module map, and data-flow diagrams.
+<p align="center">
+  <em>One cross-platform linguistic API for Python and PyQt6 applications.</em>
+</p>
 
-Development is currently focused on stabilizing its portable engines:
+<p align="center">
+  <a href="https://github.com/wachin/pyqt6-linguistic-tools"><img alt="GitHub repository" src="https://img.shields.io/badge/github-wachin%2Fpyqt6--linguistic--tools-181717?logo=github"></a>
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white">
+  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-0f766e">
+  <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
+  <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
+  <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
+  <img alt="Fast tests: 276" src="https://img.shields.io/badge/tests-276%20fast-brightgreen">
+  <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
+  <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
+</p>
 
-- [Spylls](https://github.com/zverok/spylls), for Hunspell dictionaries.
-- [PyThes](https://github.com/corerd/pythes), for MyThes thesauri.
+PyQt6 Linguistic Tools gives Python and PyQt6 applications spell checking,
+spelling suggestions, personal dictionaries, ignored words, and thesaurus
+lookup behind one small API. It uses the portable
+[Spylls](https://github.com/wachin/spylls) and
+[PyThes](https://github.com/wachin/pythes) engines, so the same code runs on
+Linux, Windows, and macOS without bundling Hunspell, MyThes, or KDE Frameworks.
 
-Native Hunspell and MyThes are outside the scope of this first stage. They may
-be added later as optional backends without changing the public API.
+- **No native dependencies.** The core is pure Python; PyQt6 is optional.
+- **One API for every platform.** Linux system dictionaries, shared managed
+  bundles, and validated user imports all go through the same service.
+- **Built for real editors.** The optional Qt layer adds highlighting,
+  asynchronous checking, context actions, a thesaurus dialog, and a Dictionary
+  Manager without subclassing `QTextEdit` or `QPlainTextEdit`.
+- **Safe by default.** Official dictionaries stay immutable; personal words and
+  ignored words live in their own layers; invalid bundles are rejected before
+  publication.
 
-The Hunspell, MyThes and Sonnet sources that informed the design were studied
-from temporary submodules and have been removed from the repository. The study
-notes are in
+Native Hunspell and MyThes are outside the scope of this portable stage. They
+may be added later as optional backends without changing the public API.
+
+> **Status:** `1.0.0` is the first stable release. The fast suite, typing
+> checks, platform smoke tests, and the manual-only CI matrix are documented in
+> [`docs/testing.md`](docs/testing.md),
+> [`docs/platform-testing.md`](docs/platform-testing.md), and
+> [`docs/continuous-integration.md`](docs/continuous-integration.md).
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    subgraph Host["Your PyQt6 application"]
+        Editor["QTextEdit / QPlainTextEdit"]
+        Menus["Menus, settings,<br/>language selection"]
+    end
+
+    subgraph QtLayer["Optional Qt layer"]
+        Decorator["LinguisticTextEditDecorator"]
+        Highlight["SpellCheckHighlighter"]
+        Context["LinguisticContextMenu"]
+        Thesaurus["ThesaurusDialog"]
+        Manager["DictionaryManagerDialog"]
+    end
+
+    subgraph Core["Core: no PyQt6 import"]
+        Service["LinguisticService"]
+        Registry["DictionaryRegistry"]
+        Resolver["Spell + thesaurus resolvers"]
+        Validator["DictionaryValidator"]
+        Personal["PersonalDictionary<br/>IgnoredWords"]
+        Tokenizer["UnicodeTokenizer"]
+    end
+
+    subgraph Engines["Portable engines"]
+        Spylls["Spylls<br/>spelling"]
+        PyThes["PyThes<br/>thesaurus"]
+    end
+
+    subgraph Sources["Dictionary sources"]
+        System["Linux system<br/>/usr/share/hunspell<br/>/usr/share/mythes"]
+        Managed["Managed bundles<br/>shared app data"]
+        User["Validated user imports"]
+        Corpus["LibreOffice corpus<br/>tests + downloads"]
+    end
+
+    Editor --> Decorator
+    Menus --> Service
+    Decorator --> Service
+    Highlight --> Service
+    Context --> Service
+    Thesaurus --> Service
+    Manager --> Service
+    Service --> Tokenizer
+    Service --> Personal
+    Service --> Registry
+    Service --> Resolver
+    Registry --> System
+    Registry --> Managed
+    Registry --> User
+    Validator --> Managed
+    Validator --> User
+    Managed -.-> Corpus
+    Resolver --> Spylls
+    Resolver --> PyThes
+```
+
+## What you can build with it
+
+- **Desktop editors** with live underlining, suggestions, personal
+  dictionaries, ignore-once/document/session scopes, and a thesaurus.
+- **A reusable Dictionary Manager** for Windows and macOS, where system
+  Hunspell/MyThes files are not available, and for applications that ship
+  their own dictionary bundles.
+- **One integration for several applications**, such as ChordFlow and
+  ChordPages, which share storage without duplicating linguistic code.
+- **Corpus validation and compatibility reports** for dictionary collections,
+  CI, and release checks.
+
+## Key building blocks
+
+The repository already ships the complete, network-free half of a dictionary
+workflow:
+
+| Module | What it gives you |
+|---|---|
+| [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | Strict, network-free validation of the `dictionaries.json` release catalog: safe unique codes, HTTPS URLs, sizes, and optional SHA-256 checksums. |
+| [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | A reusable `DictionaryManagerDialog`: effective languages, sources, spelling/thesaurus status, manual import with deep validation, removal of application-owned bundles, and a `download_requested` signal for checksum-verified entries. |
+| [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
+| [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |
+
+## Quick start
+
+```python
+from pyqt6_linguistic_tools import LinguisticService
+
+service = LinguisticService("es_EC")
+service.check_word("canción")        # True when a Spanish dictionary is available
+service.suggestions("marabillas")    # tuple of suggestions for the misspelling
+service.synonyms("feliz")            # tuple of synonyms when a thesaurus is available
+```
+
+For Qt integration, install the optional extra and attach the decorator to an
+existing editor:
+
+```python
+from pyqt6_linguistic_tools.qt import LinguisticTextEditDecorator
+
+decorator = LinguisticTextEditDecorator(editor, service)
+decorator.set_spellcheck_enabled(True)
+```
+
+## Managed dictionary downloads
+
+The repository already contains the reusable, network-free half of a
+dictionary manager:
+
+- **Catalog validation.** `load_dictionary_catalog()` validates
+  `dictionaries.json` without touching the network.
+- **Shared storage.** `ManagedDictionaryProvider` owns the cross-platform
+  managed bundle directory; `UserDictionaryProvider` owns validated manual
+  imports.
+- **Manager UI.** `DictionaryManagerDialog` lists effective languages and
+  sources, imports files in a worker thread, removes only application-owned
+  bundles, and exposes `download_requested` for verified catalog entries.
+- **Validation.** Every manual import and every host-provided bundle should
+  pass `DictionaryValidator` before publication.
+
+Downloads are intentionally **host-delegated and checksum-gated**: an entry
+without a SHA-256 checksum is shown as *Unverified* and its Download button
+stays disabled. The published LibreOffice catalog does not include checksums
+yet, so the toolkit does not perform automatic downloads or archive
+extraction. A host that implements downloads must verify the archive size and
+SHA-256, reject path traversal and links, validate the extracted bundle, and
+publish it atomically before calling `DictionaryManagerDialog.refresh()`. See
+[`docs/managed-dictionaries.md`](docs/managed-dictionaries.md) and
+[`docs/dictionary-validation.md`](docs/dictionary-validation.md).
+
+## Documentation map
+
+- [Architecture overview](docs/linguistics-architecture.md): layers, module map,
+  and data-flow diagrams.
+- [Backend API](docs/backend-api.md): contracts, lifecycle, errors, and
+  thread-boundary guidance.
+- [Dictionary registry](docs/dictionary-registry.md): providers, pairing, and
+  source priority.
+- [Managed dictionaries](docs/managed-dictionaries.md): storage, imports,
+  catalog, and the Dictionary Manager.
+- [Dictionary validation](docs/dictionary-validation.md): Hunspell/MyThes
+  checks and import boundaries.
+- [Qt architecture](docs/qt-architecture.md): decorator, highlighter, context
+  menu, dialogs, and settings.
+- [Testing](docs/testing.md) and
+  [continuous integration](docs/continuous-integration.md): suites, corpus
+  runs, and manual workflows.
+
+## Design references
+
+The Hunspell, MyThes, and Sonnet sources that informed this architecture were
+studied from temporary submodules and have been removed from the repository.
+The lessons, the last pinned revisions, and how to consult them outside the
+repository are recorded in
 [`docs/hunspell-sonnet-mythes-study.md`](docs/hunspell-sonnet-mythes-study.md).
+
+---
 
 ## Portable backend API
 
@@ -48,8 +232,9 @@ loading `libhunspell` or `libmythes` is not required.
 
 `ManagedDictionaryProvider` and `UserDictionaryProvider` use shared
 cross-platform application-data locations and support safe manual imports.
-The validated `dictionaries.json` reader prepares future managed downloads
-without performing network access. See
+The validated `dictionaries.json` catalog and the `DictionaryManagerDialog`
+prepare checksum-gated downloads without performing network access in the
+toolkit. See [Managed dictionary downloads](#managed-dictionary-downloads) and
 [`docs/managed-dictionaries.md`](docs/managed-dictionaries.md).
 
 `DictionaryValidator` produces structured `PASS`, `WARNING`, and `FAIL`
@@ -325,3 +510,26 @@ The default small, medium, and very-large matrix and its initial diagnostic
 budgets are documented in
 [`docs/performance-budgets.md`](docs/performance-budgets.md). Performance
 budgets are review thresholds rather than machine-dependent pytest failures.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the engine-fork policy, the test
+matrix, and the manual-only CI rules. The normal local gate is:
+
+```bash
+QT_QPA_PLATFORM=offscreen python3 -m pytest -c pyproject.toml -q \
+  -m 'not corpus and not platform'
+python3 -m mypy
+git diff --check
+```
+
+The toolkit is designed to be reused as a Python package, a Git submodule, or
+an OS package/AppImage component. See [`docs/reuse.md`](docs/reuse.md) and
+[`docs/release-checklist.md`](docs/release-checklist.md).
+
+The README banner is generated from `docs/assets/banner.svg`. Edit the SVG and
+run `python3 docs/assets/render-banner.py` to refresh `banner.png`; the script
+tries PyQt6/QtSvg, cairosvg, rsvg-convert, and Inkscape in that order.
+
+The vendored Spylls and PyThes forks keep their own licenses (MPL-2.0 and MIT);
+see the `license-files` entry in [`pyproject.toml`](pyproject.toml).

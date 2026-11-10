@@ -4,6 +4,9 @@ This project follows Semantic Versioning.
 
 ## Unreleased
 
+- Add a README banner, badges, a Mermaid architecture diagram, a key-module
+  overview, and explicit managed-download guidance for developers. The banner
+  SVG, its PNG render, and the conversion script live in `docs/assets/`.
 - Remove the Hunspell, MyThes and Sonnet study submodules from `third-party/`.
   The toolkit never imported, built or tested them, and CI only initialized the
   Spylls and PyThes engines. The lessons that shaped the architecture and the
