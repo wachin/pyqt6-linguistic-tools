@@ -22,13 +22,22 @@ from pyqt6_linguistic_tools.service import LinguisticService
 require_pyqt6()
 
 from PyQt6.QtCore import (  # noqa: E402
+    QByteArray,
     QObject,
+    QSettings,
     QRunnable,
     QThreadPool,
     Qt,
     pyqtSignal,
 )
-from PyQt6.QtGui import QFont, QKeySequence, QShortcut  # noqa: E402
+from PyQt6.QtGui import (  # noqa: E402
+    QCloseEvent,
+    QFont,
+    QGuiApplication,
+    QHideEvent,
+    QKeySequence,
+    QShortcut,
+)
 from PyQt6.QtWidgets import (  # noqa: E402
     QAbstractItemView,
     QComboBox,
@@ -173,7 +182,7 @@ class DictionaryManagerWidget(QWidget):
         self._catalog_group: QTreeWidgetItem | None = None
         self._busy = False
 
-        self.setMinimumSize(880, 520)
+        self.setMinimumSize(700, 440)
         self._create_widgets()
         self._populate()
 
@@ -1111,9 +1120,20 @@ class DictionaryManagerDialog(QDialog):
         catalog: DictionaryCatalog | None = None,
         thread_pool: QThreadPool | None = None,
         auto_download: bool = False,
+        settings: QSettings | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        self._window_settings = settings or QSettings(
+            "pyqt6-linguistic-tools", "DictionaryDownloadManager"
+        )
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.WindowMinMaxButtonsHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setSizeGripEnabled(True)
+        self.setMinimumSize(760, 500)
         self._manager = DictionaryManagerWidget(
             service,
             user_provider=user_provider,
@@ -1131,8 +1151,7 @@ class DictionaryManagerDialog(QDialog):
         layout.addWidget(buttons)
 
         self.setWindowTitle(self.tr("Dictionary Download Manager"))
-        self.resize(1180, 720)
-        self.setMinimumSize(960, 600)
+        self._restore_window_geometry()
 
         self._manager.dictionaries_changed.connect(self.dictionaries_changed.emit)
         self._manager.import_started.connect(self.import_started.emit)
@@ -1143,6 +1162,72 @@ class DictionaryManagerDialog(QDialog):
         self._manager.download_started.connect(self.download_started.emit)
         self._manager.download_finished.connect(self.download_finished.emit)
         self._manager.download_cancelled.connect(self.download_cancelled.emit)
+
+    def _default_window_geometry(self) -> None:
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            self.resize(1000, 650)
+            return
+        available = screen.availableGeometry()
+        width = min(1180, max(760, int(available.width() * 0.86)))
+        height = min(720, max(500, int(available.height() * 0.82)))
+        self.resize(width, height)
+        self.move(
+            available.center().x() - width // 2,
+            available.center().y() - height // 2,
+        )
+
+    def _restore_window_geometry(self) -> None:
+        saved = self._window_settings.value("window/geometry")
+        if isinstance(saved, QByteArray):
+            geometry = saved
+        elif isinstance(saved, bytes):
+            geometry = QByteArray(saved)
+        else:
+            geometry = None
+        if geometry is not None and not geometry.isEmpty():
+            if self.restoreGeometry(geometry):
+                self._keep_window_on_screen()
+                return
+        self._default_window_geometry()
+
+    def _keep_window_on_screen(self) -> None:
+        screens = QGuiApplication.screens()
+        if not screens:
+            return
+        frame = self.frameGeometry()
+
+        def intersection_area(screen) -> int:
+            overlap = screen.availableGeometry().intersected(frame)
+            return max(0, overlap.width()) * max(0, overlap.height())
+
+        best = max(screens, key=intersection_area)
+        if intersection_area(best) == 0:
+            self._default_window_geometry()
+            return
+        available = best.availableGeometry()
+        max_x = max(available.left(), available.right() - self.width() + 1)
+        max_y = max(available.top(), available.bottom() - self.height() + 1)
+        self.move(
+            min(max(self.x(), available.left()), max_x),
+            min(max(self.y(), available.top()), max_y),
+        )
+
+    def _save_window_geometry(self) -> None:
+        self._window_settings.setValue("window/geometry", self.saveGeometry())
+        self._window_settings.sync()
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:
+        self._save_window_geometry()
+        super().closeEvent(event)
+
+    def hideEvent(self, event: QHideEvent | None) -> None:
+        self._save_window_geometry()
+        super().hideEvent(event)
+
+    def done(self, result: int) -> None:
+        self._save_window_geometry()
+        super().done(result)
 
     @property
     def manager(self) -> DictionaryManagerWidget:
@@ -1260,6 +1345,7 @@ class DictionaryDownloadManagerDialog(DictionaryManagerDialog):
         managed_provider: ManagedDictionaryProvider | None = None,
         catalog: DictionaryCatalog | None = None,
         thread_pool: QThreadPool | None = None,
+        settings: QSettings | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(
@@ -1269,6 +1355,7 @@ class DictionaryDownloadManagerDialog(DictionaryManagerDialog):
             catalog=catalog,
             thread_pool=thread_pool,
             auto_download=True,
+            settings=settings,
             parent=parent,
         )
 

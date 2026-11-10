@@ -9,7 +9,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PyQt6", reason="PyQt6 is an optional dependency")
 
-from PyQt6.QtCore import QThreadPool
+from PyQt6.QtCore import QSettings, QThreadPool, Qt
 from PyQt6.QtWidgets import QApplication, QVBoxLayout
 
 from pyqt6_linguistic_tools import (
@@ -308,8 +308,8 @@ def test_widget_is_embeddable(application, tmp_path):
 
     assert widget.isWidgetType()
     assert widget.entries_tree.topLevelItemCount() == 2
-    assert widget.minimumWidth() >= 800
-    assert widget.minimumHeight() >= 480
+    assert widget.minimumWidth() >= 680
+    assert widget.minimumHeight() >= 420
 
 
 def test_download_manager_downloads_in_app_and_refreshes(
@@ -362,3 +362,41 @@ def test_download_manager_downloads_in_app_and_refreshes(
     assert completed
     assert (managed.root / "dict-fr").is_dir()
     assert service.dictionary_info("fr_FR").has_spelling
+
+
+def test_dialog_has_window_controls_and_remembers_geometry(application, tmp_path):
+    service, managed, user = _service(tmp_path)
+    settings = QSettings(
+        str(tmp_path / "geometry.ini"),
+        QSettings.Format.IniFormat,
+    )
+    dialog = DictionaryDownloadManagerDialog(
+        service,
+        managed_provider=managed,
+        user_provider=user,
+        settings=settings,
+    )
+
+    flags = dialog.windowFlags()
+    assert flags & Qt.WindowType.WindowMinimizeButtonHint
+    assert flags & Qt.WindowType.WindowMaximizeButtonHint
+    assert dialog.isSizeGripEnabled()
+
+    dialog.show()
+    application.processEvents()
+    dialog.resize(900, 600)
+    dialog.move(120, 100)
+    dialog.close()
+    application.processEvents()
+    settings.sync()
+    assert settings.value("window/geometry") is not None
+
+    restored = DictionaryDownloadManagerDialog(
+        service,
+        managed_provider=managed,
+        user_provider=user,
+        settings=settings,
+    )
+    assert restored.width() >= 780
+    assert restored.height() >= 480
+    restored.close()

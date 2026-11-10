@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 299" src="https://img.shields.io/badge/tests-299%20fast-brightgreen">
+  <img alt="Fast tests: 300" src="https://img.shields.io/badge/tests-300%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -200,6 +200,12 @@ dialog.exec()
 For a host-owned download pipeline, use the base `DictionaryManagerWidget` or
 `DictionaryManagerDialog`: they emit `download_requested` instead of downloading
 and leave verification, extraction and publication to the host.
+
+The dialog is a normal window: it has minimize, maximize and close controls,
+can be resized from any edge or corner, and starts at a screen-aware size rather
+than filling a 1366×768 display. It remembers its position and size between
+sessions through `QSettings`. ChordFlow and ChordPages open it modelessly, so a
+download can continue while the editor stays usable.
 
 The toolkit ships its own Spanish and English Qt catalogs. Install one with
 `install_toolkit_translations(app, "es")`; the host keeps its own translator and

@@ -150,6 +150,11 @@ manager.show()
 Entries without SHA-256 remain visibly unverified and disabled. Downloads
 install into the managed provider namespace used by the application service, so
 the next check sees the new spelling and thesaurus files without a restart.
+
+The dialog is a normal resizable window with minimize/maximize/close controls and
+a size grip. Its initial size is capped to the available screen, it restores the
+last position and size from `QSettings`, and it is opened modelessly by the host
+applications so downloads do not block editing.
 For a custom pipeline, use the base `DictionaryManagerWidget` or
 `DictionaryManagerDialog`: they do not perform network access and instead emit
 `download_requested` for the host to verify, extract and publish.
