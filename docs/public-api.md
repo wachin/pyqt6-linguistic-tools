@@ -35,7 +35,13 @@ import time.
 | `SpellCheckHighlighter` | `qt/spell_highlighter.py` | Underline misspelled words |
 | `LinguisticContextMenu` | `qt/context_menu.py` | Right-click suggestions, add/ignore |
 | `ThesaurusDialog` | `qt/thesaurus_dialog.py` | Synonym browser dialog |
+| `DictionaryDownloadManagerWidget` | `qt/dictionary_manager.py` | Embeddable manager with automatic verified downloads |
+| `DictionaryDownloadManagerDialog` | `qt/dictionary_manager.py` | Large dialog with automatic verified downloads |
+| `DictionaryManagerWidget` | `qt/dictionary_manager.py` | Embeddable manager with host-delegated downloads |
 | `DictionaryManagerDialog` | `qt/dictionary_manager.py` | Inspect, import, and remove dictionaries |
+| `install_toolkit_translations` | `qt/i18n.py` | Install the toolkit's Spanish/English catalog |
+| `uninstall_toolkit_translations` | `qt/i18n.py` | Remove the toolkit translator |
+| `translation_candidates` | `qt/i18n.py` | Resolve regional-to-base language fallbacks |
 | `AsyncSpellCheckController` | `qt/async_spellcheck.py` | Background spell checking |
 | `QtLanguageSettingsStore` | `qt/language_settings.py` | Persist language per document |
 | `QtLinguisticSettings` | `qt/settings.py` | Shared UI defaults |
@@ -94,6 +100,8 @@ All error types are subclasses of `LinguisticError`:
 | `DictionaryValidationError` | Validation setup fails |
 | `DictionaryImportError` | Import fails |
 | `DictionaryCatalogError` | Catalog read fails |
+| `DictionaryDownloadError` | Download verification, extraction, or publication fails |
+| `DictionaryDownloadCancelled` | The host cancels a download |
 | `PersonalDictionaryError` | Personal dictionary operation fails |
 | `PersonalDictionaryBackupError` | Backup or restore fails |
 | `BackendResolutionError` | Backend resolution fails |
@@ -117,6 +125,9 @@ All error types are subclasses of `LinguisticError`:
 | `write_report` | Write report to file |
 | `regenerate_thesaurus_index` | Regenerate a MyThes `.idx` from `.dat` |
 | `DictionaryValidator` | Validate source dictionary files |
+| `download_dictionary` | Download, verify, validate and install a catalog entry |
+| `install_dictionary_archive` | Verify and install an already downloaded archive |
+| `load_bundled_dictionary_catalog` | Load the catalog shipped with the toolkit |
 | `load_dictionary_catalog` | Load the managed dictionary catalog |
 | `DictionaryCatalog` | Catalog of available managed dictionaries |
 | `DictionaryCatalogEntry` | One entry in the catalog |

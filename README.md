@@ -15,10 +15,17 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 287" src="https://img.shields.io/badge/tests-287%20fast-brightgreen">
+  <img alt="Fast tests: 299" src="https://img.shields.io/badge/tests-299%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
+
+<p align="center">
+  <img src="images/01-pyqt6-linguistic-tools.png" alt="Dictionary Download Manager" width="100%">
+</p>
+
+<p align="center"><em>Dictionary Download Manager in Spanish, ready to embed in ChordFlow,
+ChordPages or any other PyQt6 application.</em></p>
 
 PyQt6 Linguistic Tools gives Python and PyQt6 applications spell checking,
 spelling suggestions, personal dictionaries, ignored words, and thesaurus
@@ -32,7 +39,7 @@ Linux, Windows, and macOS without bundling Hunspell, MyThes, or KDE Frameworks.
   bundles, and validated user imports all go through the same service.
 - **Built for real editors.** The optional Qt layer adds highlighting,
   asynchronous checking, context actions, a thesaurus dialog, and a Dictionary
-  Manager without subclassing `QTextEdit` or `QPlainTextEdit`.
+  Download Manager without subclassing `QTextEdit` or `QPlainTextEdit`.
 - **Safe by default.** Official dictionaries stay immutable; personal words and
   ignored words live in their own layers; invalid bundles are rejected before
   publication.
@@ -54,7 +61,7 @@ flowchart TB
 
     subgraph Toolkit["pyqt6-linguistic-tools (one package)"]
         direction TB
-        Qt["<b>Optional Qt layer</b><br/>part of the same package<br/>install with the [qt] extra<br/>omit for core-only use<br/><br/>LinguisticTextEditDecorator<br/>SpellCheckHighlighter<br/>LinguisticContextMenu<br/>ThesaurusDialog<br/>DictionaryManagerDialog"]
+        Qt["<b>Optional Qt layer</b><br/>part of the same package<br/>install with the [qt] extra<br/>omit for core-only use<br/><br/>LinguisticTextEditDecorator<br/>SpellCheckHighlighter<br/>LinguisticContextMenu<br/>ThesaurusDialog<br/>DictionaryDownloadManagerDialog"]
         Core["<b>Core API</b><br/>always installed<br/>never imports PyQt6<br/><br/>LinguisticService<br/>DictionaryRegistry<br/>Backend resolvers<br/>DictionaryValidator<br/>PersonalDictionary · IgnoredWords<br/>UnicodeTokenizer"]
         Qt --> Core
     end
@@ -94,7 +101,7 @@ rely on Linux-style system packages.
 
 - **Desktop editors** with live underlining, suggestions, personal
   dictionaries, ignore-once/document/session scopes, and a thesaurus.
-- **A reusable Dictionary Manager** for Windows and macOS, where system
+- **A reusable Dictionary Download Manager** for Windows and macOS, where system
   Hunspell/MyThes files are not available, and for applications that ship
   their own dictionary bundles.
 - **One integration for several applications**, such as ChordFlow and
@@ -110,7 +117,7 @@ workflow:
 | Module | What it gives you |
 |---|---|
 | [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), with SHA-256 checksums and spelling/thesaurus flags, plus strict network-free validation of any host-provided catalog. |
-| [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | An embeddable `DictionaryManagerWidget` and a `DictionaryManagerDialog` wrapper: search, filters, spelling/thesaurus badges, effective languages, sources, manual import with deep validation, removal of application-owned bundles, and a `download_requested` signal for checksum-verified entries. |
+| [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | Embeddable `DictionaryDownloadManagerWidget` and `DictionaryDownloadManagerDialog` with search, filters, spelling/thesaurus badges, a details panel, automatic verified downloads, manual import, and removal of application-owned bundles. The base classes retain the host-delegated `download_requested` mode. |
 | [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
 | [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |
 
@@ -137,8 +144,7 @@ decorator.set_spellcheck_enabled(True)
 
 ## Managed dictionary downloads
 
-The repository already contains the reusable, network-free half of a
-dictionary manager:
+The toolkit includes the complete, verified dictionary download workflow:
 
 - **Bundled catalog.** `load_bundled_dictionary_catalog()` loads the 57-entry
   catalog shipped in `pyqt6_linguistic_tools/data/dictionaries.json`, with
@@ -146,56 +152,71 @@ dictionary manager:
   `load_dictionary_catalog(path)` validates a host-provided catalog instead.
 - **Shared storage.** `ManagedDictionaryProvider` owns the cross-platform
   managed bundle directory; `UserDictionaryProvider` owns validated manual
-  imports.
-- **Manager UI.** `DictionaryManagerWidget` (embeddable) and
-  `DictionaryManagerDialog` provide search, filters, spelling/thesaurus badges,
-  effective languages and sources; imports run in a worker thread, only
-  application-owned bundles can be removed, and `download_requested` is
-  emitted for verified catalog entries.
-- **Validation.** Every manual import and every host-provided bundle should
-  pass `DictionaryValidator` before publication.
+  imports. ChordFlow and ChordPages share the `guitarchordstudio` namespace.
+- **Download manager UI.** `DictionaryDownloadManagerWidget` (embeddable) and
+  `DictionaryDownloadManagerDialog` provide search, filters,
+  spelling/thesaurus badges, a details panel, and automatic verified downloads
+  in a worker thread. The base `DictionaryManagerWidget`/`Dialog` keep the
+  host-delegated `download_requested` mode for custom pipelines.
+- **Verified installer.** `download_dictionary()` streams over HTTPS, checks
+  the catalog size and SHA-256, rejects unsafe archive paths and links, deep
+  validates every component, skips malformed regional variants, and publishes
+  atomically through `ManagedDictionaryProvider`.
+- **Validation.** Every manual import and every downloaded bundle passes
+  `DictionaryValidator` before publication.
 
-Windows and macOS use the same managed bundles when system dictionaries are not
-installed or not discoverable; the LibreOffice corpus is the source of the
-downloadable bundles for those platforms. Linux can additionally discover
+Windows and macOS use managed bundles when system dictionaries are not
+installed or not discoverable. The download manager installs into the same
+managed provider the application service discovers, so spelling and thesaurus
+become available without restarting the app. Linux can additionally discover
 system packages and can still use managed bundles to supplement or override
-them.
-
-Downloads are intentionally **host-delegated and checksum-gated**: an entry
-without a SHA-256 checksum is shown as *Unverified* and its Download button
-stays disabled. The bundled catalog now includes checksums, so a host can
-implement verified downloads; the toolkit still delegates network access and
-archive extraction to the host. A host that implements downloads must verify
-the archive size and SHA-256, reject path traversal and links, validate the
-extracted bundle, and publish it atomically before calling
-`DictionaryManagerDialog.refresh()`. See
-[`docs/managed-dictionaries.md`](docs/managed-dictionaries.md) and
+them. See [`docs/managed-dictionaries.md`](docs/managed-dictionaries.md) and
 [`docs/dictionary-validation.md`](docs/dictionary-validation.md).
 
-## Dictionary Manager
+## Dictionary Download Manager
 
-![Dictionary Manager screenshot](docs/assets/dictionary-manager.png)
-
-`DictionaryManagerWidget` is the embeddable, large-format manager: search and
-state/component filters, spelling and thesaurus badges, installed and available
-groups, a details panel, and verified install/remove actions.
-`DictionaryManagerDialog` wraps the same widget in a 1180×720 dialog. Downloads
-are still delegated to the host through `download_requested`; the widget
-performs no network access or archive extraction.
+`DictionaryDownloadManagerWidget` is the embeddable, large-format manager:
+search and state/component filters, spelling and thesaurus badges, installed and
+available groups, a details panel, progress, and automatic verified
+install/remove actions. `DictionaryDownloadManagerDialog` wraps the same widget
+in a 1180×720 dialog. The widget performs the download in a worker thread and
+publishes into the application's managed provider; no restart is required.
 
 ```python
 from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
-from pyqt6_linguistic_tools.qt import DictionaryManagerWidget
+from pyqt6_linguistic_tools.qt import (
+    DictionaryDownloadManagerDialog,
+    DictionaryDownloadManagerWidget,
+)
 
 catalog = load_bundled_dictionary_catalog()
-manager = DictionaryManagerWidget(service, catalog=catalog)
+manager = DictionaryDownloadManagerWidget(service, catalog=catalog)
 layout.addWidget(manager)
+
+dialog = DictionaryDownloadManagerDialog(service, catalog=catalog, parent=window)
+dialog.exec()
 ```
+
+For a host-owned download pipeline, use the base `DictionaryManagerWidget` or
+`DictionaryManagerDialog`: they emit `download_requested` instead of downloading
+and leave verification, extraction and publication to the host.
 
 The toolkit ships its own Spanish and English Qt catalogs. Install one with
 `install_toolkit_translations(app, "es")`; the host keeps its own translator and
 can override individual messages. See
 [`docs/translations.md`](docs/translations.md).
+### ChordFlow and ChordPages
+
+Both host applications expose the same manager:
+
+- **ChordFlow:** *Herramientas → Gestor de descargas de diccionarios...*
+- **ChordPages:** *Edit → Dictionary Download Manager...*
+
+They share the `guitarchordstudio` managed namespace and one
+`LinguisticService`. After a download, the service is refreshed and the toolkit
+decorator on every editor can use the new spelling and thesaurus files without
+a restart. This is the supported path for Windows and macOS, where no
+Linux-style system Hunspell/MyThes packages exist.
 
 ## Documentation map
 
@@ -206,7 +227,7 @@ can override individual messages. See
 - [Dictionary registry](docs/dictionary-registry.md): providers, pairing, and
   source priority.
 - [Managed dictionaries](docs/managed-dictionaries.md): storage, imports,
-  catalog, and the Dictionary Manager.
+  catalog, and the Dictionary Download Manager.
 - [Dictionary validation](docs/dictionary-validation.md): Hunspell/MyThes
   checks and import boundaries.
 - [Qt architecture](docs/qt-architecture.md): decorator, highlighter, context
@@ -255,9 +276,12 @@ loading `libhunspell` or `libmythes` is not required.
 
 `ManagedDictionaryProvider` and `UserDictionaryProvider` use shared
 cross-platform application-data locations and support safe manual imports.
-The validated `dictionaries.json` catalog and the `DictionaryManagerDialog`
-prepare checksum-gated downloads without performing network access in the
-toolkit. See [Managed dictionary downloads](#managed-dictionary-downloads) and
+The validated `dictionaries.json` catalog and the
+`DictionaryDownloadManagerDialog` provide checksum-gated downloads. The
+downloader verifies the archive, extracts it safely, validates every component,
+and publishes into the managed namespace; the base manager classes keep the
+host-delegated `download_requested` mode. See
+[Managed dictionary downloads](#managed-dictionary-downloads) and
 [`docs/managed-dictionaries.md`](docs/managed-dictionaries.md).
 
 `DictionaryValidator` produces structured `PASS`, `WARNING`, and `FAIL`
@@ -312,9 +336,10 @@ one-directional integration boundary without making PyQt6 a core dependency.
 Its editor decorators keep independent per-document languages, optionally
 persisted through a host-provided `QSettings`, while sharing one linguistic
 service. The language menu distinguishes regional variants and reports
-spelling and thesaurus availability. Its Dictionary Manager safely inspects,
-imports, and removes only application-owned bundles while leaving system
-dictionaries immutable. Install the `[qt]` extra for widgets. See
+spelling and thesaurus availability. Its Dictionary Download Manager safely
+downloads, inspects, imports, and removes only application-owned bundles while
+leaving system dictionaries immutable. Install the `[qt]` extra for widgets.
+See
 [`docs/qt-architecture.md`](docs/qt-architecture.md).
 
 ## Installation, development, and direct source use
@@ -503,7 +528,7 @@ python examples/spellcheck_demo.py
 # Thesaurus browser
 python examples/thesaurus_demo.py
 
-# Dictionary Manager dialog
+# Dictionary Download Manager dialog
 python examples/dictionary_manager_demo.py
 
 # Full demo combining all features

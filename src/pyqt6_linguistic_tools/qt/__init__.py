@@ -25,6 +25,8 @@ if TYPE_CHECKING:
         LinguisticTextEditDecorator,
     )
     from pyqt6_linguistic_tools.qt.dictionary_manager import (
+        DictionaryDownloadManagerDialog,
+        DictionaryDownloadManagerWidget,
         DictionaryManagerDialog,
         DictionaryManagerWidget,
     )
@@ -47,6 +49,8 @@ if TYPE_CHECKING:
 __all__ = [
     "AsyncSpellCheckController",
     "ContextActionProvider",
+    "DictionaryDownloadManagerDialog",
+    "DictionaryDownloadManagerWidget",
     "DictionaryManagerDialog",
     "DictionaryManagerWidget",
     "LinguisticTextEditDecorator",
@@ -76,7 +80,12 @@ def __getattr__(name: str) -> object:
         from pyqt6_linguistic_tools.qt import decorator
 
         return getattr(decorator, name)
-    if name in {"DictionaryManagerDialog", "DictionaryManagerWidget"}:
+    if name in {
+        "DictionaryDownloadManagerDialog",
+        "DictionaryDownloadManagerWidget",
+        "DictionaryManagerDialog",
+        "DictionaryManagerWidget",
+    }:
         from pyqt6_linguistic_tools.qt import dictionary_manager
 
         return getattr(dictionary_manager, name)

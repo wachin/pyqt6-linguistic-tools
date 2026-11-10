@@ -74,7 +74,7 @@ reports the complete compatibility picture.
 | QTextEdit and QPlainTextEdit | `test_qtextedit_integration.py`, `test_qplaintextedit_integration.py` |
 | Highlighting and asynchronous checks | `test_spell_highlighter.py`, `test_async_spellcheck.py` |
 | Context menu, thesaurus, languages | `test_context_menu.py`, `test_thesaurus_dialog.py`, `test_language_selection.py` |
-| Dictionary Manager | `test_dictionary_manager.py` |
+| Dictionary Download Manager | `test_dictionary_manager.py`, `test_download.py` |
 | Pinned multilingual acceptance matrix | `corpus/test_language_matrix.py` |
 
 The tokenizer fixtures explicitly cover `Señor`, `creación`, `Straße`,

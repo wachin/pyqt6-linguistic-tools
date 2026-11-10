@@ -12,7 +12,7 @@ Host application (ChordFlow, ChordPages, or another PyQt6 project)
         │       │
         │       ├── LinguisticTextEditDecorator
         │       ├── SpellCheckHighlighter / LinguisticContextMenu
-        │       ├── ThesaurusDialog / DictionaryManagerDialog
+        │       ├── ThesaurusDialog / DictionaryDownloadManagerDialog
         │       └── AsyncSpellCheckController
         │
         └── pyqt6_linguistic_tools  (core — no Qt dependency)

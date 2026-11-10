@@ -82,6 +82,14 @@ class DictionaryCatalogError(Exception):
     """A dictionary download catalog does not match the supported schema."""
 
 
+class DictionaryDownloadError(Exception):
+    """A dictionary download failed verification or safe extraction."""
+
+
+class DictionaryDownloadCancelled(DictionaryDownloadError):
+    """The host cancelled a dictionary download."""
+
+
 class DictionaryValidationError(Exception):
     """An explicit validation or repair operation could not be completed."""
 

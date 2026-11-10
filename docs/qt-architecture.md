@@ -389,24 +389,25 @@ All labels and status messages use English source text in the
 toolkit's bundled translations. Words, meanings, parts of speech and synonyms
 originate in the selected dictionary and are not translated by the widget.
 
-## Dictionary Manager
+## Dictionary Download Manager
 
-`DictionaryManagerWidget` is the embeddable manager: search, state and component
-filters, spelling/thesaurus badges, installed and available groups, and a
-details panel with install/remove actions. `DictionaryManagerDialog` wraps the
-same widget in a 1180×720 dialog. It lists effective and shadowed
-application-owned dictionaries with their exact locales, component
-availability, sources, and optional file-path details. Manual imports are
-deeply validated in a worker thread. Refreshing after import or removal
-invalidates obsolete service backends and result caches. Verified catalog
-downloads are requested through `download_requested`; the widget never performs
-network access, and the host publishes the bundle before calling `refresh()`.
+`DictionaryDownloadManagerWidget` is the embeddable manager: search, state and
+component filters, spelling/thesaurus badges, installed and available groups, a
+details panel, and automatic verified downloads in a worker thread.
+`DictionaryDownloadManagerDialog` wraps the same widget in a 1180×720 dialog.
+It lists effective and shadowed application-owned dictionaries with their exact
+locales, component availability, sources, and optional file-path details.
+Manual imports are deeply validated in a worker thread. Refreshing after import
+or download invalidates obsolete service backends and result caches.
 
-![Dictionary Manager](assets/dictionary-manager.png)
+![Dictionary Download Manager](assets/dictionary-manager.png)
+
+Downloads run through `download_dictionary()`: HTTPS streaming, exact size and
+SHA-256 verification, safe archive extraction, deep component validation and
+atomic publication into `ManagedDictionaryProvider`. The base
+`DictionaryManagerWidget`/`DictionaryManagerDialog` retain the custom-host mode
+that emits `download_requested` instead of performing network access.
 
 Removal is offered only when the selected paths belong to a direct bundle
 under `ManagedDictionaryProvider` or `UserDictionaryProvider`. System
 `DirectoryDictionaryProvider` entries remain visible but cannot be removed.
-The catalog tab accepts a validated `DictionaryCatalog`; it exposes verified
-entries through `download_requested` for future host integration and never
-downloads or extracts files itself.

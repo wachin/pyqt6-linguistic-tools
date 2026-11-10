@@ -24,6 +24,7 @@ from pyqt6_linguistic_tools import (
     UserDictionaryProvider,
 )
 from pyqt6_linguistic_tools.qt import (
+    DictionaryDownloadManagerDialog,
     DictionaryManagerDialog,
     DictionaryManagerWidget,
 )
@@ -309,3 +310,55 @@ def test_widget_is_embeddable(application, tmp_path):
     assert widget.entries_tree.topLevelItemCount() == 2
     assert widget.minimumWidth() >= 800
     assert widget.minimumHeight() >= 480
+
+
+def test_download_manager_downloads_in_app_and_refreshes(
+    application, tmp_path, monkeypatch
+):
+    service, managed, user = _service(tmp_path)
+    source = _spelling_bundle(tmp_path / "source", "fr_FR")
+    entry = DictionaryCatalogEntry(
+        code="fr",
+        name="French",
+        url="https://example.test/fr.tar.gz",
+        size=1024,
+        sha256="a" * 64,
+        spelling=True,
+        thesaurus=False,
+    )
+    pool = QThreadPool()
+    manager = DictionaryDownloadManagerDialog(
+        service,
+        managed_provider=managed,
+        user_provider=user,
+        catalog=DictionaryCatalog("test", (entry,)),
+        thread_pool=pool,
+    )
+    completed = []
+    manager.download_finished.connect(completed.append)
+
+    def fake_download(entry, provider, *, progress=None, should_cancel=None):
+        if progress is not None:
+            progress(1, 1)
+        return provider.import_validated_files(
+            [source / "fr_FR.aff", source / "fr_FR.dic"],
+            bundle_name="dict-fr",
+        )
+
+    monkeypatch.setattr(
+        "pyqt6_linguistic_tools.qt.dictionary_download.download_dictionary",
+        fake_download,
+    )
+
+    downloads = _group(manager, 1)
+    french = _child(downloads, 1, "fr")
+    manager.entries_tree.setCurrentItem(french)
+    manager.install_button.click()
+
+    assert pool.waitForDone(5000)
+    application.processEvents()
+
+    assert manager.windowTitle() == "Dictionary Download Manager"
+    assert completed
+    assert (managed.root / "dict-fr").is_dir()
+    assert service.dictionary_info("fr_FR").has_spelling

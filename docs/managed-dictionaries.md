@@ -76,7 +76,7 @@ Application-owned providers expose `remove_bundle(name)` for one direct bundle
 directory. The name cannot contain path separators, symbolic links are
 refused, and the operation is unavailable on `DirectoryDictionaryProvider`.
 Consequently a generic provider used for Linux system dictionaries has no
-removal API. The Qt Dictionary Manager applies the same ownership checks and
+removal API. The Qt Dictionary Download Manager applies the same ownership checks and
 asks for confirmation before removal.
 
 ## dictionaries.json catalog
@@ -104,47 +104,52 @@ checking each bundle's `.aff`/`.dic` and `.dat`/`.idx` files. The generator also
 records the SHA-256 digest that GitHub exposes for each asset, so
 `catalog.supports_verified_downloads` is true for the bundled catalog.
 
-The toolkit still does not download or extract archives itself. A host
-downloader must verify the advertised size and SHA-256, protect extraction
-against path traversal, validate the extracted bundle, and publish it through a
-managed provider.
+The toolkit performs verified downloads through
+`download_dictionary(entry, provider)`. It streams the HTTPS asset, checks the
+catalog size and SHA-256, rejects absolute paths, `..`, links and unsupported
+archive entries, deep validates each component, skips malformed regional
+variants, and atomically publishes the valid bundle through
+`ManagedDictionaryProvider`. Use `install_dictionary_archive()` when the host
+already downloaded the asset.
 
-## Qt Dictionary Manager
+## Qt Dictionary Download Manager
 
-`DictionaryManagerWidget` is the embeddable, large-format manager: search, state
-and component filters, spelling/thesaurus badges, installed and available
-groups, and a details panel with install/remove actions.
-`DictionaryManagerDialog` wraps the same widget in a 1180×720 dialog. Both
-display effective languages and any application bundle hidden by a
-higher-priority source, with locale, component availability, source ownership,
-and the exact files. Manual imports run through `import_validated_files()` in a
-Qt thread pool so loading a large Spylls or PyThes dictionary does not block the
-GUI.
+`DictionaryDownloadManagerWidget` is the embeddable, large-format manager:
+search, state and component filters, spelling/thesaurus badges, installed and
+available groups, a details panel with install/remove actions, and automatic
+verified downloads in a worker thread. `DictionaryDownloadManagerDialog` wraps
+the same widget in a 1180×720 dialog. Both display effective languages and any
+application bundle hidden by a higher-priority source, with locale, component
+availability, source ownership, and the exact files. Manual imports also run in
+a Qt thread pool so loading a large Spylls or PyThes dictionary does not block
+the GUI.
 
-![Dictionary Manager](assets/dictionary-manager.png)
+![Dictionary Download Manager](assets/dictionary-manager.png)
 
 ```python
 from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
 from pyqt6_linguistic_tools.qt import (
-    DictionaryManagerDialog,
-    DictionaryManagerWidget,
+    DictionaryDownloadManagerDialog,
+    DictionaryDownloadManagerWidget,
 )
 
 catalog = load_bundled_dictionary_catalog()
 
-# Embed in a settings page or tab.
-widget = DictionaryManagerWidget(service, catalog=catalog)
+# Embed in a settings page or tab; downloads install automatically.
+widget = DictionaryDownloadManagerWidget(service, catalog=catalog)
 layout.addWidget(widget)
 
 # Or open the large dialog.
-manager = DictionaryManagerDialog(service, catalog=catalog, parent=window)
+manager = DictionaryDownloadManagerDialog(
+    service, catalog=catalog, parent=window
+)
 manager.dictionaries_changed.connect(refresh_language_selectors)
 manager.show()
 ```
 
-The Available Downloads group integrates the validated catalog metadata but
-performs no network access. Entries without SHA-256 remain visibly unverified
-and disabled; the bundled catalog includes checksums, so a host can enable
-verified downloads. A host downloader handles `download_requested`, verifies
-the advertised size and checksum, extracts safely, and publishes through a
-managed provider.
+Entries without SHA-256 remain visibly unverified and disabled. Downloads
+install into the managed provider namespace used by the application service, so
+the next check sees the new spelling and thesaurus files without a restart.
+For a custom pipeline, use the base `DictionaryManagerWidget` or
+`DictionaryManagerDialog`: they do not perform network access and instead emit
+`download_requested` for the host to verify, extract and publish.

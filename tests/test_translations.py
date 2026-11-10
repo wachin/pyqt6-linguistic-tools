@@ -54,12 +54,20 @@ def test_spanish_translation_is_installed_and_removed(application) -> None:
             == "Ortografía"
         )
         assert (
-            QCoreApplication.translate("DictionaryManagerWidget", "Dictionary Manager")
-            == "Gestor de diccionarios"
+            QCoreApplication.translate(
+                "DictionaryManagerWidget", "Dictionary Download Manager"
+            )
+            == "Gestor de descargas de diccionarios"
         )
         assert (
-            QCoreApplication.translate("DictionaryManagerDialog", "Dictionary Manager")
-            == "Gestor de diccionarios"
+            QCoreApplication.translate(
+                "DictionaryManagerDialog", "Dictionary Download Manager"
+            )
+            == "Gestor de descargas de diccionarios"
+        )
+        assert (
+            QCoreApplication.translate("DictionaryManagerWidget", "Download")
+            == "Descargar"
         )
         assert (
             QCoreApplication.translate(

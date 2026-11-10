@@ -9,11 +9,21 @@ This project follows Semantic Versioning.
   `tools/fetch-dict-list.py`; it records the SHA-256 digest that GitHub exposes
   for release assets and accepts `--dicts-dir` to record spelling/thesaurus
   capabilities. Regenerate the bundled catalog with both checksums and flags.
-- Add an embeddable `DictionaryManagerWidget` and a large 1180×720
-  `DictionaryManagerDialog` wrapper. The manager now has search, state and
-  component filters, spelling/thesaurus badges, installed and available
-  groups, a details panel, and verified install/remove actions. Add the
-  screenshot at `docs/assets/dictionary-manager.png`.
+- Add the verified download pipeline: `download_dictionary()` and
+  `install_dictionary_archive()` stream over HTTPS, check the catalog size and
+  SHA-256, reject unsafe archive paths/links, validate every component, skip
+  malformed regional variants, and publish atomically through
+  `ManagedDictionaryProvider`.
+- Add an embeddable `DictionaryDownloadManagerWidget` and a large 1180×720
+  `DictionaryDownloadManagerDialog` wrapper with automatic downloads in a
+  worker thread. The base `DictionaryManagerWidget`/`Dialog` keep the
+  host-delegated `download_requested` mode. Add search, state/component
+  filters, spelling/thesaurus badges, installed/available groups, a details
+  panel, and verified install/remove actions. Add the screenshot at
+  `images/01-pyqt6-linguistic-tools.png`.
+- Wire the download manager into ChordFlow and ChordPages: both open the shared
+  dialog, install into the `guitarchordstudio` managed namespace, refresh the
+  service, and attach the toolkit decorator to every editor.
 - Ship toolkit-owned Spanish and English translations (`.ts` sources and
   compiled `.qm` catalogs) plus `install_toolkit_translations()`,
   `uninstall_toolkit_translations()` and `translation_candidates()`. Convert

@@ -32,12 +32,20 @@ from pyqt6_linguistic_tools.catalog import (
     load_bundled_dictionary_catalog,
     load_dictionary_catalog,
 )
+from pyqt6_linguistic_tools.download import (
+    CancelCheck,
+    ProgressCallback,
+    download_dictionary,
+    install_dictionary_archive,
+)
 from pyqt6_linguistic_tools.errors import (
     BackendOperationError,
     BackendResolutionError,
     BackendUnavailableError,
     DictionaryDiscoveryError,
     DictionaryCatalogError,
+    DictionaryDownloadCancelled,
+    DictionaryDownloadError,
     DictionaryImportError,
     DictionaryValidationError,
     DictionaryLoadError,
@@ -223,6 +231,8 @@ __all__ = [
     "BackendUnavailableError",
     "DictionaryCatalogError",
     "DictionaryDiscoveryError",
+    "DictionaryDownloadCancelled",
+    "DictionaryDownloadError",
     "DictionaryImportError",
     "DictionaryLoadError",
     "DictionaryNotFoundError",
@@ -235,6 +245,10 @@ __all__ = [
     "BUNDLED_CATALOG_PATH",
     "DictionaryCatalog",
     "DictionaryCatalogEntry",
+    "CancelCheck",
+    "ProgressCallback",
+    "download_dictionary",
+    "install_dictionary_archive",
     "load_bundled_dictionary_catalog",
     "load_dictionary_catalog",
     # Storage

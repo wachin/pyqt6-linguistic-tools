@@ -24,7 +24,7 @@ Reports contain stable checks with one of three statuses:
 
 `report.status` is the highest severity and `report.usable` is false whenever
 any check failed. Checks include machine-readable codes, messages, and the
-related path, making them suitable for logs and a future Dictionary Manager.
+related path, making them suitable for logs and a future Dictionary Download Manager.
 
 ## Hunspell validation
 

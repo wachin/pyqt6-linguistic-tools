@@ -15,6 +15,7 @@ from pyqt6_linguistic_tools.providers import (
     UserDictionaryProvider,
 )
 from pyqt6_linguistic_tools.qt._compat import require_pyqt6
+from pyqt6_linguistic_tools.qt.dictionary_download import DictionaryDownloadTask
 from pyqt6_linguistic_tools.service import LinguisticService
 
 
@@ -101,10 +102,12 @@ class _ManagerRow:
 class DictionaryManagerWidget(QWidget):
     """Embeddable dictionary manager with search, filters and details.
 
-    The widget can be placed in any layout, settings page, tab or dialog. It
-    never performs network access or archive extraction: verified downloads are
-    requested through :attr:`download_requested`; the host publishes the bundle
-    and then calls :meth:`refresh`.
+    The widget can be placed in any layout, settings page, tab or dialog. By
+    default it never performs network access: verified downloads are requested
+    through :attr:`download_requested`, and the host publishes the bundle. With
+    ``auto_download=True`` (used by
+    :class:`DictionaryDownloadManagerDialog`) it downloads, verifies, validates
+    and installs the bundle in a worker thread.
     """
 
     dictionaries_changed = pyqtSignal(object)
@@ -113,6 +116,9 @@ class DictionaryManagerWidget(QWidget):
     operation_failed = pyqtSignal(str, object)
     busy_changed = pyqtSignal(bool)
     download_requested = pyqtSignal(object)
+    download_started = pyqtSignal(object)
+    download_finished = pyqtSignal(object)
+    download_cancelled = pyqtSignal(object)
 
     def __init__(
         self,
@@ -122,6 +128,7 @@ class DictionaryManagerWidget(QWidget):
         managed_provider: ManagedDictionaryProvider | None = None,
         catalog: DictionaryCatalog | None = None,
         thread_pool: QThreadPool | None = None,
+        auto_download: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         if not isinstance(service, LinguisticService):
@@ -138,8 +145,12 @@ class DictionaryManagerWidget(QWidget):
             raise TypeError("catalog must be a DictionaryCatalog or None")
         if thread_pool is not None and not isinstance(thread_pool, QThreadPool):
             raise TypeError("thread_pool must be a QThreadPool or None")
+        if not isinstance(auto_download, bool):
+            raise TypeError("auto_download must be a boolean")
 
         super().__init__(parent)
+        self._auto_download = auto_download
+        self._download_task: DictionaryDownloadTask | None = None
         self._service = service
         providers = service.registry.providers()
         self._user_provider = user_provider or next(
@@ -271,7 +282,7 @@ class DictionaryManagerWidget(QWidget):
 
     def _create_widgets(self) -> None:
         self._text = {
-            "title": self.tr("Dictionary Manager"),
+            "title": self.tr("Dictionary Download Manager"),
             "subtitle": self.tr(
                 "Download, import and remove spelling and thesaurus bundles."
             ),
@@ -296,7 +307,7 @@ class DictionaryManagerWidget(QWidget):
             "size": self.tr("Size"),
             "status": self.tr("Status"),
             "source": self.tr("Source"),
-            "install": self.tr("Install"),
+            "install": self.tr("Download"),
             "remove": self.tr("Remove"),
             "close": self.tr("Close"),
             "details": self.tr("Details"),
@@ -769,7 +780,7 @@ class DictionaryManagerWidget(QWidget):
             self.install_button.setText(self._text["install"])
             self.install_button.setEnabled(not self._busy)
             self.install_button.setToolTip("")
-            self.status_label.setText(self.tr("Ready to install."))
+            self.status_label.setText(self.tr("Ready to download."))
 
     def _update_actions(self) -> None:
         row = self._selected_row()
@@ -864,6 +875,9 @@ class DictionaryManagerWidget(QWidget):
             return
         if row.installed_locales:
             return
+        if self._auto_download:
+            self._start_download(entry)
+            return
         self.status_label.setText(
             self.tr(
                 "Download requested. The host application installs the bundle "
@@ -871,6 +885,89 @@ class DictionaryManagerWidget(QWidget):
             )
         )
         self.download_requested.emit(entry)
+
+    def cancel_download(self) -> None:
+        """Ask the active in-app download to cancel at the next chunk."""
+        if self._download_task is not None:
+            self._download_task.cancel()
+            self.status_label.setText(self.tr("Cancelling download…"))
+
+    def _start_download(self, entry: DictionaryCatalogEntry) -> None:
+        if self._managed_provider is None:
+            self._report_error(
+                self.tr("Dictionary download failed"),
+                RuntimeError(self.tr("No managed dictionary provider is configured.")),
+            )
+            return
+        if self._download_task is not None:
+            return
+        task = DictionaryDownloadTask(entry, self._managed_provider)
+        self._download_task = task
+        task.signals.progress.connect(self._on_download_progress)
+        task.signals.finished.connect(
+            lambda result, task=task: self._on_download_finished(task, result)
+        )
+        task.signals.failed.connect(
+            lambda message, error, task=task: self._on_download_failed(
+                task, message, error
+            )
+        )
+        task.signals.cancelled.connect(
+            lambda task=task: self._on_download_cancelled(task)
+        )
+        self._set_busy(True)
+        self.progress_bar.setRange(0, 0)
+        self.status_label.setText(self.tr("Downloading %1…").replace("%1", entry.name))
+        self.download_started.emit(entry)
+        self._thread_pool.start(task)
+
+    def _on_download_progress(self, downloaded: int, total: int) -> None:
+        if total > 0:
+            percent = min(100, int(downloaded * 100 / total))
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(percent)
+            self.status_label.setText(
+                self.tr("Downloading… %1%").replace("%1", str(percent))
+            )
+        else:
+            self.progress_bar.setRange(0, 0)
+            self.status_label.setText(
+                self.tr("Downloading… %1").replace("%1", self._format_size(downloaded))
+            )
+
+    def _on_download_finished(
+        self, task: DictionaryDownloadTask, result: object
+    ) -> None:
+        if task is not self._download_task:
+            return
+        self._download_task = None
+        self._set_busy(False)
+        self.refresh()
+        self.status_label.setText(self.tr("Dictionary installed. Select it to use it."))
+        self.download_finished.emit(result)
+
+    def _on_download_failed(
+        self,
+        task: DictionaryDownloadTask,
+        message: str,
+        error: object,
+    ) -> None:
+        if task is not self._download_task:
+            return
+        self._download_task = None
+        self._set_busy(False)
+        self._report_error(
+            self.tr("Dictionary download failed"),
+            error if isinstance(error, Exception) else RuntimeError(message),
+        )
+
+    def _on_download_cancelled(self, task: DictionaryDownloadTask) -> None:
+        if task is not self._download_task:
+            return
+        self._download_task = None
+        self._set_busy(False)
+        self.status_label.setText(self.tr("Download cancelled."))
+        self.download_cancelled.emit(task.entry)
 
     def _refresh_from_ui(self) -> None:
         try:
@@ -1001,6 +1098,9 @@ class DictionaryManagerDialog(QDialog):
     operation_failed = pyqtSignal(str, object)
     busy_changed = pyqtSignal(bool)
     download_requested = pyqtSignal(object)
+    download_started = pyqtSignal(object)
+    download_finished = pyqtSignal(object)
+    download_cancelled = pyqtSignal(object)
 
     def __init__(
         self,
@@ -1010,6 +1110,7 @@ class DictionaryManagerDialog(QDialog):
         managed_provider: ManagedDictionaryProvider | None = None,
         catalog: DictionaryCatalog | None = None,
         thread_pool: QThreadPool | None = None,
+        auto_download: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -1019,6 +1120,7 @@ class DictionaryManagerDialog(QDialog):
             managed_provider=managed_provider,
             catalog=catalog,
             thread_pool=thread_pool,
+            auto_download=auto_download,
             parent=self,
         )
         layout = QVBoxLayout(self)
@@ -1028,7 +1130,7 @@ class DictionaryManagerDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-        self.setWindowTitle(self.tr("Dictionary Manager"))
+        self.setWindowTitle(self.tr("Dictionary Download Manager"))
         self.resize(1180, 720)
         self.setMinimumSize(960, 600)
 
@@ -1038,6 +1140,9 @@ class DictionaryManagerDialog(QDialog):
         self._manager.operation_failed.connect(self.operation_failed.emit)
         self._manager.busy_changed.connect(self.busy_changed.emit)
         self._manager.download_requested.connect(self.download_requested.emit)
+        self._manager.download_started.connect(self.download_started.emit)
+        self._manager.download_finished.connect(self.download_finished.emit)
+        self._manager.download_cancelled.connect(self.download_cancelled.emit)
 
     @property
     def manager(self) -> DictionaryManagerWidget:
@@ -1116,8 +1221,61 @@ class DictionaryManagerDialog(QDialog):
     def remove_selected(self, *, confirm: bool = True) -> bool:
         return self._manager.remove_selected(confirm=confirm)
 
+    def cancel_download(self) -> None:
+        self._manager.cancel_download()
+
+
+class DictionaryDownloadManagerWidget(DictionaryManagerWidget):
+    """Dictionary manager with in-app verified downloads enabled by default."""
+
+    def __init__(
+        self,
+        service: LinguisticService,
+        *,
+        user_provider: UserDictionaryProvider | None = None,
+        managed_provider: ManagedDictionaryProvider | None = None,
+        catalog: DictionaryCatalog | None = None,
+        thread_pool: QThreadPool | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(
+            service,
+            user_provider=user_provider,
+            managed_provider=managed_provider,
+            catalog=catalog,
+            thread_pool=thread_pool,
+            auto_download=True,
+            parent=parent,
+        )
+
+
+class DictionaryDownloadManagerDialog(DictionaryManagerDialog):
+    """Large dialog with in-app verified downloads enabled by default."""
+
+    def __init__(
+        self,
+        service: LinguisticService,
+        *,
+        user_provider: UserDictionaryProvider | None = None,
+        managed_provider: ManagedDictionaryProvider | None = None,
+        catalog: DictionaryCatalog | None = None,
+        thread_pool: QThreadPool | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(
+            service,
+            user_provider=user_provider,
+            managed_provider=managed_provider,
+            catalog=catalog,
+            thread_pool=thread_pool,
+            auto_download=True,
+            parent=parent,
+        )
+
 
 __all__ = [
+    "DictionaryDownloadManagerDialog",
+    "DictionaryDownloadManagerWidget",
     "DictionaryManagerDialog",
     "DictionaryManagerWidget",
 ]

@@ -42,10 +42,7 @@ def _remove_owned_bundle(root: Path, bundle_name: str) -> bool:
     """Remove one direct, non-symlinked application-owned bundle."""
     if not isinstance(bundle_name, str):
         raise TypeError("bundle_name must be a string")
-    if (
-        not _SAFE_BUNDLE_NAME.fullmatch(bundle_name)
-        or bundle_name in {".", ".."}
-    ):
+    if not _SAFE_BUNDLE_NAME.fullmatch(bundle_name) or bundle_name in {".", ".."}:
         raise ValueError("bundle_name must be one safe path component")
     target = root / bundle_name
     if target.is_symlink():
@@ -243,6 +240,31 @@ class ManagedDictionaryProvider(DirectoryDictionaryProvider):
         """Remove one direct application-managed bundle, never system data."""
         return _remove_owned_bundle(self.root, bundle_name)
 
+    def import_files(
+        self,
+        files: tuple[str | Path, ...] | list[str | Path],
+        *,
+        bundle_name: str | None = None,
+    ) -> Path:
+        """Install a validated managed bundle and return its directory."""
+        return self.import_validated_files(
+            files,
+            bundle_name=bundle_name,
+        ).destination
+
+    def import_validated_files(
+        self,
+        files: tuple[str | Path, ...] | list[str | Path],
+        *,
+        bundle_name: str | None = None,
+    ) -> DictionaryImportResult:
+        """Atomically install one complete, previously unpacked managed bundle.
+
+        Existing bundles are never overwritten. Hosts use this after verifying
+        and safely extracting a downloaded archive.
+        """
+        return _import_owned_bundle(self, files, bundle_name)
+
 
 class UserDictionaryProvider(DirectoryDictionaryProvider):
     """Discover and safely import user-supplied dictionary files."""
@@ -300,80 +322,89 @@ class UserDictionaryProvider(DirectoryDictionaryProvider):
         bundles are never overwritten. Archive extraction and network access
         deliberately remain outside this method.
         """
-        sources = tuple(Path(path).expanduser().resolve() for path in files)
-        if not sources:
-            raise DictionaryImportError("manual import requires at least one file")
-        if any(not path.is_file() for path in sources):
-            missing = next(path for path in sources if not path.is_file())
-            raise DictionaryImportError(f"import source is not a file: {missing}")
-        if len({path.name for path in sources}) != len(sources):
-            raise DictionaryImportError("import contains duplicate filenames")
-        allowed = {".aff", ".dic", ".dat", ".idx"}
-        if any(path.suffix.lower() not in allowed for path in sources):
-            raise DictionaryImportError("import contains an unsupported file type")
+        return _import_owned_bundle(self, files, bundle_name)
 
-        self.ensure_directory()
-        staging = Path(tempfile.mkdtemp(prefix=".import-", dir=self.root))
-        published = False
-        try:
-            for source in sources:
-                shutil.copy2(source, staging / source.name)
-            candidates = DirectoryDictionaryProvider(
-                staging,
-                source=self.source,
-                priority=self.priority,
-                recursive=False,
-            ).discover()
-            recognized = {
-                path.name
-                for candidate in candidates
-                for path in (
-                    candidate.aff_path,
-                    candidate.dic_path,
-                    candidate.thesaurus_dat,
-                    candidate.thesaurus_idx,
-                )
-                if path is not None
-            }
-            supplied = {path.name for path in sources}
-            if not candidates or recognized != supplied:
-                raise DictionaryImportError(
-                    "import must contain complete Hunspell pairs and/or a valid MyThes data set"
-                )
 
-            # Import locally to keep provider discovery lightweight and avoid
-            # loading either engine merely by constructing a provider.
-            from pyqt6_linguistic_tools.validation import DictionaryValidator
+def _import_owned_bundle(
+    provider: ManagedDictionaryProvider | UserDictionaryProvider,
+    files: tuple[str | Path, ...] | list[str | Path],
+    bundle_name: str | None,
+) -> DictionaryImportResult:
+    """Validate and atomically publish a bundle into an owned provider root."""
+    sources = tuple(Path(path).expanduser().resolve() for path in files)
+    if not sources:
+        raise DictionaryImportError("dictionary import requires at least one file")
+    if any(not path.is_file() for path in sources):
+        missing = next(path for path in sources if not path.is_file())
+        raise DictionaryImportError(f"import source is not a file: {missing}")
+    if len({path.name for path in sources}) != len(sources):
+        raise DictionaryImportError("import contains duplicate filenames")
+    allowed = {".aff", ".dic", ".dat", ".idx"}
+    if any(path.suffix.lower() not in allowed for path in sources):
+        raise DictionaryImportError("import contains an unsupported file type")
 
-            validation = DictionaryValidator().validate_candidates(candidates)
-            if not validation.usable:
-                failed = [
-                    check.message
-                    for report in validation.reports
-                    for check in report.checks
-                    if check.status is ValidationStatus.FAIL
-                ]
-                raise DictionaryImportError(
-                    "dictionary validation failed: " + "; ".join(failed),
-                    validation=validation,
-                )
+    provider.ensure_directory()
+    staging = Path(tempfile.mkdtemp(prefix=".import-", dir=provider.root))
+    published = False
+    try:
+        for source in sources:
+            shutil.copy2(source, staging / source.name)
+        candidates = DirectoryDictionaryProvider(
+            staging,
+            source=provider.source,
+            priority=provider.priority,
+            recursive=False,
+        ).discover()
+        recognized = {
+            path.name
+            for candidate in candidates
+            for path in (
+                candidate.aff_path,
+                candidate.dic_path,
+                candidate.thesaurus_dat,
+                candidate.thesaurus_idx,
+            )
+            if path is not None
+        }
+        supplied = {path.name for path in sources}
+        if not candidates or recognized != supplied:
+            raise DictionaryImportError(
+                "import must contain complete Hunspell pairs and/or a valid MyThes data set"
+            )
 
-            selected_name = bundle_name or candidates[0].locale
-            if (
-                not isinstance(selected_name, str)
-                or not _SAFE_BUNDLE_NAME.fullmatch(selected_name)
-                or selected_name in {".", ".."}
-            ):
-                raise DictionaryImportError("bundle_name must be one safe path component")
-            destination = self.root / selected_name
-            if destination.exists():
-                raise FileExistsError(f"dictionary bundle already exists: {destination}")
-            os.replace(staging, destination)
-            published = True
-            return DictionaryImportResult(destination, validation)
-        finally:
-            if not published and staging.exists():
-                shutil.rmtree(staging)
+        # Import locally to keep provider discovery lightweight and avoid
+        # loading either engine merely by constructing a provider.
+        from pyqt6_linguistic_tools.validation import DictionaryValidator
+
+        validation = DictionaryValidator().validate_candidates(candidates)
+        if not validation.usable:
+            failed = [
+                check.message
+                for report in validation.reports
+                for check in report.checks
+                if check.status is ValidationStatus.FAIL
+            ]
+            raise DictionaryImportError(
+                "dictionary validation failed: " + "; ".join(failed),
+                validation=validation,
+            )
+
+        selected_name = bundle_name or candidates[0].locale
+        if (
+            not isinstance(selected_name, str)
+            or not _SAFE_BUNDLE_NAME.fullmatch(selected_name)
+            or selected_name in {".", ".."}
+        ):
+            raise DictionaryImportError("bundle_name must be one safe path component")
+        destination = provider.root / selected_name
+        if destination.exists():
+            raise FileExistsError(f"dictionary bundle already exists: {destination}")
+        os.replace(staging, destination)
+        published = True
+        return DictionaryImportResult(destination, validation)
+    finally:
+        if not published and staging.exists():
+            shutil.rmtree(staging)
 
 
 __all__ = [
