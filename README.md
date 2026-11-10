@@ -273,10 +273,44 @@ dialog.exec()
 `ThesaurusWidget` is the extension point for future thesaurus controls, so new
 features added to the toolkit are inherited by every host application.
 
-`ThesaurusDialog` opens with a compact 540×480 default, has minimize/maximize
-controls and a resize grip, and remembers its last position and size through
-`QSettings`. Pass a host-owned `QSettings` object as `settings=` when an
-application wants a separate geometry namespace.
+### Window size and geometry
+
+`ThesaurusDialog` behaves like a normal desktop tool window:
+
+- It opens at a compact **540×480** default, close to LibreOffice's thesaurus
+  window, and is never smaller than **500×420**.
+- It can be resized from its edges and corners, has a size grip, and provides
+  minimize/maximize controls.
+- It saves its position and size in `QSettings` when it is closed, hidden,
+  accepted, or rejected, and restores them the next time it opens.
+- If the saved position is outside the available screens after a monitor
+  change, the dialog is moved back into a visible area.
+- The embedded `ThesaurusWidget` has no window geometry of its own; only the
+  dialog wrapper persists it.
+
+With the default settings, ChordFlow, ChordPages, and every other host share
+the toolkit's `ThesaurusDialog` geometry namespace. An application that wants
+its own position and size can inject a `QSettings` instance:
+
+```python
+from PyQt6.QtCore import QSettings
+
+from pyqt6_linguistic_tools.qt import ThesaurusDialog
+
+settings = QSettings("my-company", "my-app-thesaurus")
+dialog = ThesaurusDialog(
+    service,
+    word,
+    settings=settings,
+    parent=window,
+)
+dialog.exec()
+```
+
+The toolkit stores the geometry under the `window/geometry` key of the
+`pyqt6-linguistic-tools` / `ThesaurusDialog` settings namespace. Because the
+dialog is shared, fixes and future geometry improvements are inherited by all
+host applications without duplicating window code.
 
 ### Wiring the Replace button
 
