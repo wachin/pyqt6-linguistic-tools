@@ -273,6 +273,57 @@ dialog.exec()
 `ThesaurusWidget` is the extension point for future thesaurus controls, so new
 features added to the toolkit are inherited by every host application.
 
+### Wiring the Replace button
+
+The toolkit does not edit the host document. **Replace** only emits:
+
+```python
+replacement_requested(source_word, replacement)
+```
+
+`source_word` is the exact word that was passed to the dialog. `replacement`
+is the selected synonym, or the text the user typed in **Replace with**. The
+host application must connect both signal arguments and apply the replacement
+itself.
+
+A safe Qt editor integration looks like this:
+
+```python
+def replace_word(source: str, replacement: str) -> None:
+    cursor = editor.textCursor()
+    selected = cursor.selectedText()
+    if not cursor.hasSelection() or selected != source:
+        return
+    cursor.insertText(replacement)
+    editor.setTextCursor(cursor)
+
+
+dialog = ThesaurusDialog(service, word, parent=window)
+dialog.replacement_requested.connect(replace_word)
+dialog.exec()
+```
+
+The `source` check prevents replacing a different selection if the document
+changed while the dialog was open. If the host uses a one-argument replacement
+method, unpack the signal explicitly:
+
+```python
+dialog.replacement_requested.connect(
+    lambda _source, replacement: self.replace_selected_word(replacement)
+)
+```
+
+Do **not** connect this two-argument signal directly to a one-argument slot:
+
+```python
+# Wrong: replace_selected_word() receives source_word, not the replacement.
+dialog.replacement_requested.connect(self.replace_selected_word)
+```
+
+That mistake makes **Replace** appear to do nothing because the selected word
+is replaced by itself. ChordPages uses the correct two-argument lambda;
+ChordFlow's earlier one-argument connection was fixed for this reason.
+
 ### Example and documentation
 
 - [`examples/thesaurus_demo.py`](examples/thesaurus_demo.py) is a complete
