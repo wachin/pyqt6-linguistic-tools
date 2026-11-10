@@ -34,6 +34,7 @@ exclude = ["tests*"]
 license-files = ["libs/spylls/LICENSE", "libs/pythes/LICENSE"]
 
 [tool.setuptools.package-data]
+"pyqt6_linguistic_tools" = ["data/*.json"]
 "spylls.hunspell" = ["data/**/*.aff", "data/**/*.dic", "data/**/README*"]
 
 [tool.pytest.ini_options]

@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 276" src="https://img.shields.io/badge/tests-276%20fast-brightgreen">
+  <img alt="Fast tests: 279" src="https://img.shields.io/badge/tests-279%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -109,7 +109,7 @@ workflow:
 
 | Module | What it gives you |
 |---|---|
-| [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | Strict, network-free validation of the `dictionaries.json` release catalog: safe unique codes, HTTPS URLs, sizes, and optional SHA-256 checksums. |
+| [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), plus strict network-free validation of any host-provided catalog: safe unique codes, HTTPS URLs, sizes, and optional SHA-256 checksums. |
 | [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | A reusable `DictionaryManagerDialog`: effective languages, sources, spelling/thesaurus status, manual import with deep validation, removal of application-owned bundles, and a `download_requested` signal for checksum-verified entries. |
 | [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
 | [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |
@@ -140,8 +140,9 @@ decorator.set_spellcheck_enabled(True)
 The repository already contains the reusable, network-free half of a
 dictionary manager:
 
-- **Catalog validation.** `load_dictionary_catalog()` validates
-  `dictionaries.json` without touching the network.
+- **Bundled catalog.** `load_bundled_dictionary_catalog()` loads the 57-entry
+  catalog shipped in `pyqt6_linguistic_tools/data/dictionaries.json`;
+  `load_dictionary_catalog(path)` validates a host-provided catalog instead.
 - **Shared storage.** `ManagedDictionaryProvider` owns the cross-platform
   managed bundle directory; `UserDictionaryProvider` owns validated manual
   imports.
@@ -159,7 +160,7 @@ them.
 
 Downloads are intentionally **host-delegated and checksum-gated**: an entry
 without a SHA-256 checksum is shown as *Unverified* and its Download button
-stays disabled. The published LibreOffice catalog does not include checksums
+stays disabled. The bundled LibreOffice catalog does not include checksums
 yet, so the toolkit does not perform automatic downloads or archive
 extraction. A host that implements downloads must verify the archive size and
 SHA-256, reject path traversal and links, validate the extracted bundle, and

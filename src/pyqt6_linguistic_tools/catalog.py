@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.resources import as_file, files
 import json
 from pathlib import Path
 import re
@@ -13,6 +14,11 @@ from pyqt6_linguistic_tools.errors import DictionaryCatalogError
 
 _SAFE_CODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
+
+#: Best-effort filesystem path to the catalog shipped with the package. Use
+#: :func:`load_bundled_dictionary_catalog` when the package may be imported
+#: from a zip archive.
+BUNDLED_CATALOG_PATH = Path(__file__).with_name("data") / "dictionaries.json"
 
 
 def _code_key(code: str) -> str:
@@ -115,8 +121,25 @@ def load_dictionary_catalog(path: str | Path) -> DictionaryCatalog:
     return DictionaryCatalog(source=source.strip(), dictionaries=tuple(parsed))
 
 
+def load_bundled_dictionary_catalog() -> DictionaryCatalog:
+    """Load the curated catalog shipped with the package.
+
+    The catalog lives at ``pyqt6_linguistic_tools/data/dictionaries.json`` and
+    is included in wheels and source distributions. Hosts that maintain their
+    own catalog can call :func:`load_dictionary_catalog` with an explicit path
+    instead.
+    """
+    resource = files("pyqt6_linguistic_tools").joinpath("data").joinpath(
+        "dictionaries.json"
+    )
+    with as_file(resource) as path:
+        return load_dictionary_catalog(path)
+
+
 __all__ = [
+    "BUNDLED_CATALOG_PATH",
     "DictionaryCatalog",
     "DictionaryCatalogEntry",
+    "load_bundled_dictionary_catalog",
     "load_dictionary_catalog",
 ]

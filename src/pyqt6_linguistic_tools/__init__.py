@@ -26,8 +26,10 @@ from pyqt6_linguistic_tools.cache import (
     ResultCache,
 )
 from pyqt6_linguistic_tools.catalog import (
+    BUNDLED_CATALOG_PATH,
     DictionaryCatalog,
     DictionaryCatalogEntry,
+    load_bundled_dictionary_catalog,
     load_dictionary_catalog,
 )
 from pyqt6_linguistic_tools.errors import (
@@ -230,8 +232,10 @@ __all__ = [
     "PersonalDictionaryError",
     "UnsupportedOperationError",
     # Catalog
+    "BUNDLED_CATALOG_PATH",
     "DictionaryCatalog",
     "DictionaryCatalogEntry",
+    "load_bundled_dictionary_catalog",
     "load_dictionary_catalog",
     # Storage
     "DictionaryStoragePaths",

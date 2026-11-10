@@ -4,6 +4,10 @@ This project follows Semantic Versioning.
 
 ## Unreleased
 
+- Ship the 57-entry `dictionaries.json` catalog as package data and add
+  `load_bundled_dictionary_catalog()`. Move the catalog generator to
+  `tools/fetch-dict-list.py`; it can now record the SHA-256 digest that GitHub
+  exposes for release assets.
 - Add a README banner, badges, a Mermaid architecture diagram, a key-module
   overview, and explicit managed-download guidance for developers. The banner
   SVG, its PNG render, and the conversion script live in `docs/assets/`.

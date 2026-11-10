@@ -81,26 +81,29 @@ asks for confirmation before removal.
 
 ## dictionaries.json catalog
 
-The current LibreOffice collection catalog can be inspected safely without
-network access:
+The toolkit ships a curated 57-entry catalog at
+`pyqt6_linguistic_tools/data/dictionaries.json`, so applications get a usable
+download list without shipping their own copy:
 
 ```python
-from pyqt6_linguistic_tools import load_dictionary_catalog
+from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
 
-catalog = load_dictionary_catalog("/path/to/dictionaries.json")
+catalog = load_bundled_dictionary_catalog()
 spanish = catalog.get("es")
 ```
 
-The loader validates its schema, safe unique codes, names, HTTPS URLs, sizes,
-and optional SHA-256 fields. It treats hyphen and underscore code forms as
-equivalent for lookup while preserving the published value.
+`load_dictionary_catalog(path)` remains available for a host-provided or newly
+generated catalog. The loader validates its schema, safe unique codes, names,
+HTTPS URLs, sizes, and optional SHA-256 fields. It treats hyphen and underscore
+code forms as equivalent for lookup while preserving the published value.
 
-The current 57-entry catalog does not include SHA-256 hashes, so
-`catalog.supports_verified_downloads` is false. For that reason this stage does
-not implement automatic downloading or extraction. A future downloader should
-require checksums in the release catalog, verify archive size and SHA-256, and
-protect extraction against path traversal before publishing into the managed
-directory.
+The bundled catalog is generated from the release assets with
+`tools/fetch-dict-list.py --tag <TAG>`. It currently does not include SHA-256
+hashes, so `catalog.supports_verified_downloads` is false. For that reason this
+stage does not implement automatic downloading or extraction. A future
+downloader should require checksums in the release catalog, verify archive size
+and SHA-256, and protect extraction against path traversal before publishing
+into the managed directory.
 
 ## Qt Dictionary Manager
 
@@ -112,10 +115,10 @@ thread pool so loading a large Spylls or PyThes dictionary does not block the
 GUI.
 
 ```python
-from pyqt6_linguistic_tools import load_dictionary_catalog
+from pyqt6_linguistic_tools import load_bundled_dictionary_catalog
 from pyqt6_linguistic_tools.qt import DictionaryManagerDialog
 
-catalog = load_dictionary_catalog("/path/to/dictionaries.json")
+catalog = load_bundled_dictionary_catalog()
 manager = DictionaryManagerDialog(service, catalog=catalog, parent=window)
 manager.dictionaries_changed.connect(refresh_language_selectors)
 manager.show()
@@ -125,5 +128,5 @@ The Available Downloads tab integrates the validated catalog metadata but
 performs no network access. Entries without SHA-256 remain visibly unverified
 and disabled. A future host downloader may handle `download_requested`, verify
 the advertised size and checksum, extract safely, and publish through a
-managed provider. The current LibreOffice collection catalog therefore
-remains inspection-only until checksums are added.
+managed provider. The bundled LibreOffice collection catalog therefore remains
+inspection-only until checksums are added.
