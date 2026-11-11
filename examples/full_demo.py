@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+import _bootstrap  # noqa: E402,F401
 
 from PyQt6.QtCore import Qt  # noqa: E402
 from PyQt6.QtGui import QAction, QFont  # noqa: E402

@@ -884,36 +884,51 @@ Python/platform, generation time).
 
 ## Examples
 
-The `examples/` directory contains standalone PyQt6 applications that
-demonstrate the toolkit's features. Each example can be run directly:
+The `examples/` directory contains runnable PyQt6 applications. They are
+intended for both end users who want to see the widgets in action and
+developers who want to copy a working integration pattern. They open normal
+desktop windows.
+
+From this toolkit directory, no `pip` installation or `PYTHONPATH` setup is
+required: `examples/_bootstrap.py` adds the source and vendored engine
+directories automatically.
 
 ```bash
+cd libs/pyqt6-linguistic-tools
+
 # QTextEdit with spell checking
-python examples/basic_qtextedit.py
+python3 examples/basic_qtextedit.py
 
 # QPlainTextEdit with spell checking
-python examples/basic_qplaintextedit.py
+python3 examples/basic_qplaintextedit.py
 
 # Spell checking, suggestions, and personal dictionary
-python examples/spellcheck_demo.py
+python3 examples/spellcheck_demo.py
 
 # Reusable ThesaurusWidget and ThesaurusDialog
-python examples/thesaurus_demo.py
+python3 examples/thesaurus_demo.py
 
 # Dictionary Download Manager dialog
-python examples/dictionary_manager_demo.py
+python3 examples/dictionary_manager_demo.py
 
 # Full demo combining all features
-python examples/full_demo.py
+python3 examples/full_demo.py
 ```
 
-Set `LIBREOFFICE_DICTIONARIES_PATH` to use a LibreOffice dictionary corpus for
-additional languages. On Linux, system-installed hunspell and mythes
-dictionaries are discovered automatically.
+PyQt6 must already be available to the interpreter. On a headless machine,
+select the offscreen platform explicitly:
 
-The full demo (`full_demo.py`) shows how a PyQt6 application can integrate
-the complete toolkit with minimal code — editor, spell checking, thesaurus,
-dictionary management, and language switching.
+```bash
+QT_QPA_PLATFORM=offscreen python3 examples/basic_qtextedit.py
+```
+
+Set `LIBREOFFICE_DICTIONARIES_PATH` to use an external LibreOffice dictionary
+corpus for additional languages. On Linux, system-installed Hunspell and
+MyThes dictionaries are discovered automatically. If no matching dictionary is
+installed, the window still opens but has no words to check or synonyms to show.
+
+The full demo (`full_demo.py`) combines the editor, spell checking, thesaurus,
+dictionary management, language switching and personal dictionary management.
 
 ## Performance benchmark
 

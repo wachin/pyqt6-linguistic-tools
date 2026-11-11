@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+import _bootstrap  # noqa: E402,F401
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPlainTextEdit  # noqa: E402
 

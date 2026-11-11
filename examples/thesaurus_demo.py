@@ -8,8 +8,8 @@ Shows how another PyQt6 application can use the toolkit as a package or as a
 - one shared ``LinguisticService`` for both.
 
 Usage:
-    PYTHONPATH=src python examples/thesaurus_demo.py
-    LIBREOFFICE_DICTIONARIES_PATH=/path/to/dicts PYTHONPATH=src \
+    python examples/thesaurus_demo.py
+    LIBREOFFICE_DICTIONARIES_PATH=/path/to/dicts \
         python examples/thesaurus_demo.py
 """
 
@@ -19,8 +19,7 @@ import os
 import sys
 from pathlib import Path
 
-
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+import _bootstrap  # noqa: E402,F401
 
 from PyQt6.QtWidgets import (  # noqa: E402
     QApplication,
