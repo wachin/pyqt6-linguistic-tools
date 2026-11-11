@@ -930,6 +930,62 @@ installed, the window still opens but has no words to check or synonyms to show.
 The full demo (`full_demo.py`) combines the editor, spell checking, thesaurus,
 dictionary management, language switching and personal dictionary management.
 
+### Running the examples on Windows
+
+Windows normally uses `python` or the official Python launcher `py`; `python3`
+is not the standard Windows command. Prefer `py` when more than one Python
+version is installed:
+
+```powershell
+cd libs\pyqt6-linguistic-tools
+
+# Recommended launcher
+py examples\basic_qtextedit.py
+py examples\basic_qplaintextedit.py
+py examples\spellcheck_demo.py
+py examples\thesaurus_demo.py
+py examples\dictionary_manager_demo.py
+py examples\full_demo.py
+```
+
+`python` works when the Python installer added it to `PATH`:
+
+```powershell
+python examples\basic_qtextedit.py
+```
+
+Check which commands are available with:
+
+```powershell
+py --version
+python --version
+Get-Command py
+Get-Command python
+```
+
+Use `py -3` to select Python 3 explicitly. If `python` opens the Microsoft
+Store instead of running Python, use `py` or disable the Store execution alias
+in Windows Settings.
+
+The examples bootstrap the toolkit and vendored engine paths themselves, so no
+`pip install` or `PYTHONPATH` setup is needed on Windows. PyQt6 must be
+installed for the interpreter selected by `py` or `python`. To run a headless
+check in PowerShell:
+
+```powershell
+$env:QT_QPA_PLATFORM = "offscreen"
+py examples\basic_qtextedit.py
+Remove-Item Env:QT_QPA_PLATFORM
+```
+
+For an external dictionary corpus in PowerShell:
+
+```powershell
+$env:LIBREOFFICE_DICTIONARIES_PATH = "C:\path\to\dicts"
+py examples\thesaurus_demo.py
+Remove-Item Env:LIBREOFFICE_DICTIONARIES_PATH
+```
+
 ## Performance benchmark
 
 The portable engines include a reproducible, subprocess-isolated benchmark for
