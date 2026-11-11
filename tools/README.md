@@ -6,7 +6,7 @@ Generate the dictionary download catalog that ships with the package.
 
 ```bash
 python3 tools/fetch-dict-list.py --tag v1.0-dictionaries-thesaurus \
-  --dicts-dir ../../third-party/libreoffice-dictionaries-collection/dicts
+  --dicts-dir "$LIBREOFFICE_DICTIONARIES_PATH"
 ```
 
 By default it writes `src/pyqt6_linguistic_tools/data/dictionaries.json`, which
@@ -15,7 +15,7 @@ distributions. Use `--output` to write a different file, or
 `load_dictionary_catalog(path)` in a host application that maintains its own
 catalog.
 
-`--dicts-dir` points at the local LibreOffice collection. The generator checks
+`--dicts-dir` points at an external LibreOffice collection. The generator checks
 each bundle for `.aff`/`.dic` and `.dat`/`.idx` files and records the
 `spelling` and `thesaurus` flags used by the Dictionary Manager filters and
 badges. Without `--dicts-dir`, those fields remain unknown and the UI shows

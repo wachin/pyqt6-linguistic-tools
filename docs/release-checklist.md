@@ -72,7 +72,7 @@ print('Decorator attached:', decorator.enabled)
 
 ```bash
 python3 -m pytest -m corpus \
-  --dictionary-corpus=../../third-party/libreoffice-dictionaries-collection/dicts
+  --dictionary-corpus="$LIBREOFFICE_DICTIONARIES_PATH"
 ```
 
 ## Platform-specific verification

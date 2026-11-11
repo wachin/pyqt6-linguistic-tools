@@ -15,7 +15,7 @@
   <img alt="Core dependencies: none" src="https://img.shields.io/badge/core%20deps-none-2ea44f">
   <img alt="Qt is optional" src="https://img.shields.io/badge/Qt-optional-41CD52?logo=qt&logoColor=white">
   <img alt="Platforms: Linux, Windows and macOS" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
-  <img alt="Fast tests: 313" src="https://img.shields.io/badge/tests-313%20fast-brightgreen">
+  <img alt="Fast tests: 314" src="https://img.shields.io/badge/tests-314%20fast-brightgreen">
   <img alt="mypy clean" src="https://img.shields.io/badge/mypy-clean-blue">
   <img alt="CI is manual-only" src="https://img.shields.io/badge/CI-manual--only-lightgrey">
 </p>
@@ -118,7 +118,7 @@ workflow:
 |---|---|
 | [`src/pyqt6_linguistic_tools/catalog.py`](src/pyqt6_linguistic_tools/catalog.py) | The 57-entry `dictionaries.json` catalog shipped as package data (`load_bundled_dictionary_catalog()`), with SHA-256 checksums and spelling/thesaurus flags, plus strict network-free validation of any host-provided catalog. |
 | [`src/pyqt6_linguistic_tools/qt/dictionary_manager.py`](src/pyqt6_linguistic_tools/qt/dictionary_manager.py) | Embeddable `DictionaryDownloadManagerWidget` and `DictionaryDownloadManagerDialog` with search, filters, spelling/thesaurus badges, a details panel, automatic verified downloads, manual import, and removal of application-owned bundles. The base classes retain the host-delegated `download_requested` mode. |
-| [`src/pyqt6_linguistic_tools/factory.py`](src/pyqt6_linguistic_tools/factory.py) | `create_service()` builds the standard Linux, managed, user and optional corpus providers for any host application using the toolkit as a package or a `libs/` submodule. |
+| [`src/pyqt6_linguistic_tools/factory.py`](src/pyqt6_linguistic_tools/factory.py) | `create_service()` builds the standard Linux, managed, user and optional corpus providers for any host application using the toolkit as a package or a `libs/` submodule; `dictionary_root=` lets a host share one suite-wide managed/user/personal directory. |
 | [`src/pyqt6_linguistic_tools/qt/thesaurus_dialog.py`](src/pyqt6_linguistic_tools/qt/thesaurus_dialog.py) | Reusable `ThesaurusWidget` for embedding and `ThesaurusDialog` for a window, with grouped meanings, language-aware service data, replacement signals and formatted clipboard copy. |
 | [`src/pyqt6_linguistic_tools/providers.py`](src/pyqt6_linguistic_tools/providers.py) | `ManagedDictionaryProvider` and `UserDictionaryProvider` with shared cross-platform storage and atomic publication; Linux system dictionaries remain read-only. |
 | [`src/pyqt6_linguistic_tools/validation.py`](src/pyqt6_linguistic_tools/validation.py) | `DictionaryValidator` deep checks for Hunspell/MyThes: encodings, counts, rules, byte offsets, representative words, and complete engine loading. |

@@ -98,3 +98,26 @@ def test_system_dictionaries_work_without_a_corpus():
     assert capabilities.spelling_source == "system"
     assert service.check_word("mundo")
     assert not service.check_word("mundoerror")
+
+
+def test_create_service_uses_an_explicit_dictionary_root(tmp_path: Path):
+    root = tmp_path / "dictionaries"
+    service = create_service(
+        language="en_US",
+        dictionary_root=root,
+    )
+    providers = service.registry.providers()
+
+    managed = next(
+        provider
+        for provider in providers
+        if isinstance(provider, ManagedDictionaryProvider)
+    )
+    user = next(
+        provider
+        for provider in providers
+        if isinstance(provider, UserDictionaryProvider)
+    )
+    assert managed.root == root / "managed"
+    assert user.root == root / "user"
+    assert service.personal_store.root == root / "personal"

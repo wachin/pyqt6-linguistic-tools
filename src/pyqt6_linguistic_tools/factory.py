@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pyqt6_linguistic_tools.locales import normalize_locale
 from pyqt6_linguistic_tools.models import DictionarySourcePriority
+from pyqt6_linguistic_tools.personal import PersonalDictionaryStore
 from pyqt6_linguistic_tools.providers import (
     DictionaryProvider,
     DirectoryDictionaryProvider,
@@ -35,6 +36,7 @@ def create_service(
     namespace: str = "pyqt6-linguistic-tools",
     include_linux_system: bool = True,
     corpus_path: str | Path | None = None,
+    dictionary_root: str | Path | None = None,
     extra_providers: Iterable[DictionaryProvider] = (),
 ) -> LinguisticService:
     """Create a service with the standard platform and managed providers.
@@ -46,7 +48,10 @@ def create_service(
 
     ``include_linux_system`` is harmless on Windows and macOS because the
     Linux provider has no roots there. ``namespace`` controls the managed,
-    user and personal dictionary storage shared by an application.
+    user and personal dictionary storage shared by an application. Pass
+    ``dictionary_root`` to use an explicit shared suite directory instead;
+    managed, user and personal dictionaries then live in its
+    ``managed``, ``user`` and ``personal`` children.
     """
     providers: list[DictionaryProvider] = []
     if include_linux_system:
@@ -65,18 +70,30 @@ def create_service(
         )
 
     providers.extend(extra_providers)
-    providers.extend(
-        (
-            ManagedDictionaryProvider(namespace=namespace),
-            UserDictionaryProvider(namespace=namespace),
+    personal_store = None
+    if dictionary_root is not None:
+        root = Path(dictionary_root).expanduser().resolve()
+        providers.extend(
+            (
+                ManagedDictionaryProvider(root / "managed"),
+                UserDictionaryProvider(root / "user"),
+            )
         )
-    )
+        personal_store = PersonalDictionaryStore(root / "personal")
+    else:
+        providers.extend(
+            (
+                ManagedDictionaryProvider(namespace=namespace),
+                UserDictionaryProvider(namespace=namespace),
+            )
+        )
 
     selected_language = language or _system_language()
     registry = DictionaryRegistry(tuple(providers))
     return LinguisticService(
         selected_language,
         registry=registry,
+        personal_store=personal_store,
         namespace=namespace,
     )
 

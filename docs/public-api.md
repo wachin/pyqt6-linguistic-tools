@@ -125,7 +125,7 @@ All error types are subclasses of `LinguisticError`:
 | `serialize_report` | Serialize report to deterministic JSON |
 | `write_report` | Write report to file |
 | `regenerate_thesaurus_index` | Regenerate a MyThes `.idx` from `.dat` |
-| `create_service` | Build the standard platform, managed and user providers |
+| `create_service` | Build standard providers, optionally rooted at a shared dictionary directory |
 | `DictionaryValidator` | Validate source dictionary files |
 | `download_dictionary` | Download, verify, validate and install a catalog entry |
 | `install_dictionary_archive` | Verify and install an already downloaded archive |
