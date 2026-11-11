@@ -19,6 +19,7 @@ from pathlib import Path
 
 import _bootstrap  # noqa: E402,F401
 
+from PyQt6.QtGui import QGuiApplication  # noqa: E402
 from PyQt6.QtWidgets import (  # noqa: E402
     QApplication,
     QHBoxLayout,
@@ -101,7 +102,8 @@ class DictionaryManagerDemo(QMainWindow):
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("Dictionary Manager Demo")
-        self.resize(1200, 760)
+        self.setMinimumSize(720, 520)
+        self._fit_to_available_screen()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -130,6 +132,21 @@ class DictionaryManagerDemo(QMainWindow):
 
         self.statusBar().showMessage(
             "Downloads are delegated to the host; this demo only reports them."
+        )
+
+    def _fit_to_available_screen(self) -> None:
+        """Keep the demo inside the usable desktop on small displays."""
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            self.resize(1100, 700)
+            return
+        available = screen.availableGeometry()
+        width = min(1200, max(720, int(available.width() * 0.90)))
+        height = min(760, max(520, int(available.height() * 0.82)))
+        self.resize(width, height)
+        self.move(
+            available.x() + (available.width() - width) // 2,
+            available.y() + (available.height() - height) // 2,
         )
 
     def _download_requested(self, entry: object) -> None:
