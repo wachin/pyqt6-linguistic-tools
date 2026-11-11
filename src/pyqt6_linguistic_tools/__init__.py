@@ -92,6 +92,12 @@ from pyqt6_linguistic_tools.providers import (
     ManagedDictionaryProvider,
     UserDictionaryProvider,
 )
+from pyqt6_linguistic_tools.enchant_bridge import (
+    enchant_config_dir,
+    enchant_personal_file,
+    export_enchant_personal,
+    import_enchant_personal,
+)
 from pyqt6_linguistic_tools.personal import (
     PersonalDictionary,
     PersonalDictionaryStore,
@@ -198,6 +204,10 @@ __all__ = [
     # Personal dictionary
     "BACKUP_FORMAT",
     "BACKUP_VERSION",
+    "enchant_config_dir",
+    "enchant_personal_file",
+    "export_enchant_personal",
+    "import_enchant_personal",
     "PersonalDictionary",
     "PersonalDictionaryBackupEntry",
     "PersonalDictionaryBackupManager",

@@ -126,6 +126,7 @@ All error types are subclasses of `LinguisticError`:
 | `write_report` | Write report to file |
 | `regenerate_thesaurus_index` | Regenerate a MyThes `.idx` from `.dat` |
 | `create_service` | Build standard providers, optionally rooted at a shared dictionary directory |
+| `import_enchant_personal` / `export_enchant_personal` | Optional Enchant `.dic` personal-word bridge |
 | `DictionaryValidator` | Validate source dictionary files |
 | `download_dictionary` | Download, verify, validate and install a catalog entry |
 | `install_dictionary_archive` | Verify and install an already downloaded archive |

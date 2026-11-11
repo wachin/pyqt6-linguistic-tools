@@ -158,6 +158,12 @@ manager. Backups are JSON files created by
 `PersonalDictionaryBackupManager`; restore validates the complete file before
 merging entries, so a failed restore leaves the current dictionaries intact.
 
+Optional **Enchant** actions import or export the plain
+`<config-dir>/<locale>.dic` personal word lists used by GTK/Inkscape. Imported
+comments and blank lines are ignored, `.exc` exclusion files are never changed,
+and export preserves existing Enchant comments and words by default. The
+toolkit does not link to or require Enchant.
+
 The dialog is a normal resizable window with minimize/maximize/close controls and
 a size grip. Its initial size is capped to the available screen, it restores the
 last position and size from `QSettings`, and it is opened modelessly by the host

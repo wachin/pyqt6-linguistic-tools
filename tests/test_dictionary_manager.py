@@ -410,6 +410,8 @@ def test_manager_exposes_dictionary_folder_and_personal_backup(
     assert widget.open_folder_button.text()
     assert widget.backup_personal_button.text()
     assert widget.restore_personal_button.text()
+    assert widget.import_enchant_button.text()
+    assert widget.export_enchant_button.text()
 
     opened: list[Path] = []
     from pyqt6_linguistic_tools.qt import dictionary_manager as manager_module

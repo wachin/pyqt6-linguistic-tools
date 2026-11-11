@@ -9,6 +9,11 @@ import unicodedata
 
 from pyqt6_linguistic_tools.catalog import DictionaryCatalog, DictionaryCatalogEntry
 from pyqt6_linguistic_tools.locales import locale_display_name
+from pyqt6_linguistic_tools.enchant_bridge import (
+    enchant_config_dir,
+    export_enchant_personal,
+    import_enchant_personal,
+)
 from pyqt6_linguistic_tools.models import DictionaryImportResult, DictionaryInfo
 from pyqt6_linguistic_tools.personal_backup import (
     PersonalDictionaryBackupError,
@@ -316,6 +321,50 @@ class DictionaryManagerWidget(QWidget):
         )
         return True
 
+    def import_enchant_words(self) -> bool:
+        """Merge words from Enchant personal ``.dic`` files."""
+        try:
+            imported = import_enchant_personal(
+                self._service.personal_store,
+                config_dir=enchant_config_dir(),
+            )
+        except (OSError, TypeError, ValueError) as error:
+            self._report_error(self._text["enchant_failed"], error)
+            return False
+        if not imported:
+            self.status_label.setText(self._text["enchant_missing"])
+            return False
+        count = sum(imported.values())
+        self.status_label.setText(
+            self._text["enchant_imported"]
+            .replace("%1", str(count))
+            .replace("%2", str(len(imported)))
+        )
+        self.refresh()
+        return True
+
+    def export_enchant_words(self) -> bool:
+        """Merge toolkit personal words into Enchant ``.dic`` files."""
+        try:
+            exported = export_enchant_personal(
+                self._service.personal_store,
+                config_dir=enchant_config_dir(),
+                merge=True,
+            )
+        except (OSError, TypeError, ValueError) as error:
+            self._report_error(self._text["enchant_failed"], error)
+            return False
+        if not exported:
+            self.status_label.setText(self._text["enchant_missing"])
+            return False
+        count = sum(exported.values())
+        self.status_label.setText(
+            self._text["enchant_exported"]
+            .replace("%1", str(count))
+            .replace("%2", str(len(exported)))
+        )
+        return True
+
     def refresh(self) -> tuple[DictionaryInfo, ...]:
         """Rediscover providers, clear obsolete backends, and rebuild the view."""
         self._service.refresh_dictionaries()
@@ -429,6 +478,13 @@ class DictionaryManagerWidget(QWidget):
             "catalog": self.tr("Catalog"),
             "ready": self.tr("Select a dictionary to see its details."),
             "personal": self.tr("Personal dictionary:"),
+            "enchant": self.tr("Enchant:"),
+            "import_enchant": self.tr("Import Enchant Words…"),
+            "export_enchant": self.tr("Export Enchant Words…"),
+            "enchant_imported": self.tr("Imported %1 Enchant words for %2 locale(s)."),
+            "enchant_exported": self.tr("Exported %1 words to %2 Enchant locale(s)."),
+            "enchant_missing": self.tr("No Enchant personal dictionaries were found."),
+            "enchant_failed": self.tr("Enchant personal dictionary operation failed"),
             "open_folder": self.tr("Open Dictionary Folder"),
             "backup_personal": self.tr("Back Up Personal Dictionary…"),
             "restore_personal": self.tr("Restore Personal Dictionary…"),
@@ -474,6 +530,15 @@ class DictionaryManagerWidget(QWidget):
         personal_row.addWidget(self.restore_personal_button)
         personal_row.addStretch(1)
         layout.addLayout(personal_row)
+
+        enchant_row = QHBoxLayout()
+        enchant_row.addWidget(QLabel(self._text["enchant"], self))
+        self.import_enchant_button = QPushButton(self._text["import_enchant"], self)
+        self.export_enchant_button = QPushButton(self._text["export_enchant"], self)
+        enchant_row.addWidget(self.import_enchant_button)
+        enchant_row.addWidget(self.export_enchant_button)
+        enchant_row.addStretch(1)
+        layout.addLayout(enchant_row)
 
         search_row = QHBoxLayout()
         self.search_edit = QLineEdit(self)
@@ -568,6 +633,12 @@ class DictionaryManagerWidget(QWidget):
         )
         self.restore_personal_button.clicked.connect(
             lambda _checked=False: self.restore_personal_dictionary()
+        )
+        self.import_enchant_button.clicked.connect(
+            lambda _checked=False: self.import_enchant_words()
+        )
+        self.export_enchant_button.clicked.connect(
+            lambda _checked=False: self.export_enchant_words()
         )
         self.entries_tree.currentItemChanged.connect(self._update_selection)
         self.search_edit.textChanged.connect(self._apply_filters)
