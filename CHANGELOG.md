@@ -42,6 +42,9 @@ This project follows Semantic Versioning.
   so providers no longer have to be assembled in each program. Add
   `pyqt6_linguistic_tools_bootstrap.py` for applications that vendor the
   toolkit as a `libs/` git submodule without pip.
+- Add **Open Dictionary Folder**, **Back Up Personal Dictionary…**, and
+  **Restore Personal Dictionary…** to the Qt dictionary manager, backed by the
+  existing transactional personal-dictionary backup API.
 - Add `create_service(dictionary_root=...)` so suite applications can share one
   managed, user and personal dictionary directory. Add a focused factory test
   for the explicit root.

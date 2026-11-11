@@ -10,6 +10,10 @@ import unicodedata
 from pyqt6_linguistic_tools.catalog import DictionaryCatalog, DictionaryCatalogEntry
 from pyqt6_linguistic_tools.locales import locale_display_name
 from pyqt6_linguistic_tools.models import DictionaryImportResult, DictionaryInfo
+from pyqt6_linguistic_tools.personal_backup import (
+    PersonalDictionaryBackupError,
+    PersonalDictionaryBackupManager,
+)
 from pyqt6_linguistic_tools.providers import (
     ManagedDictionaryProvider,
     UserDictionaryProvider,
@@ -26,12 +30,14 @@ from PyQt6.QtCore import (  # noqa: E402
     QObject,
     QSettings,
     QRunnable,
+    QUrl,
     QThreadPool,
     Qt,
     pyqtSignal,
 )
 from PyQt6.QtGui import (  # noqa: E402
     QCloseEvent,
+    QDesktopServices,
     QFont,
     QGuiApplication,
     QHideEvent,
@@ -219,6 +225,97 @@ class DictionaryManagerWidget(QWidget):
         self._catalog = catalog
         self._populate()
 
+    def dictionary_folder(self) -> Path | None:
+        """Return the shared directory containing managed and user bundles."""
+        if self._managed_provider is not None:
+            return self._managed_provider.root.parent
+        if self._user_provider is not None:
+            return self._user_provider.root.parent
+        store = getattr(self._service, "personal_store", None)
+        if store is not None:
+            return Path(store.root).parent
+        return None
+
+    def open_dictionary_folder(self) -> bool:
+        """Open the platform file manager at the dictionary root."""
+        folder = self.dictionary_folder()
+        if folder is None:
+            self.status_label.setText(self._text["folder_failed"])
+            return False
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            self._report_error(self._text["folder_failed"], error)
+            return False
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
+            self.status_label.setText(self._text["folder_failed"])
+            return False
+        return True
+
+    def backup_personal_dictionary(self) -> bool:
+        """Ask for a destination and export the personal dictionaries."""
+        default_path = Path.home() / "guitarchordstudio-personal-dictionaries.json"
+        destination, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            self._text["backup_personal"],
+            str(default_path),
+            self.tr("Personal dictionary backup (*.json)"),
+        )
+        if not destination:
+            return False
+        path = Path(destination)
+        if path.suffix.lower() != ".json":
+            path = path.with_suffix(".json")
+        try:
+            preview = PersonalDictionaryBackupManager(
+                self._service.personal_store
+            ).export(path, overwrite=True)
+        except (OSError, PersonalDictionaryBackupError, ValueError) as error:
+            self._report_error(self._text["backup_failed"], error)
+            return False
+        self.status_label.setText(
+            self._text["backup_saved"].replace("%1", str(preview.path))
+        )
+        return True
+
+    def restore_personal_dictionary(self) -> bool:
+        """Ask for a backup and merge its personal dictionaries."""
+        source, _selected_filter = QFileDialog.getOpenFileName(
+            self,
+            self._text["restore_personal"],
+            str(Path.home()),
+            self.tr("Personal dictionary backup (*.json)"),
+        )
+        if not source:
+            return False
+        manager = PersonalDictionaryBackupManager(self._service.personal_store)
+        try:
+            preview = manager.inspect(source)
+            if not preview.entries:
+                self.status_label.setText(self._text["no_personal_backup"])
+                return False
+            answer = QMessageBox.question(
+                self,
+                self._text["restore_personal"],
+                self._text["restore_confirm"]
+                .replace("%1", str(preview.total_words))
+                .replace("%2", str(len(preview.locales))),
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return False
+            result = manager.restore(source, mode="merge")
+        except (OSError, PersonalDictionaryBackupError, ValueError) as error:
+            self._report_error(self._text["restore_failed"], error)
+            return False
+        self.refresh()
+        added = sum(entry.added_count for entry in result.entries)
+        self.status_label.setText(
+            self._text["restore_done"]
+            .replace("%1", str(added))
+            .replace("%2", str(len(result.entries)))
+        )
+        return True
+
     def refresh(self) -> tuple[DictionaryInfo, ...]:
         """Rediscover providers, clear obsolete backends, and rebuild the view."""
         self._service.refresh_dictionaries()
@@ -331,6 +428,19 @@ class DictionaryManagerWidget(QWidget):
             "verified": self.tr("SHA-256 verified"),
             "catalog": self.tr("Catalog"),
             "ready": self.tr("Select a dictionary to see its details."),
+            "personal": self.tr("Personal dictionary:"),
+            "open_folder": self.tr("Open Dictionary Folder"),
+            "backup_personal": self.tr("Back Up Personal Dictionary…"),
+            "restore_personal": self.tr("Restore Personal Dictionary…"),
+            "backup_saved": self.tr("Personal dictionary backup saved: %1"),
+            "restore_done": self.tr("Restored %1 personal entries for %2 locale(s)."),
+            "backup_failed": self.tr("Personal dictionary backup failed"),
+            "restore_failed": self.tr("Personal dictionary restore failed"),
+            "restore_confirm": self.tr("Restore %1 personal entries for %2 locale(s)?"),
+            "no_personal_backup": self.tr(
+                "The selected backup contains no personal dictionaries."
+            ),
+            "folder_failed": self.tr("Could not open the dictionary folder."),
         }
 
         layout = QVBoxLayout(self)
@@ -353,6 +463,17 @@ class DictionaryManagerWidget(QWidget):
         header.addWidget(self.refresh_button)
         header.addWidget(self.import_button)
         layout.addLayout(header)
+
+        personal_row = QHBoxLayout()
+        personal_row.addWidget(QLabel(self._text["personal"], self))
+        self.open_folder_button = QPushButton(self._text["open_folder"], self)
+        self.backup_personal_button = QPushButton(self._text["backup_personal"], self)
+        self.restore_personal_button = QPushButton(self._text["restore_personal"], self)
+        personal_row.addWidget(self.open_folder_button)
+        personal_row.addWidget(self.backup_personal_button)
+        personal_row.addWidget(self.restore_personal_button)
+        personal_row.addStretch(1)
+        layout.addLayout(personal_row)
 
         search_row = QHBoxLayout()
         self.search_edit = QLineEdit(self)
@@ -439,6 +560,15 @@ class DictionaryManagerWidget(QWidget):
         )
         self.refresh_button.clicked.connect(self._refresh_from_ui)
         self.import_button.clicked.connect(self._choose_import_files)
+        self.open_folder_button.clicked.connect(
+            lambda _checked=False: self.open_dictionary_folder()
+        )
+        self.backup_personal_button.clicked.connect(
+            lambda _checked=False: self.backup_personal_dictionary()
+        )
+        self.restore_personal_button.clicked.connect(
+            lambda _checked=False: self.restore_personal_dictionary()
+        )
         self.entries_tree.currentItemChanged.connect(self._update_selection)
         self.search_edit.textChanged.connect(self._apply_filters)
         self.status_filter.currentIndexChanged.connect(self._apply_filters)
@@ -1268,6 +1398,18 @@ class DictionaryManagerDialog(QDialog):
     @property
     def refresh_button(self) -> QPushButton:
         return self._manager.refresh_button
+
+    @property
+    def open_folder_button(self) -> QPushButton:
+        return self._manager.open_folder_button
+
+    @property
+    def backup_personal_button(self) -> QPushButton:
+        return self._manager.backup_personal_button
+
+    @property
+    def restore_personal_button(self) -> QPushButton:
+        return self._manager.restore_personal_button
 
     @property
     def import_button(self) -> QPushButton:

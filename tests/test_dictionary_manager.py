@@ -400,3 +400,25 @@ def test_dialog_has_window_controls_and_remembers_geometry(application, tmp_path
     assert restored.width() >= 780
     assert restored.height() >= 480
     restored.close()
+
+
+def test_manager_exposes_dictionary_folder_and_personal_backup(
+    application, tmp_path, monkeypatch
+):
+    service, managed, _user = _service(tmp_path)
+    widget = DictionaryManagerWidget(service)
+    assert widget.open_folder_button.text()
+    assert widget.backup_personal_button.text()
+    assert widget.restore_personal_button.text()
+
+    opened: list[Path] = []
+    from pyqt6_linguistic_tools.qt import dictionary_manager as manager_module
+
+    monkeypatch.setattr(
+        manager_module.QDesktopServices,
+        "openUrl",
+        lambda url: opened.append(Path(url.toLocalFile())) is None,
+    )
+
+    assert widget.open_dictionary_folder()
+    assert opened == [managed.root.parent]

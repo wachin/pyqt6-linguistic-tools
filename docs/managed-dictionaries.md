@@ -151,6 +151,13 @@ Entries without SHA-256 remain visibly unverified and disabled. Downloads
 install into the managed provider namespace used by the application service, so
 the next check sees the new spelling and thesaurus files without a restart.
 
+The manager also exposes **Open Dictionary Folder**, **Back Up Personal
+Dictionary…**, and **Restore Personal Dictionary…**. The folder button uses
+`QDesktopServices` to open the managed/user/personal root in the platform file
+manager. Backups are JSON files created by
+`PersonalDictionaryBackupManager`; restore validates the complete file before
+merging entries, so a failed restore leaves the current dictionaries intact.
+
 The dialog is a normal resizable window with minimize/maximize/close controls and
 a size grip. Its initial size is capped to the available screen, it restores the
 last position and size from `QSettings`, and it is opened modelessly by the host
