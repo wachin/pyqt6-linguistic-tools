@@ -230,6 +230,144 @@ decorator on every editor can use the new spelling and thesaurus files without
 a restart. This is the supported path for Windows and macOS, where no
 Linux-style system Hunspell/MyThes packages exist.
 
+## Configuration and user data
+
+Both host applications use one per-user `GuitarChordStudio` root. Linux follows
+the XDG base-directory rules, so configuration and downloaded data live in
+different directories. Windows keeps small settings in `%APPDATA%` and large
+downloaded dictionaries in `%LOCALAPPDATA%`.
+
+Use lowercase names on Linux (`guitarchordstudio`, `chordflow`,
+`chordpages`). Use the visible PascalCase names on Windows and macOS
+(`GuitarChordStudio`, `ChordFlow`, `ChordPages`) so the folders are easy to
+recognize in Explorer or Finder.
+
+### Linux
+
+| Content | Location |
+|---|---|
+| ChordFlow settings | `~/.config/guitarchordstudio/chordflow/settings.json` |
+| ChordPages settings | `~/.config/guitarchordstudio/chordpages/settings.json` |
+| Dictionaries | `~/.local/share/guitarchordstudio/dictionaries/` |
+| ChordPages autosave, backups, snapshots | `~/.local/share/guitarchordstudio/chordpages/` |
+
+`XDG_CONFIG_HOME` and `XDG_DATA_HOME` override the two base directories when
+set. Dictionaries do **not** belong in `~/.config`; that directory is reserved
+for settings.
+
+### Windows
+
+| Content | Location |
+|---|---|
+| ChordFlow settings | `%APPDATA%\GuitarChordStudio\ChordFlow\settings.json` |
+| ChordPages settings | `%APPDATA%\GuitarChordStudio\ChordPages\settings.json` |
+| Dictionaries | `%LOCALAPPDATA%\GuitarChordStudio\dictionaries\` |
+| ChordPages autosave, backups, snapshots | `%APPDATA%\GuitarChordStudio\ChordPages\` |
+
+`%APPDATA%` is roaming application data; `%LOCALAPPDATA%` is local machine data.
+The dictionary directory is local because downloaded bundles can be large. An
+installer should place the executables under
+`C:\Program Files\GuitarChordStudio\`, but user settings and dictionaries must
+remain under the per-user AppData roots.
+
+### macOS
+
+| Content | Location |
+|---|---|
+| ChordFlow settings | `~/Library/Application Support/GuitarChordStudio/ChordFlow/settings.json` |
+| ChordPages settings | `~/Library/Application Support/GuitarChordStudio/ChordPages/settings.json` |
+| Dictionaries | `~/Library/Application Support/GuitarChordStudio/dictionaries/` |
+| ChordPages autosave, backups, snapshots | `~/Library/Application Support/GuitarChordStudio/ChordPages/` |
+
+### Dictionary directory layout
+
+```text
+dictionaries/
+├── managed/     bundles downloaded through the manager
+├── user/        bundles imported manually by the user
+└── personal/    words added with "Add to Dictionary"
+```
+
+The managed and user bundles contain dictionary files. The personal directory
+contains one JSON file per locale, for example `es_EC.json`.
+
+### Backing up personal words
+
+The Dictionary Download Manager has a **Personal dictionary:** section with:
+
+- **Open Dictionary Folder** — opens the shared dictionary directory in the
+  platform file manager.
+- **Back Up Personal Dictionary…** — writes one JSON backup containing every
+  personal locale and its words.
+- **Restore Personal Dictionary…** — validates a backup, shows the locale and
+  word counts, and merges it into the current personal dictionaries.
+
+Restore is transactional: if validation or publication fails, the current
+personal dictionaries are left unchanged. The backup file is portable, so a
+user can save it to an external drive, reinstall the operating system and
+applications, then restore it from the new installation.
+
+The backup covers personal words only. Managed and user dictionary bundles,
+settings files, autosave drafts and document snapshots are separate; managed
+dictionaries can be downloaded again, and settings can be copied separately.
+
+The same functionality is available without Qt:
+
+```python
+from pyqt6_linguistic_tools import (
+    PersonalDictionaryBackupManager,
+    PersonalDictionaryStore,
+)
+
+store = PersonalDictionaryStore("/path/to/dictionaries/personal")
+manager = PersonalDictionaryBackupManager(store)
+
+manager.export("/backup/guitarchordstudio-personal.json")
+manager.restore("/backup/guitarchordstudio-personal.json", mode="merge")
+```
+
+### Optional Enchant import/export
+
+GTK applications such as Inkscape use Enchant. Enchant personal word lists are
+plain text files with one word per line:
+
+```text
+~/.config/enchant/es_EC.dic
+```
+
+The dictionary manager can import or export these lists without linking to
+Enchant or requiring Aspell/Hunspell:
+
+- **Import Enchant Words…** reads the `.dic` files and merges the words into
+  the toolkit's personal dictionaries.
+- **Export Enchant Words…** merges the toolkit's personal words into the
+  corresponding Enchant `.dic` files.
+- Enchant comments are preserved; `.exc` exclusion files are never modified.
+
+Enchant's configuration directory can be overridden with
+`ENCHANT_CONFIG_DIR`. On Linux it defaults to `$XDG_CONFIG_HOME/enchant` or
+`~/.config/enchant`; on Windows to `%LOCALAPPDATA%\enchant`; on macOS the bridge
+uses `~/Library/Preferences/enchant` when present.
+
+### Developer rules
+
+- Do not hard-code `~/.config`, `%APPDATA%`, or a parent checkout path. Import
+  the shared helpers from `guitarchordstudio_paths` or pass an explicit
+  `dictionary_root=` to `create_service()`.
+- Keep settings and downloaded data separate on Linux.
+- Treat system dictionaries and Enchant files as user-owned external data.
+  Read or write them only through an explicit user action and never rewrite
+  their contents implicitly.
+- Keep personal words in `PersonalDictionaryStore`; do not store them in the
+  same JSON file as application settings.
+- For a suite build, ship both executables together under
+  `C:\Program Files\GuitarChordStudio` on Windows, but create the per-user
+  settings and dictionary directories on first launch.
+
+Old `guitarchs` and `ChordFlow` directories are no longer used. The applications
+migrate the old `config.json`/`settings.ini` files to `settings.json` on first
+launch; the old files can be deleted after verification.
+
 ## Reusing the thesaurus widget
 
 The thesaurus browser is part of the optional Qt layer and has no ChordFlow or
@@ -438,6 +576,7 @@ local dictionary corpus. Otherwise the factory uses Linux system dictionaries
 when present, plus the managed and user dictionary providers.
 
 ## Documentation map
+- [Configuration and user data](#configuration-and-user-data): per-platform paths, dictionary backup and Enchant interoperability.
 
 - [Architecture overview](docs/linguistics-architecture.md): layers, module map,
 - [Reusable thesaurus widget](#reusing-the-thesaurus-widget): embeddable
